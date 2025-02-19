@@ -1,0 +1,97 @@
+body {
+
+    // Solaceform.
+    .solaceform-form {
+        .solaceform-form-button-wrap {
+            @media only screen and (min-width: 767px) and (max-width: 1024px) {
+                button.tablet-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (min-width: 1024px) {
+                button.desktop-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (max-width: 766px) {
+                button.mobile-full-width {
+                    width: 100%;
+                }
+            }            
+        }
+    }
+
+    // Nav menu main
+    .elementor-widget-solace-extra-nav-menu {
+        .elementor-nav-menu--main {
+            li {
+                a {
+                    .sub-arrow {
+                        padding: 10px;
+    
+                        i {
+                            color: var(--sol-color-link-button-initial);
+                        }
+                    }
+                }
+            }
+
+            li.menu-item-has-children {
+                > .sub-arrow {
+                    display: none;
+                }
+
+                &:hover {
+                    ul.sub-menu {
+                        display: block;
+                    }
+                }
+            }
+        }
+    }
+
+    // Nav menu dropdown
+    .elementor-widget-solace-extra-nav-menu {
+        .solace-elementor-nav-menu--dropdown {
+            li {
+                display: flex;
+                flex-wrap: wrap;
+
+                a {
+                    .sub-arrow {
+                        display: none;
+                    }
+                }
+
+                &:hover a {
+                    background: transparent;
+                    color: var(--sol-color-link-button-hover);
+                }
+            }
+
+            li.menu-item-has-children {
+                > .sub-arrow {
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    padding: 0;
+                    cursor: pointer;
+
+                    i {
+                        color: var(--sol-color-link-button-initial);
+                    }
+                }
+            }            
+
+            li.active {
+                >ul.sub-menu {
+                    width: 100%;
+                    display: block;
+                }
+            }
+        }
+    }
+
+}

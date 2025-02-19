@@ -1,0 +1,21 @@
+body .solace-hide-control {
+  visibility: hidden;
+  height: 0;
+  padding: 0;
+  padding-block-start: 0 !important;
+}
+body ul.elementor-navigation-menu-horizontal {
+  padding-left: 0;
+}
+body ul.elementor-navigation-menu-horizontal li {
+  display: inline-block;
+  list-style: none;
+  margin-right: 15px;
+}
+body ul.elementor-navigation-menu-vertical {
+  padding-left: 0;
+}
+body ul.elementor-navigation-menu-vertical li {
+  list-style: none;
+  margin-right: 15px;
+}/*# sourceMappingURL=elementor-editor.css.map */

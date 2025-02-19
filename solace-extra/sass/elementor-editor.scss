@@ -1,0 +1,35 @@
+body {
+
+    // Solaceform.
+    .solaceform-form {
+        .solaceform-form-button-wrap {
+            @media only screen and (min-width: 767px) and (max-width: 1024px) {
+                button.tablet-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (min-width: 1024px) {
+                button.desktop-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (max-width: 766px) {
+                button.mobile-full-width {
+                    width: 100%;
+                }
+            }            
+        }
+    }
+
+    // Nav menu
+    .elementor-nav-menu {
+        li {
+            > .sub-arrow {
+                display: none;
+            }
+        }
+    }
+
+}
