@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 6.7
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,15 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.3.1 - 3 March 2025 =
+* Fix: Resolved the Patchstack trusted domain issue.
+* Fix: Fixed the vulnerability in Patchstack's "Get Logo from API" function.
+* Fix: Corrected the console error related to the adjustWidth issue.
+* Fix: Changed the order to descending (DESC) on the frontend.
+* Fix: Fixed the alert issue when one part has the same conditions.
+* Fix: Styled the popup.
+* Style: Applied automatic styling to the widget navigation menu.
 
 = 1.3.0 - 14 February 2025 =
 * Feat: Site Builder

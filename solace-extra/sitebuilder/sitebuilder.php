@@ -133,6 +133,7 @@ function get_solace_header_conditions() {
         INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = %s
         WHERE p.post_type = %s
         AND pm2.meta_value = %s
+        ORDER BY p.ID DESC
     ";
 
     // Prepare the query using placeholders
@@ -177,6 +178,7 @@ function get_solace_footer_conditions() {
         INNER JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = %s
         WHERE p.post_type = %s
         AND pm2.meta_value = %s
+        ORDER BY p.ID DESC
     ";
 
     // Prepare the query using placeholders
@@ -1990,10 +1992,10 @@ function solace_save_edit_conditions() {
     wp_send_json_success($response);
 }
 
-add_action('wp_ajax_create_and_edit_page', 'create_and_edit_page_singleproduct');
-add_action('wp_ajax_nopriv_create_and_edit_page', 'create_and_edit_page_singleproduct');
+add_action('wp_ajax_create_and_edit_page_single_product', 'solace_create_and_edit_page_singleproduct');
+add_action('wp_ajax_nopriv_create_and_edit_page_single_product', 'solace_create_and_edit_page_singleproduct');
 
-function create_and_edit_page_singleproduct() { // Masuk ke solace-sitebuilder, bisa di preview, tapi content broken
+function solace_create_and_edit_page_singleproduct() { 
     $new_post = array(
         'post_title'   => 'Single Product',
         'post_content' => '',
@@ -2011,36 +2013,73 @@ function create_and_edit_page_singleproduct() { // Masuk ke solace-sitebuilder, 
     }
 }
 
-function create_and_edit_page_singleproductx() { // MASUK KE ELEMENTOR LIBRARY, NGISI KONDISI
-    // Data untuk post baru
+add_action('wp_ajax_create_and_edit_page_blogsingle_post', 'solace_create_and_edit_page_blogsinglepost');
+add_action('wp_ajax_nopriv_create_and_edit_page_blogsingle_post', 'solace_create_and_edit_page_blogsinglepost');
+
+function solace_create_and_edit_page_blogsinglepost() { 
     $new_post = array(
-        'post_title'   => 'Single Product',
+        'post_title'   => 'Blog Single Post',
         'post_content' => '',
         'post_status'  => 'draft',
-        'post_type'    => 'elementor_library',  
+        'post_type'    => 'solace-sitebuilder', 
     );
 
     $post_id = wp_insert_post($new_post);
 
     if ($post_id) {
-        update_post_meta($post_id, '_elementor_template_type', 'single'); 
-        update_post_meta($post_id, '_elementor_edit_mode', 'builder');  
-
-        
-        update_post_meta($post_id, '_elementor_template_status', 'publish');
-
-        update_post_meta($post_id, '_solace_singleproduct_status', 1);
-
+        update_post_meta($post_id, '_solace_blogsinglepost_status', 1);
         wp_send_json_success(array('post_id' => $post_id));
     } else {
         wp_send_json_error('Failed to create new post');
     }
 }
 
-add_action('wp_ajax_create_new_post', 'create_new_post');
-add_action('wp_ajax_nopriv_create_new_post', 'create_new_post');
+add_action('wp_ajax_create_and_edit_page_blogarchive', 'solace_create_and_edit_page_blogarchive');
+add_action('wp_ajax_nopriv_create_and_edit_page_blogarchive', 'solace_create_and_edit_page_blogarchive');
 
-function create_new_post() {
+function solace_create_and_edit_page_blogarchive() { 
+    $new_post = array(
+        'post_title'   => 'Blog Archive',
+        'post_content' => '',
+        'post_status'  => 'draft',
+        'post_type'    => 'solace-sitebuilder', 
+    );
+
+    $post_id = wp_insert_post($new_post);
+
+    if ($post_id) {
+        update_post_meta($post_id, '_solace_blogarchive_status', 1);
+        wp_send_json_success(array('post_id' => $post_id));
+    } else {
+        wp_send_json_error('Failed to create new post');
+    }
+}
+
+add_action('wp_ajax_create_and_edit_page_shop_product', 'solace_create_and_edit_page_shop_product');
+add_action('wp_ajax_nopriv_create_and_edit_page_shop_product', 'solace_create_and_edit_page_shop_product');
+
+function solace_create_and_edit_page_shop_product() { 
+    $new_post = array(
+        'post_title'   => 'Shop Product Categories',
+        'post_content' => '',
+        'post_status'  => 'draft',
+        'post_type'    => 'solace-sitebuilder', 
+    );
+
+    $post_id = wp_insert_post($new_post);
+
+    if ($post_id) {
+        update_post_meta($post_id, '_solace_shopproduct_status', 1);
+        wp_send_json_success(array('post_id' => $post_id));
+    } else {
+        wp_send_json_error('Failed to create new post');
+    }
+}
+
+add_action('wp_ajax_create_new_post', 'solace_create_new_post');
+add_action('wp_ajax_nopriv_create_new_post', 'solace_create_new_post');
+
+function solace_create_new_post() {
     $new_post = array(
         'post_title'   => 'Solace Site Builder Title Here',
         'post_content' => '',
@@ -2057,10 +2096,10 @@ function create_new_post() {
     }
 }
 
-add_action('wp_ajax_create_new_post_404', 'create_new_post_404');
-add_action('wp_ajax_nopriv_create_new_post_404', 'create_new_post_404');
+add_action('wp_ajax_create_new_post_404', 'solace_create_new_post_404');
+add_action('wp_ajax_nopriv_create_new_post_404', 'solace_create_new_post_404');
 
-function create_new_post_404() {
+function solace_create_new_post_404() {
     check_ajax_referer('solace_conditions_nonce_action', 'nonce');
 
     $new_post = array(
@@ -2078,41 +2117,6 @@ function create_new_post_404() {
         wp_send_json_success(array('post_id' => $post_id));
     } else {
         wp_send_json_error('Failed to create new post');
-    }
-}
-
-
-// add_action('wp_ajax_save_conditions', 'handle_save_conditions');
-// add_action('wp_ajax_nopriv_save_conditions', 'handle_save_conditions');
-
-function handle_save_conditions() {
-    if (!isset($_POST['security']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['security'])), 'solace_conditions_nonce_action')) {
-        wp_send_json_error('Invalid nonce14.');
-        return;
-    }
-
-    // $post_id = isset($_POST['post_id']) ? sanitize_text_field($_POST['post_id']) : null;
-    $post_id = isset($_POST['post_id']) ? intval(wp_unslash($_POST['post_id'])) : null;
-
-    // $conditions = isset($_POST['conditions']) ? $_POST['conditions'] : array();
-    $conditions = isset($_POST['conditions']) ? array_map('sanitize_text_field', wp_unslash($_POST['conditions'])) : array();
-
-    // $from = isset($_POST['from']) ? sanitize_text_field($_POST['from']) : '';
-    $from = isset($_POST['from']) ? sanitize_text_field(wp_unslash($_POST['from'])) : '';
-
-
-
-    if ($post_id) {
-        $result = update_post_meta($post_id, 'solace_conditions', $conditions);
-    } else {
-        // Optional: Handle case where post_id is null if needed
-        $result = false;
-    }
-
-    if ($result) {
-        wp_send_json_success();
-    } else {
-        wp_send_json_error('Failed to save conditions');
     }
 }
 

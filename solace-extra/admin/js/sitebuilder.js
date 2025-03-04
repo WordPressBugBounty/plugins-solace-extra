@@ -223,13 +223,13 @@
                 url: solaceSitebuilderParams.ajaxurl, 
                 method: 'POST',
                 data: {
-                    action: 'create_and_edit_page',
+                    action: 'create_and_edit_page_single_product',
                     // part: part,
                     nonce: solaceSitebuilderParams.nonce,
                 }, 
               success: function(response) {
                 if (response.success) {
-                    var postId = response.data.post_id;  // Sekarang postId didefinisikan
+                    var postId = response.data.post_id;  
                     console.log('postID sukses:'+postId);
                     // window.location.href = response.data.edit_link;
     
@@ -237,12 +237,93 @@
                     console.log('editUrl:', editUrl);
                     window.location.href = editUrl;
                 } else {
-                  alert('Gagal membuat halaman baru.');
+                  alert('failed to create new page.');
                 }
               },
               error: function(error) {
                 console.error(error);
-                alert('Terjadi kesalahan.');
+                alert('Unknown Error, please try again.');
+              }
+            });
+        } else if (part=='shopproduct'){
+            $.ajax({
+                url: solaceSitebuilderParams.ajaxurl, 
+                method: 'POST',
+                data: {
+                    action: 'create_and_edit_page_shop_product',
+                    // part: part,
+                    nonce: solaceSitebuilderParams.nonce,
+                }, 
+              success: function(response) {
+                if (response.success) {
+                    var postId = response.data.post_id;  
+                    console.log('postID sukses:'+postId);
+                    // window.location.href = response.data.edit_link;
+    
+                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
+                    console.log('editUrl:', editUrl);
+                    window.location.href = editUrl;
+                } else {
+                    alert('failed to create new page.');
+                }
+              },
+              error: function(error) {
+                console.error(error);
+                alert('Unknown Error, please try again.');
+              }
+            });
+        } else if (part=='blogsinglepost'){
+            $.ajax({
+                url: solaceSitebuilderParams.ajaxurl, 
+                method: 'POST',
+                data: {
+                    action: 'create_and_edit_page_blogsingle_post',
+                    // part: part,
+                    nonce: solaceSitebuilderParams.nonce,
+                }, 
+              success: function(response) {
+                if (response.success) {
+                    var postId = response.data.post_id;  
+                    console.log('postID sukses:'+postId);
+                    // window.location.href = response.data.edit_link;
+    
+                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
+                    console.log('editUrl:', editUrl);
+                    window.location.href = editUrl;
+                } else {
+                    alert('failed to create new page.');
+                }
+              },
+              error: function(error) {
+                console.error(error);
+                alert('Unknown Error, please try again.');
+              }
+            });
+        } else if (part=='blogarchive'){
+            $.ajax({
+                url: solaceSitebuilderParams.ajaxurl, 
+                method: 'POST',
+                data: {
+                    action: 'create_and_edit_page_blogarchive',
+                    // part: part,
+                    nonce: solaceSitebuilderParams.nonce,
+                }, 
+              success: function(response) {
+                if (response.success) {
+                    var postId = response.data.post_id;  
+                    console.log('postID sukses:'+postId);
+                    // window.location.href = response.data.edit_link;
+    
+                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
+                    console.log('editUrl:', editUrl);
+                    window.location.href = editUrl;
+                } else {
+                    alert('failed to create new page.');
+                }
+              },
+              error: function(error) {
+                console.error(error);
+                alert('Unknown Error, please try again.');
               }
             });
         }else {
@@ -299,53 +380,57 @@
         $('#add-404-popup-overlay').fadeIn(400); 
 
     });
-    
-    
 
     $('#save-new-conditions').on('click', function(e) {
         e.preventDefault();
-        var assetsUrl = solaceSitebuilderParams.assetsUrl; 
-
-        $('#save-new-conditions').addClass('active');
-        $('#save-new-conditions dotlottie-player').fadeIn(1000);
-
-        $(this).addClass('active-button').css({
-            'width': '300px',
-            'padding-right': '85px',
-            'transition': 'width .5s ease, padding-right .5s ease'
-        });
-
+        var assetsUrl = solaceSitebuilderParams.assetsUrl;
+    
         var $container = $('#new-conditions-container');
         if ($container.length === 0) {
             alert('No conditions container found.');
             return;
         }
     
-        var part = $('#add-new-popup').data('part');
         var conditions = [];
-        var postId=0;
+        var selectedValues = new Set(); 
+        var postId = 0;
+        var part = $('#add-new-popup').data('part');
     
-        console.log('Conditions container:', $container); // Debugging
+        var hasDuplicate = false; 
     
         $container.find('.condition-item').each(function(index, item) {
             var $item = $(item);
             var conditionType = $item.find('.condition-exclude-include-select').val();
             var conditionValue = $item.find('.condition-select').val();
     
-            console.log('Condition Type:', conditionType);
-            console.log('Condition Value:', conditionValue);
+            if (selectedValues.has(conditionValue)) {
+                hasDuplicate = true;
+                return false; 
+            }
     
+            selectedValues.add(conditionValue); 
             conditions.push({
                 type: conditionType,
                 value: conditionValue
             });
         });
-        console.log('Conditions to be sent:', conditions);
-
+    
+        if (hasDuplicate) {
+            alert('Condition on same instance, please select other conditions');
+            return;
+        }
+    
+        $('#save-new-conditions').addClass('active');
+        $('#save-new-conditions dotlottie-player').fadeIn(1000);
+    
+        $(this).addClass('active-button').css({
+            'width': '300px',
+            'padding-right': '85px',
+            'transition': 'width .5s ease, padding-right .5s ease'
+        });
     
         $.ajax({
             url: solaceSitebuilderParams.ajaxurl, 
-            method: 'POST',
             method: 'POST',
             dataType: 'json', 
             contentType: 'application/x-www-form-urlencoded; charset=UTF-8',       
@@ -361,7 +446,7 @@
                 console.log('AJAX Response #save-new-conditions:', response); // Debugging
                 if (response.success) {
                     postId = response.data.post_id; 
-                    console.log('postID sukses:'+postId);
+                    console.log('postID sukses:' + postId);
                     saveEditConditions(postId, part, conditions);
                 } else {
                     alert('Failed to save conditions: ' + (response.data || 'Unknown error.'));
@@ -373,42 +458,8 @@
                 alert('An error occurred while saving. Please try again.');
             }
         });
-
+    
     });
-    
-    // $('.addnew[data-part="shopsingleproduct"]').click(function(e) { 
-    //     e.preventDefault();
-    
-    //     // var part = $(this).data('part');
-    
-    //     $.ajax({
-    //         url: solaceSitebuilderParams.ajaxurl, 
-    //         method: 'POST',
-    //         data: {
-    //             action: 'create_and_edit_page',
-    //             // part: part,
-    //             nonce: solaceSitebuilderParams.nonce,
-    //         }, 
-    //       success: function(response) {
-    //         if (response.success) {
-    //             postId = response.data.post_id; 
-    //             console.log('postID sukses:'+postId);
-    //             // window.location.href = response.data.edit_link;
-
-    //             var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
-    //             console.log('editUrl:', editUrl);
-    //             window.location.href = editUrl;
-    //         } else {
-    //           alert('Gagal membuat halaman baru.');
-    //         }
-    //       },
-    //       error: function(error) {
-    //         console.error(error);
-    //         alert('Terjadi kesalahan.');
-    //       }
-    //     });
-    // });
-    
     
     function saveEditConditions(postId, part, conditions) {
         $.ajax({
@@ -438,44 +489,55 @@
             }
         });
     }
-    
 
     $('#save-conditions').on('click', function(e) {
         e.preventDefault();
+    
+        var $container = $('.conditions-container');
+        if ($container.length === 0) {
+            alert('No conditions container found.');
+            return;
+        }
+    
+        var conditions = [];
+        var selectedValues = new Set(); 
+        var postId = $('.conditions-container').data('post-id');
+        var part = $('.addnew').data('part');
         
+        var hasDuplicate = false; 
+
+        $container.find('.condition-item').each(function(index, item) {
+            var $item = $(item);
+            var conditionType = $item.find('.condition-exclude-include-select').val();
+            var conditionValue = $item.find('.condition-select').val();
+    
+            if (selectedValues.has(conditionValue)) {
+                hasDuplicate = true;
+                return false; 
+            }
+    
+            selectedValues.add(conditionValue); 
+            conditions.push({
+                type: conditionType,
+                value: conditionValue
+            });
+        });
+    
+        if (hasDuplicate) {
+            alert('Condition on same instance, please select other conditions');
+            return;
+        }
+
+
         $('#save-conditions').addClass('active');
         $('#save-conditions dotlottie-player').fadeIn(1000);
-
 
         $(this).addClass('active-button').css({
             'width': '300px',
             'padding-right': '85px',
             'transition': 'width .5s ease, padding-right .5s ease'
         });
-
-
-        var $container = $('.conditions-container');
-        if ($container.length === 0) {
-            alert('No conditions container found.');
-
-            return;
-        }
     
-        var conditions = [];
-        var postId  = $('.conditions-container').data('post-id');
-        var part    = $('.addnew').data('part');
-    
-        $container.find('.condition-item').each(function(index, item) {
-            var $item = $(item);
-            var conditionType = $item.find('.condition-exclude-include-select').val();
-            var conditionValue = $item.find('.condition-select').val();
-    
-            conditions.push({
-                type: conditionType,
-                value: conditionValue
-            });
-        });
-        
         $.ajax({
             url: solaceSitebuilderParams.ajaxurl, 
             method: 'POST',
@@ -501,22 +563,12 @@
                 alert('An error occurred while saving. Please try again.');
             }
         });
-
+    
     });
 
     $('#partnew-save-new-conditions').on('click', function(e) {
         e.preventDefault();
         var assetsUrl = solaceSitebuilderParams.assetsUrl; 
-        $('#partnew-save-new-conditions').addClass('active');
-        $('#partnew-save-new-conditions dotlottie-player').fadeIn(1000);
-
-
-        $(this).addClass('active-button').css({
-            'width': '300px',
-            'padding-right': '85px',
-            'transition': 'width .5s ease, padding-right .5s ease'
-        });
-
     
         var $container = $('#all-new-conditions-container');
         if ($container.length === 0) {
@@ -524,28 +576,43 @@
             return;
         }
     
-        var part = $('.condition-part-select').val();
         var conditions = [];
-        var postId=0;
+        var selectedValues = new Set(); 
+        var part = $('.condition-part-select').val();
+        var postId = 0;
     
-        console.log('Conditions container:', $container); // Debugging
+        var hasDuplicate = false; 
     
         $container.find('.condition-item').each(function(index, item) {
             var $item = $(item);
             var conditionType = $item.find('.condition-exclude-include-select').val();
             var conditionValue = $item.find('.condition-select').val();
     
-            console.log('Condition Type:', conditionType);
-            console.log('Condition Value:', conditionValue);
-            // alert('Condition Value: ' + conditionValue); // Debugging
+            if (selectedValues.has(conditionValue)) {
+                hasDuplicate = true;
+                return false; 
+            }
     
+            selectedValues.add(conditionValue); 
             conditions.push({
                 type: conditionType,
                 value: conditionValue
             });
         });
-        console.log('Conditions to be sent:', conditions);
-
+    
+        if (hasDuplicate) {
+            alert('Condition on same instance, please select other conditions');
+            return;
+        }
+    
+        $('#partnew-save-new-conditions').addClass('active');
+        $('#partnew-save-new-conditions dotlottie-player').fadeIn(1000);
+    
+        $(this).addClass('active-button').css({
+            'width': '300px',
+            'padding-right': '85px',
+            'transition': 'width .5s ease, padding-right .5s ease'
+        });
     
         $.ajax({
             url: solaceSitebuilderParams.ajaxurl, 
@@ -564,7 +631,7 @@
                 console.log('AJAX Response:', response); 
                 if (response.success) {
                     postId = response.data.post_id; 
-                    console.log('postID sukses:'+postId);
+                    console.log('postID sukses:' + postId);
                     saveEditConditions(postId, part, conditions);
                 } else {
                     alert('Failed to save conditions: ' + (response.data || 'Unknown error.'));
@@ -902,6 +969,11 @@
         
 
         function adjustWidths() {
+            if (!previewContainer) {
+                console.warn("Skipping adjustWidths: .preview-container not found.");
+                return;
+            }
+
             const containerWidth = previewContainer.offsetWidth;
             const minWidth = 1025; // Minimum width in pixels
         
@@ -922,13 +994,13 @@
             customHeaderContent.style.width = `${customHeaderWidth}px`;
         
             // Debugging logs
-            console.log("Container Width:", containerWidth);
-            console.log("Adjusted Width:", adjustedWidth);
-            console.log("Scale Factor:", scaleFactor);
-            console.log("Iframe Width:", iframe.style.width);
-            console.log("Iframe Height:", iframe.style.height);
-            console.log("Screen Width:", screenWidth);
-            console.log("Custom Header Content Width:", customHeaderContent.style.width);
+            // console.log("Container Width:", containerWidth);
+            // console.log("Adjusted Width:", adjustedWidth);
+            // console.log("Scale Factor:", scaleFactor);
+            // console.log("Iframe Width:", iframe.style.width);
+            // console.log("Iframe Height:", iframe.style.height);
+            // console.log("Screen Width:", screenWidth);
+            // console.log("Custom Header Content Width:", customHeaderContent.style.width);
         }
 
         
@@ -940,7 +1012,7 @@
         }
 
         // Run adjustWidths only if the URL contains "&part"
-        if (hasPartParameter()) {
+        if (hasPartParameter() && previewContainer) {
             adjustWidths();
             window.addEventListener("resize", adjustWidths);
         } else {

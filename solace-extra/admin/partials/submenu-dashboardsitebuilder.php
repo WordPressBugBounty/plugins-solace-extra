@@ -414,8 +414,9 @@ echo wp_nonce_url(admin_url('admin-post.php?action=delete_post&id=' . get_the_ID
                         $status_header = solace_get_part_status('header');
                         $status_footer = solace_get_part_status('footer');
                         $status_singleproduct = solace_get_part_status('singleproduct');
-
-
+                        $status_shopproduct = solace_get_part_status('shopproduct');
+                        $status_blogsinglepost = solace_get_part_status('blogsinglepost');
+                        $status_blogarchive = solace_get_part_status('blogarchive');
                         ?>
                         <a class="part-header <?php echo esc_attr($status_header['lock_class']); ?>" href="<?php echo esc_url(add_query_arg('part', 'header', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
                             <div class="card" style="background-image: url('<?php 
@@ -462,17 +463,49 @@ echo wp_nonce_url(admin_url('admin-post.php?action=delete_post&id=' . get_the_ID
                                         </div>
                                     </div>
                                 </a>
-                                <a href="<?php echo esc_url(add_query_arg('part', 'singleblog', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
+                                <a class="part-shopproduct <?php echo esc_attr($status_shopproduct['lock_class']); ?>" href="<?php echo esc_url(add_query_arg('part', 'shopproduct', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
                                     <div class="card" style="background-image: url('<?php 
-                                        $image = 'blogsinglepost.svg';
-                                        echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $image ); 
+                                    echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/' . $status_shopproduct['image']); 
                                     ?>');">
                                         <div class="card-body"></div>
-                                        <div class="card-footer">
-                                            <span class='title'>Blog Single Post</span>
+                                        <div class="card-footer <?php echo esc_attr($status_shopproduct['active_blue']);?>">
+                                            <span class='title'>Shop Product Categories</span>
+                                            <label class="switch layout">
+                                                <input type="checkbox" class="all-status-switch <?php echo $status_shopproduct['is_disabled'] ? 'disabled-checkbox' : ''; ?>" data-part-global="shopproduct" <?php echo $status_shopproduct['is_checked'] ? 'checked' : ''; ?> />
+                                                <span class="slider round"></span>
+                                            </label>
                                         </div>
                                     </div>
                                 </a>
+                                <a class="part-blogsinglepost <?php echo esc_attr($status_blogsinglepost['lock_class']); ?>" href="<?php echo esc_url(add_query_arg('part', 'blogsinglepost', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
+                                    <div class="card" style="background-image: url('<?php 
+                                    echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/' . $status_blogsinglepost['image']); 
+                                    ?>');">
+                                        <div class="card-body"></div>
+                                        <div class="card-footer <?php echo esc_attr($status_blogsinglepost['active_blue']);?>">
+                                            <span class='title'>Blog Single Post</span>
+                                            <label class="switch layout">
+                                                <input type="checkbox" class="all-status-switch <?php echo $status_blogsinglepost['is_disabled'] ? 'disabled-checkbox' : ''; ?>" data-part-global="blogsinglepost" <?php echo $status_blogsinglepost['is_checked'] ? 'checked' : ''; ?> />
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a class="part-blogarchive <?php echo esc_attr($status_blogarchive['lock_class']); ?>" href="<?php echo esc_url(add_query_arg('part', 'blogarchive', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
+                                    <div class="card" style="background-image: url('<?php 
+                                    echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/' . $status_blogarchive['image']); 
+                                    ?>');">
+                                        <div class="card-body"></div>
+                                        <div class="card-footer <?php echo esc_attr($status_blogarchive['active_blue']);?>">
+                                            <span class='title'>Blog Archive</span>
+                                            <label class="switch layout">
+                                                <input type="checkbox" class="all-status-switch <?php echo $status_blogarchive['is_disabled'] ? 'disabled-checkbox' : ''; ?>" data-part-global="blogarchive" <?php echo $status_blogsinglepost['is_checked'] ? 'checked' : ''; ?> />
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </a>
+                               
                                 <a href="<?php echo esc_url(add_query_arg('part', '404', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
                                     <div class="card" style="background-image: url('<?php 
                                         $image = 'footer.svg';
@@ -481,35 +514,6 @@ echo wp_nonce_url(admin_url('admin-post.php?action=delete_post&id=' . get_the_ID
                                         <div class="card-body"></div>
                                         <div class="card-footer">
                                             <span class='title'>404</span>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a href="<?php echo esc_url(add_query_arg('part', 'shopproductcategories', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
-                                <div class="card" style="background-image: url('<?php 
-                                        $image = 'shopproductcategories.svg';
-                                        echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $image ); 
-                                    ?>');">
-                                        <div class="card-body"> <span class="dashicons dashicons-lock"></span> 
-                                            <button type="button">
-                                                <?php esc_html_e( 'Coming Soon', 'solace-extra' ); ?>
-                                            </button></div>
-                                        <div class="card-footer">
-                                            <span class='title'>Shop Product Categories</span>
-                                        </div>
-                                    </div>
-                                </a>
-                                
-                                <a href="<?php echo esc_url(add_query_arg('part', 'blogarchive', admin_url('admin.php?page=dashboard-sitebuilder'))); ?>">
-                                    <div class="card" style="background-image: url('<?php 
-                                        $image = 'blogarchive.svg';
-                                        echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $image ); 
-                                    ?>');">
-                                        <div class="card-body"> <span class="dashicons dashicons-lock"></span> 
-                                            <button type="button">
-                                                <?php esc_html_e( 'Coming Soon', 'solace-extra' ); ?>
-                                            </button></div>
-                                        <div class="card-footer">
-                                            <span class='title'>Blog Archive</span>
                                         </div>
                                     </div>
                                 </a>

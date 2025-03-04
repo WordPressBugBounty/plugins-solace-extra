@@ -555,123 +555,159 @@ class Solace_Extra_Import {
         wp_die();
     }
 
-    public function download_and_update_logo_logo_from_live_url($remote_url)
-    {
-        $response = wp_remote_get($remote_url);
+    public function download_and_update_logo_logo_from_live_url($remote_url) {
+        $remote_url = esc_url_raw($remote_url);
     
-        if (!is_wp_error($response) && $response['response']['code'] === 200) {
-            $file_content = wp_remote_retrieve_body($response);
-    
-            // Use WP_Filesystem methods to save the file
-            $upload_dir = wp_upload_dir();
-            $upload_path = $upload_dir['path'];
-            $file_name = basename($remote_url);
-            $file_path = $upload_path . '/' . $file_name;
-    
-            if (function_exists('wp_filesystem')) {
-                global $wp_filesystem;
-    
-                // Initialize the WP_Filesystem
-                WP_Filesystem();
-    
-                // Use put_contents() method instead of file_put_contents()
-                $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
-    
-                if ($file_saved !== false) {
-                    $attachment = array(
-                        'post_title'     => sanitize_file_name(pathinfo($file_name, PATHINFO_FILENAME)),
-                        'post_mime_type' => wp_check_filetype($file_name)['type'],
-                        'post_status'    => 'inherit',
-                    );
-    
-                    $attachment_id = wp_insert_attachment($attachment, $file_path);
-    
-                    require_once(ABSPATH . 'wp-admin/includes/image.php');
-                    $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
-                    wp_update_attachment_metadata($attachment_id, $attachment_data);
-    
-                    $theme_mods = get_theme_mod('theme_mods_solace');
-//                     $logo_data = json_decode($theme_mods['logo_logo'], true);
-					if ( isset($theme_mods['logo_logo']) && is_string($theme_mods['logo_logo']) ) {
-						$logo_data = json_decode($theme_mods['logo_logo'], true);
-					} else {
-						$logo_data = []; 
-					}
-                    $logo_logo_data = '{"light":' . $attachment_id . ',"dark":' . $attachment_id . ',"same":true}';
-                    if ($attachment_id) {
-                        update_post_meta($attachment_id, 'solace_import_images', true);
-                    }
-                    set_theme_mod('logo_logo', $logo_logo_data);
-                    echo esc_html('Media berhasil diunduh dan disimpan di localhost. ID Media Local: ' . $attachment_id . ', Logo Logo telah diupdate.');
-                } else {
-                    esc_html_e('Gagal menyimpan file di localhost.', 'solace-extra');
-                }
-            } else {
-                esc_html_e('Gagal menginisialisasi WP_Filesystem.', 'solace-extra');
-            }
-        } else {
-            esc_html_e('Gagal mendownload file dari server live.', 'solace-extra');
+        if (!filter_var($remote_url, FILTER_VALIDATE_URL)) {
+            esc_html_e('Invalid URL.', 'solace-extra');
+            return;
         }
+    
+        $allowed_domains = ['solacewp.com', 'www.solacewp.com'];
+        $parsed_url = wp_parse_url($remote_url);
+        if (!in_array($parsed_url['host'], $allowed_domains, true)) {
+            esc_html_e('Domain not allowed.', 'solace-extra');
+            return;
+        }
+    
+        $response = wp_remote_get($remote_url, ['timeout' => 10]);
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            esc_html_e('Failed to download file.', 'solace-extra');
+            return;
+        }
+    
+        $file_content = wp_remote_retrieve_body($response);
+        $upload_dir = wp_upload_dir();
+        $file_name = sanitize_file_name(basename($remote_url));
+        $file_path = $upload_dir['path'] . '/' . $file_name;
+    
+        if (!function_exists('wp_filesystem')) {
+            esc_html_e('Failed to initialize WP_Filesystem.', 'solace-extra');
+            return;
+        }
+    
+        global $wp_filesystem;
+        WP_Filesystem();
+        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
+    
+        if ($file_saved === false) {
+            esc_html_e('Failed to save file.', 'solace-extra');
+            return;
+        }
+    
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type = wp_check_filetype($file_name);
+        if (!in_array($file_type['type'], $allowed_types, true)) {
+            esc_html_e('File type not allowed.', 'solace-extra');
+            wp_delete_file($file_path); 
+            return;
+        }
+    
+        $attachment = [
+            'post_title'     => pathinfo($file_name, PATHINFO_FILENAME),
+            'post_mime_type' => $file_type['type'],
+            'post_status'    => 'inherit',
+        ];
+    
+        $attachment_id = wp_insert_attachment($attachment, $file_path);
+        if (!$attachment_id) {
+            wp_delete_file($file_path);
+            esc_html_e('Failed to save attachment.', 'solace-extra');
+            return;
+        }
+    
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
+        wp_update_attachment_metadata($attachment_id, $attachment_data);
+    
+        set_theme_mod('logo_logo', json_encode(['light' => $attachment_id, 'dark' => $attachment_id, 'same' => true]));
+    
+        echo esc_html__('Media successfully downloaded and saved.', 'solace-extra');
     }
+    
 
-    public function download_and_update_logo_footer_logo_from_live_url($remote_url)
-    {
-        $response = wp_remote_get($remote_url);
+    public function download_and_update_logo_footer_logo_from_live_url($remote_url) {
+        $remote_url = esc_url_raw($remote_url);
     
-        if (!is_wp_error($response) && $response['response']['code'] === 200) {
-            $file_content = wp_remote_retrieve_body($response);
-    
-            // Use WP_Filesystem methods to save the file
-            $upload_dir = wp_upload_dir();
-            $upload_path = $upload_dir['path'];
-            $file_name = basename($remote_url);
-            $file_path = $upload_path . '/' . $file_name;
-    
-            if (function_exists('wp_filesystem')) {
-                global $wp_filesystem;
-    
-                // Initialize the WP_Filesystem
-                WP_Filesystem();
-    
-                // Use put_contents() method instead of file_put_contents()
-                $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
-    
-                if ($file_saved !== false) {
-                    $attachment = array(
-                        'post_title'     => sanitize_file_name(pathinfo($file_name, PATHINFO_FILENAME)),
-                        'post_mime_type' => wp_check_filetype($file_name)['type'],
-                        'post_status'    => 'inherit',
-                    );
-    
-                    $attachment_id = wp_insert_attachment($attachment, $file_path);
-    
-                    require_once(ABSPATH . 'wp-admin/includes/image.php');
-                    $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
-                    wp_update_attachment_metadata($attachment_id, $attachment_data);
-    
-                    $theme_mods = get_theme_mod('theme_mods_solace');
-//                     $logo_data = json_decode($theme_mods['logo-footer_logo'], true);
-					if ( isset($theme_mods['logo-footer_logo']) && is_string($theme_mods['logo-footer_logo']) ) {
-						$logo_data = json_decode($theme_mods['logo-footer_logo'], true);
-					} else {
-						$logo_data = []; 
-					}
-                    $logo_logo_data = '{"light":' . $attachment_id . ',"dark":' . $attachment_id . ',"same":true}';
-                    if ($attachment_id) {
-                        update_post_meta($attachment_id, 'solace_import_images', true);
-                    }
-                    set_theme_mod('logo-footer_logo', $logo_logo_data);
-                    echo esc_html('Media berhasil diunduh dan disimpan di localhost. ID Media Local: ' . $attachment_id . ', Logo Logo telah diupdate.');
-                } else {
-                    esc_html_e('Gagal menyimpan file di localhost.', 'solace-extra');
-                }
-            } else {
-                esc_html_e('Gagal menginisialisasi WP_Filesystem.', 'solace-extra');
-            }
-        } else {
-            esc_html_e('Gagal mendownload file dari server live.', 'solace-extra');
+        if (!filter_var($remote_url, FILTER_VALIDATE_URL)) {
+            esc_html_e('Invalid URL.', 'solace-extra');
+            return;
         }
+    
+        $allowed_domains = ['solacewp.com', 'www.solacewp.com']; 
+        $parsed_url = wp_parse_url($remote_url);
+        if (!in_array($parsed_url['host'], $allowed_domains, true)) {
+            esc_html_e('Domain not allowed.', 'solace-extra');
+            return;
+        }
+    
+        $response = wp_remote_get($remote_url, ['timeout' => 10]);
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            esc_html_e('Failed to download file.', 'solace-extra');
+            return;
+        }
+    
+        $file_content = wp_remote_retrieve_body($response);
+        $upload_dir = wp_upload_dir();
+        $file_name = sanitize_file_name(basename($remote_url));
+        $file_path = $upload_dir['path'] . '/' . $file_name;
+    
+        if (!function_exists('wp_filesystem')) {
+            esc_html_e('Failed to initialize WP_Filesystem.', 'solace-extra');
+            return;
+        }
+    
+        global $wp_filesystem;
+        WP_Filesystem();
+        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
+    
+        if ($file_saved === false) {
+            esc_html_e('Failed to save file.', 'solace-extra');
+            return;
+        }
+    
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type = wp_check_filetype($file_name);
+        if (!in_array($file_type['type'], $allowed_types, true)) {
+            esc_html_e('File type not allowed.', 'solace-extra');
+            wp_delete_file($file_path);
+            return;
+        }
+    
+        $attachment = [
+            'post_title'     => pathinfo($file_name, PATHINFO_FILENAME),
+            'post_mime_type' => $file_type['type'],
+            'post_status'    => 'inherit',
+        ];
+    
+        $attachment_id = wp_insert_attachment($attachment, $file_path);
+        if (!$attachment_id) {
+            wp_delete_file($file_path);
+            esc_html_e('Failed to save attachment.', 'solace-extra');
+            return;
+        }
+    
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
+        wp_update_attachment_metadata($attachment_id, $attachment_data);
+    
+        $theme_mods = get_theme_mod('theme_mods_solace');
+        $logo_data = isset($theme_mods['logo-footer_logo']) && is_string($theme_mods['logo-footer_logo']) 
+            ? json_decode($theme_mods['logo-footer_logo'], true) 
+            : [];
+    
+        $logo_logo_data = json_encode(['light' => $attachment_id, 'dark' => $attachment_id, 'same' => true]);
+    
+        if ($attachment_id) {
+            update_post_meta($attachment_id, 'solace_import_images', true);
+        }
+    
+        set_theme_mod('logo-footer_logo', $logo_logo_data);
+    
+        echo esc_html__('Media successfully downloaded and saved.', 'solace-extra');
     }
+    
+    
 
     /**
      * Available widgets
@@ -1984,18 +2020,17 @@ class Solace_Extra_Import {
 		}
     }
 
-    function install_and_activate_theme()
-    {
+    function install_and_activate_theme() {
         // Verify nonce
         if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
             $response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
+            echo wp_json_encode($response);
             wp_die();
         }           
 
         solace_disable_image_processing();
 
-        // set import zip complete option to false
+        // Set import zip complete option to false
         update_option('solace_extra_import_zip_complete', false);
         set_theme_mod('solace_extra_import_zip_complete', false);
 
@@ -2007,7 +2042,7 @@ class Solace_Extra_Import {
                 $api = themes_api('theme_information', array('slug' => $theme_slug));
 
                 if (is_wp_error($api)) {
-                    esc_html_e('Gagal mendapatkan informasi tema dari WordPress.org.', 'solace-extra');
+                    esc_html_e('Failed to retrieve theme information from WordPress.org.', 'solace-extra');
                     return;
                 }
 
@@ -2022,7 +2057,7 @@ class Solace_Extra_Import {
                         $zip->close();
                         wp_delete_file($theme_zip);
                     } else {
-                        esc_html_e('Gagal membuka file ZIP.', 'solace-extra');
+                        esc_html_e('Failed to open ZIP file.', 'solace-extra');
                     }
                 }
             }
@@ -2032,12 +2067,13 @@ class Solace_Extra_Import {
             if (!(get_option('template') === $theme_slug || get_option('stylesheet') === $theme_slug)) {
                 esc_html_e('Theme Installed and Activated', 'solace-extra');
             } else {
-                esc_html_e('Gagal mengaktifkan tema.', 'solace-extra');
+                esc_html_e('Failed to activate theme.', 'solace-extra');
             }
         } else {
-            esc_html_e('Tema sudah terinstal dan aktif.', 'solace-extra');
+            esc_html_e('Theme is already installed and active.', 'solace-extra');
         }
     }
+
 
     function install_and_activate_plugins()
     {
