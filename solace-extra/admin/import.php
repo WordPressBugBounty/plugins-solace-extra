@@ -386,20 +386,18 @@ class Solace_Extra_Import {
             // wp_die();
         }
 
-        // solaceDemoUrl
-        $getUrl = ! empty( $_POST['getUrl'] ) ? esc_url_raw( wp_unslash( $_POST['getUrl'] ) ) : '';
-
-        if (substr($getUrl, -1) !== '/') {
-            $getUrl .= '/';
+        // Check current user
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'error' => 'Unauthorized' ) );
         }
 
-        if (empty($getUrl)) {
-            esc_html_e('Error demo URL', 'solace-extra');
-            die;
-        }
+        // Get menus data from the API
+        $get_demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
+
+        $demo = 'https://solacewp.com/' . $get_demo_name . "/wp-json/solace/v1/customizer-setting";        
 
         // Remote and local API URLs
-        $url_customizer = $getUrl . 'wp-json/solace/v1/customizer-setting';
+        $url_customizer = $demo;
         $url_local_customizer = plugin_dir_url(__FILE__) . 'demo/customizer/casanova/casanova.json';
 
         // Make remote request using wp_remote_get
@@ -459,7 +457,7 @@ class Solace_Extra_Import {
             }
         }
 
-        $api_url = $getUrl . 'wp-json/solace/v1/customizer-setting?timestamp=' . time();
+        $api_url = 'https://solacewp.com/' . $get_demo_name . '/wp-json/solace/v1/customizer-setting?timestamp=' . time();
         $response = wp_remote_get($api_url);
 
         if (!is_wp_error($response)) {
@@ -474,7 +472,7 @@ class Solace_Extra_Import {
         }
 
         // Remote and local API URLs
-        $url_setting_options = $getUrl . 'wp-json/solace/v1/setting-options';
+        $url_setting_options = 'https://solacewp.com/' . $get_demo_name . 'wp-json/solace/v1/setting-options';
 
         // Make remote request using wp_remote_get
         $response_setting_options = wp_remote_get($url_setting_options);
@@ -750,19 +748,18 @@ class Solace_Extra_Import {
             wp_die();
         }        
 
-        // solaceDemoUrl
-        $getUrl = ! empty( $_POST['getUrl'] ) ? esc_url_raw( wp_unslash( $_POST['getUrl'] ) ) : '';
-        if (substr($getUrl, -1) !== '/') {
-            $getUrl .= '/';
-        }        
-
-        if (empty($getUrl)) {
-            esc_html_e('Error demo URL', 'solace-extra');
-            die;
+        // Check current user
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'error' => 'Unauthorized' ) );
         }
 
+        // Get menus data from the API
+        $get_demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
+
+        $demo = 'https://solacewp.com/' . $get_demo_name . "/wp-json/solace/v1/widgets";          
+
         // Remote API URL
-        $url_widget = $getUrl . 'wp-json/solace/v1/widgets';
+        $url_widget = $demo;
 
         // Make remote request using wp_remote_get
         $response_widget = wp_remote_get($url_widget);
@@ -2322,21 +2319,22 @@ class Solace_Extra_Import {
             wp_die();
         }         
 
-        // Get menus data from the API
-        $get_demo_url = ! empty( $_POST['getUrl'] ) ? esc_url_raw( wp_unslash( $_POST['getUrl'] ) ) : '';
-        $demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( 'solace_extra_' . wp_unslash( $_POST['getDemo'] ) ) : '';
-
-        if (substr($get_demo_url, -1) !== '/') {
-            $get_demo_url .= '/';
+        // Check current user
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'error' => 'Unauthorized' ) );
         }
 
-        $demo = $get_demo_url . "wp-json/solace/v1/menus";
+        // Get menus data from the API
+        $get_demo_url = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
+        $demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( 'solace_extra_' . wp_unslash( $_POST['getDemo'] ) ) : '';
+
+        $demo = 'https://solacewp.com/' . $get_demo_url . "/wp-json/solace/v1/menus";
         $response = wp_remote_get($demo);
         $menus_data = wp_remote_retrieve_body($response);
         $menus = json_decode($menus_data);
 
         if (empty($get_demo_url)) {
-            esc_html_e('Erorr menu demo url', 'solace-extra');
+            esc_html_e('Error menu demo url', 'solace-extra');
             die;
         }
 

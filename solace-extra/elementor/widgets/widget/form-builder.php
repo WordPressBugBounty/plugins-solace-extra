@@ -77,7 +77,7 @@ class SolaceFormBuilder extends SolaceFormBase {
 	 * @return array Widget scripts dependencies.
 	 */
 	public function get_script_depends() {
-		return array( 'solaceform' );
+		return array( 'solaceform', 'solaceform-sweetalert' );
 	}
 
 	/**
@@ -745,37 +745,37 @@ class SolaceFormBuilder extends SolaceFormBase {
 
 		$this->end_controls_section();
 
-		$this->start_controls_section(
-			'section_redirect',
-			array(
-				'label' => __( 'Redirect', 'solace-extra' ),
-			)
-		);
+		// $this->start_controls_section(
+		// 	'section_redirect',
+		// 	array(
+		// 		'label' => __( 'Redirect', 'solace-extra' ),
+		// 	)
+		// );
 
-		$this->add_control(
-			'redirect',
-			array(
-				'label'        => __( 'Redirect to another URL', 'solace-extra' ),
-				'type'         => Controls_Manager::SWITCHER,
-				'label_on'     => __( 'Yes', 'solace-extra' ),
-				'label_off'    => __( 'No', 'solace-extra' ),
-				'return_value' => 'yes',
-			)
-		);
+		// $this->add_control(
+		// 	'redirect',
+		// 	array(
+		// 		'label'        => __( 'Redirect to another URL', 'solace-extra' ),
+		// 		'type'         => Controls_Manager::SWITCHER,
+		// 		'label_on'     => __( 'Yes', 'solace-extra' ),
+		// 		'label_off'    => __( 'No', 'solace-extra' ),
+		// 		'return_value' => 'yes',
+		// 	)
+		// );
 
-		$this->add_control(
-			'redirect_url',
-			array(
-				'label'       => __( 'Redirect To', 'solace-extra' ),
-				'type'        => Controls_Manager::TEXT,
-				'placeholder' => __( 'https://your-link.com', 'solace-extra' ),
-				'condition'   => array(
-					'redirect' => 'yes',
-				),
-			)
-		);
+		// $this->add_control(
+		// 	'redirect_url',
+		// 	array(
+		// 		'label'       => __( 'Redirect To', 'solace-extra' ),
+		// 		'type'        => Controls_Manager::TEXT,
+		// 		'placeholder' => __( 'https://your-link.com', 'solace-extra' ),
+		// 		'condition'   => array(
+		// 			'redirect' => 'yes',
+		// 		),
+		// 	)
+		// );
 
-		$this->end_controls_section();
+		// $this->end_controls_section();
 
 		$this->start_controls_section(
 			'section_email',

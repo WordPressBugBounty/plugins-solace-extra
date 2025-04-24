@@ -650,6 +650,7 @@
                 action: 'action-import-customizer',
                 nonce: nonce,
                 getUrl: getParameterByName('url'),
+                getDemo: getParameterByName('demo'),
             },
             success: function(response) {
                 console.log(response);
@@ -672,6 +673,7 @@
                 action: 'action-import-widgets',
                 nonce: nonce,
                 getUrl: getParameterByName('url'),
+                getDemo: getParameterByName('demo'),                
             },
             success: function(response) {
                 $('section.progress-import .mycontainer .boxes .box-step-import .percent').text('100%');

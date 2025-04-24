@@ -50,7 +50,35 @@
 	margin: 10px 0;
 	cursor: pointer;
 	font-size: 14px;
+	transition: background 0.3s ease;
 }
+
+.solaceform-form-button .solace-spinner {
+	display: none;
+	width: 20px;
+	height: 20px;
+	border: 2px solid transparent;
+	border-top: 2px solid #fff;
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.solaceform-form-button.active {
+	position: relative;
+	color: transparent;
+}
+
+.solaceform-form-button.active .solace-spinner {
+	display: block;
+}
+
+@keyframes spin {
+	to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
 
 .solaceform-form-button svg {
 	color: #fff;

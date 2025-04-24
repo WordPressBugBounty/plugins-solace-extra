@@ -81,158 +81,186 @@ class FormHandler {
 	}
 
 	/**
-	 * Form ajax.
+	 * Handle Elementor form file upload and send email with attachments.
 	 *
 	 * @since  1.0.0
-	 *
 	 * @access public
 	 */
 	public function elementor_form_builder_form_ajax() {
-
 		check_ajax_referer( 'elementor_form_builder_form', 'nonce' );
 
-		$data = !empty( $_POST['dataSerialize'] ) ? wp_kses_post( wp_unslash( $_POST['dataSerialize'] ) ) : '';
-		$extension = !empty( $_POST['extension'] ) ? wp_kses_post( wp_unslash( $_POST['extension'] ) ) : '';
-		$extension = explode(',', $extension);
-		$post_id = !empty( $_POST['post_id'] ) ? sanitize_text_field( wp_unslash( $_POST['post_id'] ) ) : '';
-		$el_id = !empty( $_POST['el_id'] ) ? sanitize_text_field( wp_unslash( $_POST['el_id'] ) ) : '';
-		$max_file_size = 10 * 1024 * 1024; // 10 MB in bytes.
+		$data    = isset( $_POST['dataSerialize'] ) ? wp_kses_post( wp_unslash( $_POST['dataSerialize'] ) ) : '';
+		$post_id = isset( $_POST['post_id'] ) ? sanitize_text_field( wp_unslash( $_POST['post_id'] ) ) : '';
+		$el_id   = isset( $_POST['el_id'] ) ? sanitize_text_field( wp_unslash( $_POST['el_id'] ) ) : '';
+		$max_file_size = 10 * 1024 * 1024; // 10 MB.
 
-		$attachments = [];
-
-		// Iterate through all files in $_FILES
-		foreach ($_FILES as $file_group) {
-			if (isset($file_group['tmp_name']) && is_array($file_group['tmp_name'])) {
-				foreach ($file_group['tmp_name'] as $key => $tmp_name) {
-					if ($file_group['error'][$key] === UPLOAD_ERR_OK) {
-						// Check file size
-						if ($file_group['size'][$key] > $max_file_size) {
-							wp_send_json_error(['message' => 'File size exceeds 10 MB.'], 400);
-						}
-
-						// Validate file extension
-						$file_extension = strtolower(strrchr($file_group['name'][$key], '.'));
-						if (!in_array($file_extension, $extension, true)) {
-							$file_extension_message = sprintf(
-								/* translators: %s: The file extension */
-								esc_html__( 'Uploading files with the extensions %s is not permitted.', 'solace-extra' ),
-								esc_html( $file_extension )
-							);
-
-							wp_send_json_error(
-								[
-									'message' => $file_extension_message,
-								],
-								400
-							);
-						}						
-
-						$upload_overrides = array( 'test_form' => false );
-
-						$file_array = array(
-							'name'     => $file_group['name'][$key],
-							'type'     => $file_group['type'][$key],
-							'tmp_name' => $tmp_name,
-							'error'    => $file_group['error'][$key],
-							'size'     => $file_group['size'][$key],
-						);
-						
-						// Upload process using wp_handle_upload
-						$movefile = wp_handle_upload($file_array, $upload_overrides);
-						
-						if ($movefile && !isset($movefile['error'])) {
-							$attachments[] = $movefile['file'];
-						} else {
-							wp_send_json_error(['message' => esc_html__( 'File upload failed.', 'solace-extra') ], 400);
-						}
-
-					}
-				}
-			} elseif (isset($file_group['tmp_name']) && $file_group['error'] === UPLOAD_ERR_OK) {
-				// Check file size for single file
-				if ($file_group['size'] > $max_file_size) {
-					wp_send_json_error(['message' => 'File size exceeds 10 MB.'], 400);
-				}
-
-				// Validate file extension
-				$file_extension = strtolower(strrchr($file_group['name'], '.'));
-				if (!in_array($file_extension, $extension, true)) {
-					$file_extension_message = sprintf(
-						/* translators: %s: The file extension */
-						esc_html__( 'Uploading files with the extensions %s is not permitted.', 'solace-extra' ),
-						esc_html( $file_extension )
-					);
-
-					wp_send_json_error(
-						[
-							'message' => $file_extension_message,
-						],
-						400
-					);
-				}				
-
-				$upload_overrides = array('test_form' => false);
-				$file_array = array(
-					'name'     => $file_group['name'],
-					'type'     => $file_group['type'],
-					'tmp_name' => $file_group['tmp_name'],
-					'error'    => $file_group['error'],
-					'size'     => $file_group['size'],
-				);
-		
-				$movefile = wp_handle_upload($file_array, $upload_overrides);
-		
-				if ($movefile && !isset($movefile['error'])) {
-					$attachments[] = $movefile['file'];
-				} else {
-					wp_send_json_error(['message' => esc_html__( 'File upload failed.', 'solace-extra') ], 400);			
-				}
-
-			}
+		$document = Plugin::$instance->documents->get( $post_id );
+		if ( ! $document ) {
+			wp_send_json_error( [ 'message' => 'Invalid post document.' ], 400 );
 		}
-		
-		if ( $data ) {
-			$document = Plugin::$instance->documents->get( $post_id );
 
-			if ( $document ) {
-				$form        = Utils::find_element_recursive( $document->get_elements_data(), $el_id );
-				$settings    = $form['settings'];
-				$redirect    = isset( $settings['redirect'] ) ? true : false;
-				$redirect_to = isset( $settings['redirect_url'] ) ? $settings['redirect_url'] : '';
-				$to          = isset( $settings['email_to'] ) ? $settings['email_to'] : '';
-				$subject     = isset( $settings['email_subject'] ) ? $settings['email_subject'] : '';
-				$from        = isset( $settings['email_from'] ) ? $settings['email_from'] : '';
-				$name        = isset( $settings['email_name'] ) ? $settings['email_name'] : '';
+		$form     = Utils::find_element_recursive( $document->get_elements_data(), $el_id );
+		$settings = $form['settings'] ?? [];
 
-				$args = array(
-					'redirect'        => $redirect,
-					'redirect_to'     => $redirect_to,
-					'error_message'   => $settings['error_message'],
-					'success_message' => $settings['success_message'],
-				);
+		if ( empty( $data ) || empty( $settings['email_to'] ) ) {
+			wp_send_json_error( [ 'message' => 'Missing email recipient or form data.' ], 400 );
+		}
 
-				$this->message = $data;
-				$this->form_data( $to, $subject, $from, $name );
+		// Extract per-field MIME validation rules
+		$field_mime_map = $this->map_field_extensions_to_mimes( $settings['fields'] ?? [] );
 
-				$headers = array('Content-Type: text/html; charset=UTF-8');
+		// Process uploaded files with per-field MIME validation
+		$attachments = $this->process_uploaded_files_with_field_validation( $field_mime_map, $max_file_size, $settings['fields'] );
 
-				$send = wp_mail( $to, $subject, $data, $headers, $attachments );
+		// Email configuration
+		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
+		$send    = wp_mail(
+			sanitize_email( $settings['email_to'] ),
+			sanitize_text_field( $settings['email_subject'] ?? 'Form Submission' ),
+			$data,
+			$headers,
+			$attachments
+		);
 
-				// Cleanup uploaded files
-				foreach ($attachments as $attachment) {
-					wp_delete_file($attachment);
-				}
+		// Clean up temporary uploaded files
+		foreach ( $attachments as $attachment ) {
+			wp_delete_file( $attachment );
+		}
 
-				if ( is_wp_error( $send ) ) {
-					wp_send_json_error( $args, 500 );
-				} else {
-					wp_send_json_success( $args, 200 );
-				}
-			}
+		$response = [
+			'error_message'   => sanitize_text_field( $settings['error_message'] ?? '' ),
+			'success_message' => sanitize_text_field( $settings['success_message'] ?? '' ),
+		];
+
+		if ( is_wp_error( $send ) ) {
+			wp_send_json_error( $response, 500 );
+		} else {
+			wp_send_json_success( $response, 200 );
 		}
 
 		wp_die();
 	}
+
+	/**
+	 * Map each file field to its allowed MIME types.
+	 *
+	 * @param array $fields Elementor field settings.
+	 * @return array Associative array: field_name => [allowed_mime_types]
+	 */
+	private function map_field_extensions_to_mimes( array $fields ): array {
+		$mime_map = [];
+		$allowed_mimes = get_allowed_mime_types();
+
+		foreach ( $fields as $field ) {
+			if ( isset( $field['field_type'] ) && strtolower( $field['field_type'] ) === 'file' ) {
+				$field_name = $field['field_name'] ?? $field['_id'];
+				$extensions = [];
+
+				if ( ! empty( $field['file_types'] ) ) {
+					$types = explode( ',', $field['file_types'] );
+					foreach ( $types as $type ) {
+						$type = strtolower( trim( ltrim( $type, '.' ) ) );
+						if ( preg_match( '/^[a-z0-9]+$/', $type ) ) {
+							$extensions[] = $type;
+						}
+					}
+				}
+
+				$mimes = [];
+				foreach ( $extensions as $ext ) {
+					foreach ( $allowed_mimes as $key => $mime ) {
+						$exts = explode( '|', $key );
+						if ( in_array( $ext, $exts, true ) ) {
+							$mimes[] = $mime;
+						}
+					}
+				}
+
+				$mime_map[ $field_name ] = array_unique( $mimes );
+			}
+		}
+
+		return $mime_map;
+	}
+
+	/**
+	 * Validate and process uploaded files with field-based MIME rules.
+	 *
+	 * @param array $field_mime_map Field name to allowed MIME types mapping.
+	 * @param int   $max_size       Maximum file size allowed.
+	 * @param array $settings       get settings.
+	 * @return array Array of uploaded file paths.
+	 */
+	private function process_uploaded_files_with_field_validation( array $field_mime_map, int $max_size, array $settings ): array {
+		check_ajax_referer( 'elementor_form_builder_form', 'nonce' );
+
+		$attachments = [];
+
+		foreach ( $_FILES as $field_name => $file_group ) {
+			$indexes = isset( $file_group['tmp_name'] ) && is_array( $file_group['tmp_name'] )
+				? array_keys( $file_group['tmp_name'] )
+				: [ null ];
+
+			foreach ( $indexes as $i ) {
+				$tmp  = is_null( $i ) ? $file_group['tmp_name'] : $file_group['tmp_name'][ $i ];
+				$name = is_null( $i ) ? $file_group['name']     : $file_group['name'][ $i ];
+				$type = is_null( $i ) ? $file_group['type']     : $file_group['type'][ $i ];
+				$err  = is_null( $i ) ? $file_group['error']    : $file_group['error'][ $i ];
+				$size = is_null( $i ) ? $file_group['size']     : $file_group['size'][ $i ];
+
+				if ( $err !== UPLOAD_ERR_OK || ! is_uploaded_file( $tmp ) ) {
+					continue;
+				}
+
+				if ( $size > $max_size ) {
+					wp_send_json_error( [ 'message' => 'File size exceeds 10 MB.' ], 400 );
+				}
+
+				// Get the real MIME type of the uploaded temporary file
+				$real_mime = mime_content_type( $tmp );
+
+				// Filter out only fields with type 'File' from the settings array
+				$file_fields = array_filter( $settings, function( $field ) {
+					return isset( $field['field_type'] ) && $field['field_type'] === 'File';
+				});
+
+				// Reindex the array to ensure numeric keys start from 0
+				$file_fields = array_values( $file_fields );
+
+				// Get the field identifier, prioritizing 'field_name' if available
+				$field_id = isset( $file_fields[ $i ]['field_name'] ) ? $file_fields[ $i ]['field_name'] : $file_fields[ $i ]['_id'];
+
+				// Fetch the list of allowed MIME types for the current field from the MIME map
+				$allowed_mimes = isset( $field_mime_map[ $field_id ] ) ? $field_mime_map[ $field_id ] : [];
+
+				// Validate if the real MIME type is among the allowed types for this field
+				if ( ! in_array( $real_mime, $allowed_mimes, true ) ) {
+					// Return an error response if the MIME type is not allowed
+					// wp_send_json_error( [ 'message' => 'Unsupported file type. Allowed types: ' . implode( ', ', $allowed_mimes ) ], 400 );
+					wp_send_json_error( [ 'message' => 'Unsupported file extension' ], 400 );
+				}
+				
+				$file = [
+					'name'     => sanitize_file_name( $name ),
+					'type'     => $type,
+					'tmp_name' => $tmp,
+					'error'    => $err,
+					'size'     => $size,
+				];
+
+				$movefile = wp_handle_upload( $file, [ 'test_form' => false ] );
+
+				if ( isset( $movefile['error'] ) ) {
+					wp_send_json_error( [ 'message' => 'Upload failed: ' . $movefile['error'] ], 400 );
+				} else {
+					$attachments[] = $movefile['file'];
+				}
+			}
+		}
+
+		return $attachments;
+	}
+
 }
 
 FormHandler::instance();

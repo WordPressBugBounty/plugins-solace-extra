@@ -3,8 +3,8 @@ Contributors: solacewp
 Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
-Tested up to: 6.7
-Stable tag: 1.3.1
+Tested up to: 6.8
+Stable tag: 1.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -69,7 +69,11 @@ https://www.google.com/recaptcha/api.js
 
 == Changelog ==
 
-= 1.3.1 - 3 March 2025 =
+= 1.3.2 - 21 April 2025 =
+* Fix: Resolved the Patchstack Server Side Request Forgery (SSRF) vulnerability reported by stealthcopter.
+* Fix: Resolved the Patchstack Arbitrary File Upload issue reported by theviper17.
+
+= 1.3.2 - 3 March 2025 =
 * Fix: Resolved the Patchstack trusted domain issue.
 * Fix: Fixed the vulnerability in Patchstack's "Get Logo from API" function.
 * Fix: Corrected the console error related to the adjustWidth issue.

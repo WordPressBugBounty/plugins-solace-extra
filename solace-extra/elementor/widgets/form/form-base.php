@@ -40,7 +40,7 @@ abstract class SolaceFormBase extends WidgetBase {
 			<input
 				<?php if ( 'file' === $type ) { ?>
 					<?php echo esc_attr( $file_types ); ?>
-					name="<?php echo esc_attr( $name ) . '[]'; ?>"
+					name="<?php echo esc_attr( 'solaceFile[]' ); ?>"
 				<?php } else { ?>
 						name="<?php echo esc_attr( $name ); ?>"
 				<?php } ?>
@@ -282,6 +282,7 @@ abstract class SolaceFormBase extends WidgetBase {
 					<?php if ( $position === 'right' ) : ?>
 						<?php Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) ); ?>
 					<?php endif; ?>
+					<div class="solace-spinner"></div>
 				</button>
 			</div>
 		<?php
