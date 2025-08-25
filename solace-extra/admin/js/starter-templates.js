@@ -57,10 +57,9 @@
 
     // Get Link
     $('section.start-templates .content-main main .mycontainer').on("click", ".demo", function() {
-        let demoUrl = $(this).attr('data-url');
         let demoName = $(this).attr('data-name');
         demoName = demoName.toLowerCase().replace(/\s+/g, '-');    
-        let dataUrl = demoUrl;
+        let demoUrl = 'https://solacewp.com/' + demoName;
 
         // Add cookie page access.
         $.ajax({ 
@@ -71,10 +70,10 @@
                 nonce: ajax_object.nonce,
             },
             success: function(response) {
-                localStorage.setItem('solaceInfo', dataUrl);
+                localStorage.setItem('solaceInfo', demoUrl);
                 localStorage.setItem('solaceDemoName', demoName);
         
-                let adminUrl = pluginUrl.admin_url + `admin.php?page=dashboard-step5&dataUrl=${dataUrl}&type=${demoType}&demo=${demoName}&nonce=${ajax_object.nonce}`;
+                let adminUrl = pluginUrl.admin_url + `admin.php?page=dashboard-step5&type=${demoType}&demo=${demoName}&nonce=${ajax_object.nonce}`;
                 window.location.replace(adminUrl);
             },
             error: function(xhr, textStatus, errorThrown) {

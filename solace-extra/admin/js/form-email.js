@@ -65,7 +65,7 @@
                 localStorage.setItem('solaceRemoveDataDemo', demoName);
             }                
 
-            window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();            
+            window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();            
         }
 
     });
@@ -77,7 +77,7 @@
         const demoUrl = getParameterByName('url');
         const demoName = getParameterByName('demo');
 
-        window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();         
+        window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();         
     });
 
     // Skip no thanks with expiration date and created date
@@ -98,7 +98,7 @@
         const demoUrl = getParameterByName('url');
         const demoName = getParameterByName('demo');        
 
-        window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();  
+        window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();  
     });
 
     function sendDataToSendy(firstname, email, agreement, listId, apiKey) {
@@ -120,13 +120,13 @@
             data: data,
             success: function (response) {
                 if (response == '1') {
-                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
                 } else {
-                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&err=1&type=' + demoType + '&url=' + demoUrl + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&err=1&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
                 }
             },
             error: function (xhr, status, error) {
-                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&err=1&type=' + demoType + '&url=' + demoUrl + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&err=1&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
                 // console.error(xhr.responseText);
             }
         });

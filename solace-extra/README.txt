@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 6.8
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -69,7 +69,8 @@ https://www.google.com/recaptcha/api.js
 
 == Changelog ==
 
-= 1.3.2 - 21 April 2025 =
+= 1.3.3 - 25 August 2025 =
+* Fix: Resolved the Patchstack Server Side Request Forgery (SSRF) vulnerability reported by Que Thanh Tuan - Blue Rock.
 * Fix: Resolved the Patchstack Server Side Request Forgery (SSRF) vulnerability reported by stealthcopter.
 * Fix: Resolved the Patchstack Arbitrary File Upload issue reported by theviper17.
 

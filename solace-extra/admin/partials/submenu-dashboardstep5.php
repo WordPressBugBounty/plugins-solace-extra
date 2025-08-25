@@ -66,31 +66,28 @@ function solace_extra_upload_logo() {
         $response = array('error' => 'Invalid nonce8!');
     }
 
-    $dataUrl = ! empty( $_GET['dataUrl'] ) ? esc_url_raw( wp_unslash( $_GET['dataUrl'] ) ) : '';
-    // $dataUrl = 'https://stagging-solace.djavaweb.com/homeharbor/';
-    // $dataUrl = 'https://stagging-solace.djavaweb.com/toyjungle/';
-    // $iframe_url = 'https://solacewp.com/petrovex';
-        // $dataUrl = 'https://solacewp.com/testtest/';
+    $demoUrl = ! empty( $_GET['demo'] ) ? sanitize_key( wp_unslash( $_GET['demo'] ) ) : '';
+    $demoUrl = 'https://solacewp.com/' . $demoUrl;
 
-    $iframe_url = $dataUrl;
+    $iframe_url = $demoUrl;
 
     // Trim whitespace from the beginning and end of the URL
-    $dataUrl = trim($dataUrl);
+    $demoUrl = trim($demoUrl);
 
     // Check if the URL does not end with a slash
-    if (substr($dataUrl, -1) !== '/') {
+    if (substr($demoUrl, -1) !== '/') {
         // If it does not, append a slash to the end of the URL
-        $dataUrl .= '/';
+        $demoUrl .= '/';
     }
 
-    $url = $dataUrl; 
+    $url = $demoUrl; 
 
     // $bodyClasses = solace_extra_getBodyClasses($url);
-    $cssUrl = $dataUrl .'core/views/solace/style-main-new.min.css';
+    $cssUrl = $demoUrl .'core/views/solace/style-main-new.min.css';
 
     // $backgroundColor = solace_extra_getBodyBackgroundColor($url, $cssUrl);
 
-    $api_url = $dataUrl .'wp-json/elementor-api/v1/settings?timestamp=' . time();
+    $api_url = $demoUrl .'wp-json/elementor-api/v1/settings?timestamp=' . time();
 
     $color_palettes = array();
     $palette_font_scheme = array();
@@ -484,7 +481,8 @@ p:'$font1';
 
     jQuery(document).ready(function($) { 
         
-        let dataUrl = localStorage.getItem('solaceInfo');
+        let demoUrl = localStorage.getItem('solaceDemoName');
+        demoUrl = 'https://solacewp.com/' + demoUrl;
         // let demoName = localStorage.getItem('solaceDemoName');
         let demoName = getParameterByName('demo');
         demoName = demoName.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
@@ -492,8 +490,8 @@ p:'$font1';
         console.log (demoName);
         $('.labeldemo').text(demoName);
 
-        if (dataUrl) {
-            console.log('localStorage Data:', dataUrl);
+        if (demoUrl) {
+            console.log('localStorage Data:', demoUrl);
         }else {
             const demoType = getParameterByName('demoType');
             window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-starter-templates&type=' + demoType;
@@ -566,12 +564,7 @@ p:'$font1';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
 
-        const demoURL = getParameterByName('dataUrl');
-
-       
         var firstload = true;
-
-       
 
         // Remove the 'solaceRemoveImported' value from localStorage
         localStorage.removeItem('solaceRemoveImported');
@@ -965,7 +958,7 @@ p:'$font1';
             console.log ('done step6? :'+solaceStep6);
             if (solaceStep6 === 'success') {
                 const demoType = getParameterByName('type');
-                const demoUrl = getParameterByName('dataUrl');
+                const demoUrl = 'https://solacewp.com/' + getParameterByName('demo');
                 const demoName = getParameterByName('demo');
 
                 // Function to get the current time
@@ -1000,13 +993,13 @@ p:'$font1';
                     localStorage.setItem('solaceRemoveDataDemo', demoName);
                 }                
 
-                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
 
             } else {
                 const demoType = getParameterByName('type');
-                const demoUrl = getParameterByName('dataUrl');
+                const demoUrl = 'https://solacewp.com/' + getParameterByName('demo');
                 const demoName = getParameterByName('demo');
-                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-step6&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-step6&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
             }
 
             /**
@@ -1058,7 +1051,7 @@ p:'$font1';
 
                 // Get query parameters for redirection
                 const demoType = getParameterByName('type');
-                const demoUrl = getParameterByName('dataUrl');
+                const demoUrl = 'https://solacewp.com/' + getParameterByName('demo');
                 const demoName = getParameterByName('demo');                 
 
                 // Check if the current date is past the expiry date
@@ -1066,10 +1059,10 @@ p:'$font1';
                     // Remove the expired item from local storage
                     localStorage.removeItem(key);
 
-                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-step6&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-step6&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
                 } else {
 
-                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&url=' + demoUrl +'&demo=' + demoName + '&timestamp=' + new Date().getTime();
+                    window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();
                 }
             }
 
