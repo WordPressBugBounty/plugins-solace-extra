@@ -159,4 +159,25 @@
     //         }
     //     });
     // }
+
+    function checkFormValidity() {
+        const firstname = $('.firstname').val().trim();
+        const email = $('.email').val().trim();
+        const agreementChecked = $('#agreement').is(':checked');
+
+        if (firstname !== '' && email !== '' && agreementChecked) {
+            $('#submit-button').prop('disabled', false);
+        } else {
+            $('#submit-button').prop('disabled', true);
+        }
+    }
+
+    $(document).ready(function () {
+        checkFormValidity();
+
+        $('.firstname, .email, #agreement').on('input change', function () {
+            checkFormValidity();
+        });
+    });
+
 })( jQuery );

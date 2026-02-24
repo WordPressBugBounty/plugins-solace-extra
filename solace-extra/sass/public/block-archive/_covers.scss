@@ -1,0 +1,25 @@
+.main-all.main-index.main-layout-blog-covers {
+    .row1 {
+        .left {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+            flex-basis: 100%;
+            gap: 0;
+
+            article {
+                width: 48%;
+                width: calc(50% - 32px);
+
+                @media (max-width: $layout-breakpoint-large) {
+                    width: 100%;
+                }
+            }
+
+            .navigation.pagination {
+                width: 100%;
+            }
+        }
+    }
+}

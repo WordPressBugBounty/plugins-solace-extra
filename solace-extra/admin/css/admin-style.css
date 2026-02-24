@@ -130,8 +130,33 @@
 
 .js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(4),
 .js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(5),
-.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6) {
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6),
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(14) {
   display: block;
+}
+
+.js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item {
+  display: block;
+  background-color: #FF8F00;
+  border-radius: 30px;
+  font-weight: 700;
+  margin: 0 15px;
+}
+.js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item a {
+  color: #fff;
+  text-align: center;
+}
+.js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item a:hover {
+  box-shadow: none !important;
+}
+
+.js #adminmenu .toplevel_page_solace .wp-submenu li.support-menu-item {
+  display: block;
+}
+
+body .swal-footer {
+  display: flex;
+  justify-content: center;
 }
 
 body.solace_page_dashboard #wpbody-content .notice,
@@ -224,6 +249,7 @@ body.solace_page_dashboard-congratulations .wrap {
   background: #f1f1f1;
   padding: 0;
   margin: 0;
+  overflow: auto;
 }
 body.solace_page_dashboard-starter-templates .wrap div.notice,
 body.solace_page_dashboard-sitebuilder .wrap div.notice,
@@ -604,7 +630,63 @@ body.toplevel_page_solace .wrap footer.bottom .mycontainer {
     padding: 25px 0;
   }
 }
-@media only screen and (max-width: 1050px) {
+@media only screen and (max-width: 1024px) {
+  body.solace_page_dashboard-starter-templates .wrap nav div.mycontainer,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer,
+  body.solace_page_dashboard-type .wrap nav div.mycontainer,
+  body.solace_page_dashboard-video .wrap nav div.mycontainer,
+  body.solace_page_dashboard-step5 .wrap nav div.mycontainer,
+  body.solace_page_dashboard-step6 .wrap nav div.mycontainer,
+  body.toplevel_page_solace .wrap nav div.mycontainer,
+  body.solace_page_dashboard .wrap nav div.mycontainer,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer,
+  body.solace_page_dashboard-progress .wrap nav div.mycontainer,
+  body.solace_page_dashboard-congratulations .wrap nav div.mycontainer {
+    flex-direction: column;
+    padding: 20px 10px;
+  }
+  body.solace_page_dashboard-starter-templates .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-type .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-video .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-step5 .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-step6 .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.toplevel_page_solace .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-progress .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-congratulations .wrap nav div.mycontainer div.box-menu ul li::after {
+    top: 20px;
+  }
+}
+@media only screen and (max-width: 992px) {
+  body.solace_page_dashboard-starter-templates .wrap footer.bottom,
+  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
+  body.solace_page_dashboard-type .wrap footer.bottom,
+  body.solace_page_dashboard-video .wrap footer.bottom,
+  body.toplevel_page_solace .wrap footer.bottom,
+  body.solace_page_dashboard .wrap footer.bottom,
+  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
+  body.solace_page_dashboard-progress .wrap footer.bottom {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+@media only screen and (max-width: 782px) {
+  body.solace_page_dashboard-starter-templates .wrap footer.bottom,
+  body.solace_page_dashboard-type .wrap footer.bottom,
+  body.solace_page_dashboard-video .wrap footer.bottom,
+  body.solace_page_dashboard-step5 .wrap footer.bottom,
+  body.solace_page_dashboard-step6 .wrap footer.bottom,
+  body.toplevel_page_solace .wrap footer.bottom,
+  body.solace_page_dashboard .wrap footer.bottom,
+  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
+  body.solace_page_dashboard-progress .wrap footer.bottom,
+  body.solace_page_dashboard-congratulations .wrap footer.bottom {
+    left: 0;
+  }
+}
+@media only screen and (max-width: 768px) {
   body.solace_page_dashboard-starter-templates .wrap nav div.mycontainer,
   body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer,
   body.solace_page_dashboard-type .wrap nav div.mycontainer,
@@ -634,45 +716,18 @@ body.toplevel_page_solace .wrap footer.bottom .mycontainer {
     text-align: center;
     gap: 15px;
   }
-  body.solace_page_dashboard-starter-templates .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-type .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-video .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-step5 .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-step6 .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.toplevel_page_solace .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-progress .wrap nav div.mycontainer div.box-menu ul li.active::after,
-  body.solace_page_dashboard-congratulations .wrap nav div.mycontainer div.box-menu ul li.active::after {
+  body.solace_page_dashboard-starter-templates .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-type .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-video .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-step5 .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-step6 .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.toplevel_page_solace .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-sitebuilder .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-progress .wrap nav div.mycontainer div.box-menu ul li::after,
+  body.solace_page_dashboard-congratulations .wrap nav div.mycontainer div.box-menu ul li::after {
     top: 2px;
-  }
-}
-@media only screen and (max-width: 992px) {
-  body.solace_page_dashboard-starter-templates .wrap footer.bottom,
-  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
-  body.solace_page_dashboard-type .wrap footer.bottom,
-  body.solace_page_dashboard-video .wrap footer.bottom,
-  body.toplevel_page_solace .wrap footer.bottom,
-  body.solace_page_dashboard .wrap footer.bottom,
-  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
-  body.solace_page_dashboard-progress .wrap footer.bottom {
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-}
-@media only screen and (max-width: 782px) {
-  body.solace_page_dashboard-starter-templates .wrap footer.bottom,
-  body.solace_page_dashboard-type .wrap footer.bottom,
-  body.solace_page_dashboard-video .wrap footer.bottom,
-  body.solace_page_dashboard-step5 .wrap footer.bottom,
-  body.solace_page_dashboard-step6 .wrap footer.bottom,
-  body.toplevel_page_solace .wrap footer.bottom,
-  body.solace_page_dashboard .wrap footer.bottom,
-  body.solace_page_dashboard-sitebuilder .wrap footer.bottom,
-  body.solace_page_dashboard-progress .wrap footer.bottom,
-  body.solace_page_dashboard-congratulations .wrap footer.bottom {
-    left: 0;
   }
 }
 @media only screen and (max-width: 600px) {
@@ -895,6 +950,88 @@ html.wp-toolbar:has(.solace_page_dashboard-sitebuilder) {
   padding-top: 0;
 }
 
+body.solace_page_dashboard-sitebuilder .swal2-title {
+  color: rgba(0, 0, 0, 0.65);
+  font-weight: 600;
+  text-transform: none;
+  position: relative;
+  display: block;
+  padding: 13px 16px;
+  font-size: 27px;
+  line-height: normal;
+  text-align: center;
+  margin-bottom: 0;
+}
+body.solace_page_dashboard-sitebuilder .swal2-html-container {
+  font-size: 16px;
+  position: relative;
+  float: none;
+  line-height: normal;
+  vertical-align: top;
+  text-align: left;
+  display: inline-block;
+  margin: 0;
+  padding: 0 10px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.64);
+  max-width: calc(100% - 20px);
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+  text-align: center;
+}
+body.solace_page_dashboard-sitebuilder .swal2-styled {
+  background-color: #7cd1f9;
+  color: #fff;
+  border: none;
+  box-shadow: none;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 10px 24px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+body.solace_page_dashboard-sitebuilder .swal2-cancel {
+  color: #555;
+  background-color: #efefef;
+}
+body.solace_page_dashboard-sitebuilder .swal2-confirm {
+  background-color: #e64942;
+}
+body.solace_page_dashboard-sitebuilder .swal2-confirm-orange {
+  background: #ff9400;
+}
+body.solace_page_dashboard-sitebuilder {
+  /* Coming soon container styling */
+}
+body.solace_page_dashboard-sitebuilder .coming-soon-container {
+  text-align: center;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+body.solace_page_dashboard-sitebuilder {
+  /* Heading styling */
+}
+body.solace_page_dashboard-sitebuilder .coming-soon-container h1 {
+  font-size: 3em;
+  color: #333;
+  margin-bottom: 20px;
+}
+body.solace_page_dashboard-sitebuilder .container {
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+  height: 100vh;
+}
+body.solace_page_dashboard-sitebuilder {
+  /* Paragraph styling */
+}
+body.solace_page_dashboard-sitebuilder .coming-soon-container p {
+  font-size: 1.2em;
+  color: #666;
+}
 body.solace_page_dashboard-sitebuilder #adminmenumain,
 body.solace_page_dashboard-sitebuilder #wpadminbar {
   display: none;
@@ -914,14 +1051,53 @@ body.solace_page_dashboard-sitebuilder #update-nag,
 body.solace_page_dashboard-sitebuilder .update-nag {
   display: none;
 }
-body.solace_page_dashboard-sitebuilder .wrap {
-  background-color: #001644;
-}
 body.solace_page_dashboard-sitebuilder .wrap > nav .mycontainer {
   padding: 0;
 }
 body.solace_page_dashboard-sitebuilder .wrap > nav {
   margin-bottom: 0;
+}
+body.solace_page_dashboard-sitebuilder .wrap {
+  background-color: #001644;
+  /* Iframe preview */
+}
+body.solace_page_dashboard-sitebuilder .wrap .template-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+body.solace_page_dashboard-sitebuilder .wrap .template-card {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  position: relative;
+}
+body.solace_page_dashboard-sitebuilder .wrap .template-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  cursor: pointer;
+}
+body.solace_page_dashboard-sitebuilder .wrap .iframe-wrapper {
+  width: 300px;
+  height: 282px;
+  height: 250px;
+  overflow: hidden;
+  position: relative;
+}
+body.solace_page_dashboard-sitebuilder .wrap .iframe-preview {
+  transform: scale(0.25);
+  transform-origin: top left;
+  width: 1200px;
+  height: 1035.97px;
+  border: none;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder {
   display: flex;
@@ -979,9 +1155,10 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .parts a.button.activ
   outline: 3px solid #FF9400;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list {
-  padding: 50px;
+  padding: 20px;
   background: #F1F1F1;
   width: 100%;
+  width: calc(100% - 310px);
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .label {
   font-size: 18px;
@@ -995,6 +1172,9 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid {
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a {
   text-decoration: none;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a.lock {
+  display: none;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a:active {
   box-sizing: unset;
@@ -1099,12 +1279,21 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch {
   width: 34px;
   height: 20px;
 }
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch input {
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch.layout .all-status-switch {
+  visibility: hidden;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch.layout .slider:before {
+  height: 13px;
+  width: 13px;
+  left: 4px;
+  bottom: 4px;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .slider {
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch .slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -1114,14 +1303,15 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .slider {
   background-color: #ccc;
   transition: 0.4s;
   border-radius: 34px;
+  z-index: 9;
 }
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .slider:before {
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .switch .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
-  left: 3px;
-  bottom: 3px;
+  height: 13px;
+  width: 13px;
+  left: 4px;
+  bottom: 3.3px;
   background-color: white;
   transition: 0.4s;
   border-radius: 50%;
@@ -1138,35 +1328,50 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist {
   align-items: center;
   margin-bottom: 30px;
 }
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist span.label {
+  display: block;
+  width: 100%;
+}
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist .addnew,
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist #save-404 {
   position: relative;
   background-color: #ff9400;
   color: #fff;
   border-radius: 30px;
-  padding: 5px 60px 5px 40px;
+  padding: 6px 60px 5px 40px;
   height: 39px;
   border: none;
+  line-height: 2.1;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist .addnew::after,
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist #save-404::after {
   content: url("../../assets/images/plus-addnew.svg");
   position: absolute;
-  right: 5px;
+  right: 4px;
   top: -4px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist .addnew:hover,
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist #save-404:hover {
   background-color: #ea8903;
 }
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view {
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist button#export {
+  margin: 20px 0;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-template-item {
   background-color: #fff;
   border-radius: 20px;
+  margin-bottom: 40px;
+  padding-bottom: 0;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #F1F1F1;
+  overflow: auto;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances {
   display: flex;
@@ -1177,6 +1382,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   border-radius: 30px;
   padding-top: 6px;
   padding-bottom: 6px;
+  margin-right: 16px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances .label {
   font-size: 12px;
@@ -1186,10 +1392,10 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   font-weight: 600;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances .label.listinstances .text-include {
-  color: green; /* Warna hijau untuk include */
+  color: green;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances .label.listinstances .text-exclude {
-  color: red; /* Warna merah untuk exclude */
+  color: red;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances .conditions-column {
   position: relative;
@@ -1206,6 +1412,15 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.action {
   display: flex;
+  margin-right: 16px;
+  align-items: center;
+  background-color: #f0f3ff;
+  padding-left: 0px;
+  padding-right: 0px;
+  border-radius: 30px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-left: 16px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.action .edit-column {
   position: relative;
@@ -1225,6 +1440,15 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   left: 15px;
   top: 1px;
 }
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.action .export-column {
+  position: relative;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.action .export-column .export::before {
+  content: url("../../assets/images/sitebuilder-export.svg");
+  position: absolute;
+  left: 25px;
+  top: 6px;
+}
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.action .delete-column {
   position: relative;
 }
@@ -1235,13 +1459,13 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   top: 6px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .list-column {
-  flex: 1;
   padding: 0 10px;
   display: flex;
   align-items: center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .list-column.title-column {
   font-weight: bold;
+  padding-left: 16px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .list-column .button {
   display: flex;
@@ -1251,9 +1475,13 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   background-color: #0E305F;
   color: #fff;
   height: 31px;
+  min-height: 31px;
+  line-height: inherit;
   padding: 0;
   padding-left: 40px;
   padding-right: 20px;
+  padding-top: 1px;
+  margin-bottom: 0;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .list-column .button.delete {
   color: #fff;
@@ -1271,6 +1499,92 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
   display: flex;
   justify-content: flex-end;
 }
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view.header .solace-template-item .preview-container, body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view.footer .solace-template-item .preview-container {
+  padding-bottom: 16px;
+  margin: 16px;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty {
+  display: flex;
+  width: -moz-max-content;
+  width: max-content;
+  align-items: center;
+  background: linear-gradient(180deg, #001958 0%, #001344 100%);
+  border-radius: 12px;
+  min-height: 250px;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left {
+  padding: 25px;
+  color: #fff;
+  font-family: Poppins;
+  font-size: 25px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: block;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left span.desc {
+  color: #fff;
+  font-family: Poppins;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-bottom: 26px;
+  display: block;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left a.button.addnew {
+  position: relative;
+  background-color: #ff9400;
+  color: #fff;
+  border-radius: 30px;
+  padding: 6px 60px 5px 40px;
+  height: 39px;
+  border: none;
+  line-height: 2.1;
+  width: 100%;
+  text-align: center;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty {
+  display: flex;
+  width: -moz-max-content;
+  width: max-content;
+  align-items: center;
+  background: linear-gradient(180deg, #001958 0%, #001344 100%);
+  border-radius: 12px;
+  min-height: 250px;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left {
+  padding: 25px;
+  color: #fff;
+  font-family: Poppins;
+  font-size: 25px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  display: block;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left span.desc {
+  color: #fff;
+  font-family: Poppins;
+  font-size: 15px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-bottom: 26px;
+  display: block;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty .banner_left a.button.addnew {
+  position: relative;
+  background-color: #ff9400;
+  color: #fff;
+  border-radius: 30px;
+  padding: 6px 60px 5px 40px;
+  height: 39px;
+  border: none;
+  line-height: 2.1;
+  width: 100%;
+  text-align: center;
+}
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .delete-condition {
   color: #FF9400;
   font-size: 16px;
@@ -1282,7 +1596,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .delete-condition.hid
   visibility: hidden;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .delete-condition:hover {
-  color: #a00; /* Warna saat hover */
+  color: #a00;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-overlay {
   position: fixed;
@@ -1312,7 +1626,6 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
   position: relative;
   width: 100%;
   text-align: center;
-  /* Close button styling */
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content span.addnew-title {
   font-weight: 700;
@@ -1329,7 +1642,24 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
   flex-direction: column;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #addnew-add-condition,
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #add-condition,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #add-condition {
+  background-color: #0e305f;
+  color: #fff;
+  padding-left: 50px;
+  padding-right: 20px;
+  border-radius: 30px;
+  height: 40px;
+  position: relative;
+  padding-top: 3px;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #addnew-add-condition::before,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #add-condition::before {
+  content: url("../../assets/images/plus-addcondition.svg");
+  position: absolute;
+  left: 6px;
+  top: -1px;
+  width: 20px;
+}
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #partnew-add-condition {
   background-color: #0e305f;
   color: #fff;
@@ -1338,9 +1668,8 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
   border-radius: 30px;
   height: 40px;
   position: relative;
+  padding-top: 3px;
 }
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #addnew-add-condition::before,
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #add-condition::before,
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #partnew-add-condition::before {
   content: url("../../assets/images/plus-addcondition.svg");
   position: absolute;
@@ -1381,7 +1710,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
   width: 250px;
   box-shadow: none;
   display: inline-flex;
-  align-items: center; /* Untuk membuat teks dan animasi vertikal align-center */
+  align-items: center;
   justify-content: center;
   transition: width 1s ease, padding-right 1s ease;
 }
@@ -1402,17 +1731,20 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #solace-save-404:hover {
   background-color: #ea8903;
 }
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content {
+  /* Close button styling */
+}
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content .close-popup {
   position: absolute;
-  top: -31px;
-  right: -1px;
+  top: -32px;
+  right: -2px;
   font-size: 19px;
   color: #fff;
   cursor: pointer;
   background-color: #0e305f;
   border-radius: 100px;
   font-weight: 300;
-  padding: 2px 5px 0px 5px;
+  padding: 3px 5px 0px 5px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #all-new-conditions-container {
   display: flex;
@@ -1423,6 +1755,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #all-new-conditions-container select.condition-part-select {
   margin-bottom: 20px;
+  background-position: right 13px center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content span.chooseparts {
   display: flex;
@@ -1436,6 +1769,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content select.condition-part-select {
   margin-left: 10px;
+  background-position: right 13px center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder #save-404 {
   background-color: #ff9400;
@@ -1449,7 +1783,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder #save-404 {
   box-shadow: none;
   padding: 5px 60px 5px 40px;
   display: inline-flex;
-  align-items: center; /* Untuk membuat teks dan animasi vertikal align-center */
+  align-items: center;
   justify-content: center;
   transition: width 1s ease, padding-right 1s ease;
 }
@@ -1473,6 +1807,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-part-selec
   font-size: 12px;
   height: 44px;
   padding-right: 100px;
+  background-position: right 13px center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item {
   margin-bottom: 10px;
@@ -1487,25 +1822,27 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item selec
   position: relative;
   background-color: #F0F3FF;
   border-radius: 30px;
-  padding: 5px 30px 5px 30px;
+  padding: 5px 39px 5px 30px;
   font-size: 12px;
   height: 44px;
+  background-position: right 13px center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item select.condition-select {
   padding-right: 100px;
   position: relative;
+  background-position: right 13px center;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item .condition-exclude-include-select {
-  padding-left: 36px;
+  padding-left: 50px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item .condition-exclude-include-select::before {
   content: url("../../assets/images/plus-include.svg");
   position: absolute;
-  left: 5px; /* Jarak dari kiri */
+  left: 5px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px; /* Atur ukuran ikon sesuai kebutuhan */
-  height: 20px; /* Atur ukuran ikon sesuai kebutuhan */
+  width: 20px;
+  height: 20px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .condition-item .icon-container {
   justify-content: center;
@@ -1530,15 +1867,50 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-footer 
   margin-bottom: 30px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .preview-container {
-  margin-top: 10px; /* Space above the preview */
-  width: 100%;
+  margin-top: 10px;
   display: flex;
-  justify-content: center; /* Center the iframe horizontally */
+  justify-content: center;
+  margin: 10px;
+  height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .preview-container .iframe-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 10;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .preview-container .custom-header-content {
+  width: 100%;
+  position: relative;
+  border-radius: 18px;
+  height: auto;
+  transition: height 0.3s ease;
+  width: 100% !important;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder .preview-container .custom-header-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0);
+  border-radius: 18px;
+  z-index: 10;
+  pointer-events: none;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .preview-container iframe {
   width: 100%;
+  width: 100% !important;
+  transform: scale(1) !important;
   height: 200px; /* Adjust the height as needed */
   border: none;
+  padding-bottom: 10px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-rename-popup-overlay, body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-404-popup-overlay {
   position: fixed;
@@ -1597,7 +1969,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-rename-popup-
   background-color: #0e305f;
   border-radius: 100px;
   font-weight: 300;
-  padding: 2px 5px 0px 5px;
+  padding: 3px 5px 0px 5px;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-rename-popup-content h3, body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-404-popup-content h3 {
   margin-bottom: 15px;
@@ -1623,6 +1995,67 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-rename-popup-
   cursor: pointer;
 }
 
+@media only screen and (max-width: 1350px) {
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist span.label {
+    text-align: center;
+  }
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid {
+    justify-content: space-evenly;
+  }
+}
+@media only screen and (max-width: 998px) {
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder {
+    flex-direction: column;
+  }
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .parts {
+    min-width: 100%;
+    margin: 0;
+    padding: 15px;
+  }
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list {
+    padding: 15px;
+    width: 100%;
+  }
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid {
+    justify-content: center;
+  }
+}
+@media only screen and (max-width: 700px) {
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action {
+    margin-left: 16px;
+  }
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action div.list-column {
+    padding: 0 5px;
+  }
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action div.list-column a.button {
+    padding: 0;
+    width: 40px;
+  }
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action div.list-column a.button span {
+    display: none;
+  }
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action div.list-column a.button::before {
+    left: 50%;
+    transform: translate(-50%, 0);
+  }
+  body.solace_page_dashboard-sitebuilder div.solace-sitebuilder div.list div.solace-list-view div.solace-list-item div.group.action div.list-column.rename-column a.button::before {
+    left: calc(50% - 4px);
+    transform: translate(-50%, 0);
+  }
+}
+@media only screen and (max-width: 580px) {
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item {
+    justify-content: center;
+  }
+  body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-view .solace-list-item .group.instances {
+    display: none;
+  }
+}
+@media only screen and (max-width: 480px) {
+  body.solace_page_dashboard-sitebuilder .wrap .iframe-wrapper {
+    width: 100%;
+  }
+}
 body.solace_page_dashboard-video {
   background: #fff;
 }
@@ -1927,17 +2360,17 @@ body.solace_page_dashboard-step5.js #adminmenu .toplevel_page_solace .wp-submenu
 body.solace_page_dashboard-step5 > #wpwrap > #wpcontent {
   margin-top: -22px;
 }
-body.solace_page_dashboard-step5 .wrap-step5 {
-  background: #f1f1f1;
-  padding: 0;
-  margin: 0;
-  height: 100vh;
-}
 body.solace_page_dashboard-step5 .wrap-step5 pre {
   display: none;
 }
 body.solace_page_dashboard-step5 .wrap-step5:not(.preview) {
   font-family: "Poppins", sans-serif;
+}
+body.solace_page_dashboard-step5 .wrap-step5 {
+  background: #f1f1f1;
+  padding: 0;
+  margin: 0;
+  height: 100vh;
 }
 body.solace_page_dashboard-step5 .wrap-step5 > nav {
   background: #000F44;
@@ -2060,17 +2493,19 @@ body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer {
   width: 100%;
   height: 88vh !important;
   overflow: hidden !important;
-  --e-transform-scale: 0.6;
-  background-color: var(--e-global-color-9d6aead);
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: 328px auto;
 }
 body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer iframe {
   width: 100%;
   height: 100%;
   border: 1px solid #ddd;
   border-top: 0;
+}
+body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer {
+  --e-transform-scale: 0.6;
+  background-color: var(--e-global-color-9d6aead);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 328px auto;
 }
 @media (max-width: 1412px) {
   body.solace_page_dashboard-step5 .simple-plugin-columns {
@@ -2153,7 +2588,7 @@ body.solace_page_dashboard-step5 .demotitle {
 body.solace_page_dashboard-step5 .labeldemo {
   font-family: "Poppins", sans-serif;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 700;
   color: #000;
 }
 body.solace_page_dashboard-step5 .palette-buttons {
@@ -2189,6 +2624,7 @@ body.solace_page_dashboard-step5 .colorlist {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   padding: 20px;
+  padding-left: 24px;
   padding-bottom: 0;
   margin-bottom: 20px;
 }
@@ -2196,16 +2632,18 @@ body.solace_page_dashboard-step5 .colorlist .color.active {
   outline: 4px solid #ff8c02;
 }
 body.solace_page_dashboard-step5 .fontlist {
-  padding: 20px 20px 0 20px;
+  padding: 20px 20px 0 24px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 20px;
-  /* CSS Untuk Tooltip */
 }
 body.solace_page_dashboard-step5 .fontlist .font.active {
   outline: 4px solid #ff8c02;
   border-radius: 10px;
+}
+body.solace_page_dashboard-step5 .fontlist {
+  /* CSS Untuk Tooltip */
 }
 body.solace_page_dashboard-step5 .fontlist .tooltip {
   text-decoration: none;
@@ -2334,11 +2772,11 @@ body.solace_page_dashboard-step5 span.titlelogo {
   align-items: center;
   justify-content: center;
   display: flex;
-  font-weight: 800;
+  font-weight: 700;
   color: #000;
   font-family: "Poppins", sans-serif;
   height: 26px;
-  font-size: 16px;
+  font-size: 15px;
 }
 body.solace_page_dashboard-step5 .logo-buttons #upload-logo-form input {
   color: #939393 !important;
@@ -2369,7 +2807,7 @@ body.solace_page_dashboard-step5 .box-required-plugin-elementor label,
 body.solace_page_dashboard-step5 .box-required-plugin-ecommerce label {
   font-family: "Poppins", sans-serif;
   color: #3c434a;
-  font-size: 15px;
+  font-size: 14px;
   position: relative;
   bottom: 2px;
   left: 5px;
@@ -2387,12 +2825,12 @@ body.solace_page_dashboard-step5 .box-required-plugin-elementor.collapse {
   padding-bottom: 0;
 }
 body.solace_page_dashboard-step5 span.titlecolor {
-  font-weight: 800;
+  font-weight: 700;
   display: block;
   color: #000;
   padding: 20px 20px 0 20px;
   font-family: "Poppins", sans-serif;
-  font-size: 16px;
+  font-size: 15px;
 }
 body.solace_page_dashboard-step5 .loading-overlay {
   /* display:none; */
@@ -2409,6 +2847,8 @@ body.solace_page_dashboard-step5 .loading-overlay-preview {
   height: 100vh;
 }
 body.solace_page_dashboard-step5 a#solace-extra-continue,
+body.solace_page_dashboard-step5 button#solace-extra-continue,
+body.solace_page_dashboard-step5 button#solace-extra-upgrade,
 body.solace_page_dashboard-step5 a#solace-extra-continue-disable {
   opacity: 0.5;
   cursor: not-allowed;
@@ -2417,7 +2857,7 @@ body.solace_page_dashboard-step5 a#solace-extra-continue-disable {
   padding: 5px 50px;
   border-radius: 50px;
   color: #FFFFFF;
-  font-weight: 900;
+  font-weight: 700;
   text-transform: uppercase;
   font-size: 14px;
   flex-basis: 80%;
@@ -2426,14 +2866,17 @@ body.solace_page_dashboard-step5 a#solace-extra-continue-disable {
   justify-content: center;
   display: flex;
   text-decoration: none;
+  border: none;
 }
 body.solace_page_dashboard-step5 a#solace-extra-continue-disable {
   opacity: 0.5;
   cursor: not-allowed;
 }
-body.solace_page_dashboard-step5 a#solace-extra-continue.active {
+body.solace_page_dashboard-step5 a#solace-extra-continue.active,
+body.solace_page_dashboard-step5 button#solace-extra-continue.active {
   opacity: 1;
   cursor: pointer;
+  border: none;
 }
 body.solace_page_dashboard-step5 div.box-delete {
   padding: 20px 0;
@@ -2443,7 +2886,7 @@ body.solace_page_dashboard-step5 div.box-delete {
   align-items: center;
 }
 body.solace_page_dashboard-step5 div.box-delete label {
-  font-size: 15px;
+  font-size: 14px;
   position: relative;
   bottom: 2px;
   left: 5px;
@@ -2460,6 +2903,9 @@ body.solace_page_dashboard-step5 div#solace-extra-action-button {
   margin-top: 5px;
   height: 42px;
 }
+body.solace_page_dashboard-step5 div.pro-not-active {
+  margin-top: 20px !important;
+}
 body.solace_page_dashboard-step5 .media-modal-close:hover {
   background: unset;
 }
@@ -2470,6 +2916,7 @@ body.solace_page_dashboard-step5 .container-license .box-title-license {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  padding: 0 20px 0 20px;
 }
 body.solace_page_dashboard-step5 .container-license .box-title-license .title-license {
   cursor: pointer;
@@ -2672,6 +3119,10 @@ html.wp-toolbar:has(.solace_page_dashboard-step6) {
   padding-top: 0;
 }
 
+body.solace_page_dashboard-step6 #submit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 body.solace_page_dashboard-step6 #adminmenumain,
 body.solace_page_dashboard-step6 #wpadminbar {
   display: none;
@@ -3809,7 +4260,7 @@ body.solace_page_dashboard .wrap .box .row2 .col4 {
   display: flex;
   flex-wrap: wrap;
   flex-direction: column;
-  justify-content: center;
+  justify-content: unset;
   align-items: center;
 }
 body.toplevel_page_solace .wrap .box .row2 .col1 span,
@@ -3831,6 +4282,8 @@ body.solace_page_dashboard .wrap .box .row2 .col2 svg,
 body.solace_page_dashboard .wrap .box .row2 .col3 svg,
 body.solace_page_dashboard .wrap .box .row2 .col4 svg {
   margin-bottom: 21px;
+  width: 46px;
+  height: 46px;
 }
 body.toplevel_page_solace .wrap .box .row2 .col1 span.title,
 body.toplevel_page_solace .wrap .box .row2 .col2 span.title,
@@ -4063,6 +4516,40 @@ body.solace_page_dashboard-starter-templates .wrap > nav .mycontainer {
 body.solace_page_dashboard-starter-templates .wrap nav .mycontainer .box-menu ul li.active::after {
   content: none;
 }
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .skeleton {
+  position: relative;
+}
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .skeleton::before {
+  content: "";
+  display: block;
+  width: 20px;
+  height: 20px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: loaderAnimation 1s infinite linear alternate;
+  position: absolute;
+  left: 49%;
+  top: 370px;
+  z-index: 2;
+}
+@keyframes loaderAnimation {
+  0% {
+    box-shadow: 20px 0 #000, -20px 0 rgba(0, 0, 0, 0.1333333333);
+    background: #000;
+  }
+  33% {
+    box-shadow: 20px 0 #000, -20px 0 rgba(0, 0, 0, 0.1333333333);
+    background: rgba(0, 0, 0, 0.1333333333);
+  }
+  66% {
+    box-shadow: 20px 0 rgba(0, 0, 0, 0.1333333333), -20px 0 #000;
+    background: rgba(0, 0, 0, 0.1333333333);
+  }
+  100% {
+    box-shadow: 20px 0 rgba(0, 0, 0, 0.1333333333), -20px 0 #000;
+    background: #000;
+  }
+}
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top {
   max-width: 90%;
   margin: 0 auto;
@@ -4081,7 +4568,6 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  justify-content: center;
   width: 100%;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col1 {
@@ -4101,7 +4587,6 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 {
   display: flex;
-  display: none;
   flex-wrap: wrap;
   justify-content: space-between;
 }
@@ -4122,6 +4607,7 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .dropdown1 {
   position: relative;
+  display: none;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .dropdown1 select {
   margin-right: 6px;
@@ -4135,6 +4621,7 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .dropdown3 {
   position: relative;
+  display: none;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .dropdown3 select {
   height: 43px;
@@ -4144,6 +4631,13 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
   position: absolute;
   right: 20px;
   bottom: 12px;
+}
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .filter-license {
+  position: relative;
+}
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top .mycontainer .boxes .col3 .filter-license select {
+  height: 43px;
+  background: #000f44 url(../images/starter-templates/arrow-down-alt.png) no-repeat right 12px top 55%;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-top img.decor1 {
   position: absolute;
@@ -4355,6 +4849,11 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
   position: absolute;
   right: 0;
   top: 0;
+}
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-main main .mycontainer .demo .box-content .top-content span.label.pro {
+  background: #ff8f00;
+  color: #fff;
+  display: none;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-main main .mycontainer .demo .box-content .bottom-content p {
   font-family: Poppins;

@@ -1,0 +1,339 @@
+#solaceExtraTemplateLibrary__modal .dialog-lightbox-message {
+	overflow: hidden;
+}
+
+.solaceExtraTemplateLibrary__preview {
+	position: relative;
+	overflow: hidden;
+	margin: auto;
+	width: 100%;
+	height: 100%;
+	-webkit-transition: width .2s,height .2s;
+	transition: width .2s,height .2s;
+}
+
+.solaceExtraTemplateLibrary__preview::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 95%;
+	height: 100%;
+	z-index: 1;
+}
+
+.solaceExtraTemplateLibrary__preview>iframe {
+	width: 150%;
+	height: 150%;
+	-webkit-transform: scale(.666) translateX(-25%) translateY(-25%);
+	transform: scale(.666) translateX(-25%) translateY(-25%);
+}
+
+.solaceExtraTemplateLibrary__logo-wrap {
+	display: -webkit-inline-box;
+	display: -ms-inline-flexbox;
+	display: inline-flex;
+	margin-right: 10px;
+	width: 30px;
+	height: 30px;
+	border-radius: 100%;
+	color: #fff;
+	text-align: center;
+	line-height: 1;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-webkit-box-pack: center;
+	-ms-flex-pack: center;
+	justify-content: center
+}
+
+.solaceExtraTemplateLibrary__logo-wrap>i {
+	position: relative;
+}
+
+.solaceExtraTemplateLibrary__logo-title {
+	padding-top: 2px;
+	font-weight: 600;
+}
+
+.solaceExtraTemplateLibrary__responsive-menu-item {
+	display: inline-block;
+	padding: 16px 0;
+	width: 40px;
+	text-align: center;
+	cursor: pointer;
+}
+
+.solaceExtraTemplateLibrary__responsive-menu-item.elementor-active {
+	border-bottom: 3px solid #fb8c87;
+	background-color: #f1f3f524;
+}
+
+.solaceExtraTemplateLibrary__header-menu .elementor-template-library-menu-item.elementor-active {
+	border-bottom-color: #fb8c87;
+}
+
+#solaceExtraTemplateLibrary__toolbar {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	align-items: center;
+	-ms-flex-align: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+}
+
+#solaceExtraTemplateLibrary__toolbar-filter,#solaceExtraTemplateLibrary__toolbar-search {
+	position: relative;
+	width: 200px;
+}
+
+#solaceExtraTemplateLibrary__toolbar-search i,.solaceExtraTemplateLibrary__filter-btn i {
+	position: absolute;
+	top: 50%;
+	right: 0;
+	-webkit-transform: translateY(-50%);
+	transform: translateY(-50%);
+}
+
+.solaceExtraTemplateLibrary__filter-btn {
+	display: block;
+	display: none;
+	text-align: left;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+#solaceExtraTemplateLibrary__toolbar-counter {
+	font-size: 12px;
+	text-transform: capitalize;
+}
+
+#solaceExtraTemplateLibrary__search {
+	border: none;
+}
+
+#solaceExtraTemplateLibrary__search,.solaceExtraTemplateLibrary__filter-btn {
+	padding: 8px 15px 8px 0;
+	border-bottom: 1px solid #d5dadf;
+	border-radius: 0;
+	font-size: 12px;
+}
+
+#solaceExtraTemplateLibrary__filter-tags {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 999;
+	display: none;
+	margin-top: 10px;
+	padding: 10px;
+	width: 270%;
+	border-radius: 0 2px 2px;
+	background: #161b22; border: none; outline: none;
+	box-shadow: 0 4px 8px rgba(0,0,0,.05);
+}
+
+#solaceExtraTemplateLibrary__filter-tags>li {
+	float: left;
+	padding: 10px;
+	width: calc(100% / 4);
+	text-align: left;
+	text-transform: capitalize;
+	cursor: pointer;
+}
+
+#solaceExtraTemplateLibrary__filter-tags>li.active,#solaceExtraTemplateLibrary__filter-tags>li:hover {
+	color: #fb8c87;
+}
+
+#solaceExtraTemplateLibrary__filter-tags:before {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	width: 0;
+	height: 0;
+	border: solid transparent;
+	border-width: 0 10px 10px 0;
+	border-bottom-color: #161b22;
+	content: " ";
+	pointer-events: none;
+}
+
+#solaceExtraTemplateLibrary__templates {
+	height: calc(100% + 30px);
+}
+
+#solaceExtraTemplateLibrary__templates #select2-solaceExtraTemplateLibrary__filter-select-container {
+	text-align: left;
+}
+
+.solaceExtraTemplateLibrary__templates-window {
+	position: relative;
+	overflow-y: auto;
+	margin: 10px -15px 0;
+	height: calc(100% - 45px);
+}
+
+#solaceExtraTemplateLibrary__templates-list {
+	/* Masonry-style layout using CSS columns */
+	column-count: 3;
+	column-gap: 30px;
+}
+
+.solaceExtraTemplateLibrary__template {
+	position: relative;
+	overflow: hidden;
+	margin: 0 0 30px;
+	border-radius: 2px;
+	background-color: #fff;
+	box-shadow: 0 1px 20px 0 rgba(0,0,0,.07);
+	display: inline-block;
+	width: 100%;
+	-webkit-column-break-inside: avoid;
+	page-break-inside: avoid;
+	break-inside: avoid;
+}
+
+.solaceExtraTemplateLibrary__templates--section .solaceExtraTemplateLibrary__template,
+.solaceExtraTemplateLibrary__templates--page .solaceExtraTemplateLibrary__template {
+	/* Let the column layout control width */
+	width: 100%;
+}
+
+.solaceExtraTemplateLibrary__template-body {
+	position: relative;
+}
+
+.solaceExtraTemplateLibrary__template-body::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+.solaceExtraTemplateLibrary__template-preview {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,.5);
+	opacity: 0;
+	cursor: pointer;
+	-webkit-transition: opacity .5s;
+	transition: opacity .5s;
+}
+
+.solaceExtraTemplateLibrary__template-preview i {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	color: #d5dadf;
+	font-size: 20px;
+	-webkit-transform: translate(-50%,-50%);
+	transform: translate(-50%,-50%);
+}
+
+.solaceExtraTemplateLibrary__template-badge {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	display: inline-block;
+	padding: 2px 4px;
+	border-radius: 2px;
+	background-color: #fb8c87;
+	color: #fff;
+	text-transform: uppercase;
+	letter-spacing: .5px;
+	font-size: 10px;
+}
+
+.solaceExtraTemplateLibrary__template:hover .solaceExtraTemplateLibrary__template-preview {
+	opacity: 1;
+}
+
+.solaceExtraTemplateLibrary__template-thumbnail {
+	display: block;
+	width: 100%;
+}
+
+.solaceExtraTemplateLibrary__template-footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	align-items: center;
+	-ms-flex-align: center;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	padding: 10px;
+	width: 100%;
+	background-color: #fff;
+	font-size: 11px;
+	line-height: 1;
+	z-index: 2;
+	-webkit-transition: -webkit-transform .5s;
+	transition: transform .5s;
+	transition: transform .5s,-webkit-transform .5s;
+	-webkit-transform: translateY(100%);
+	transform: translateY(100%);
+}
+
+.solaceExtraTemplateLibrary__template:hover .solaceExtraTemplateLibrary__template-footer {
+	-webkit-transform: translateY(0);
+	transform: translateY(0);
+}
+
+.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__insert-button,.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__pro-button {
+	color: #fb8c87;
+	background-color: transparent;
+	padding: 0;
+}
+
+.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__pro-button:focus,.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__pro-button:hover {
+	color: #f1497e;
+}
+
+.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__insert-button:focus,.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__insert-button:hover {
+	color: #fb8c87;
+}
+
+.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__preview-button {
+	color: #495157;
+	background-color: transparent;
+	padding: 0;
+}
+
+.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__preview-button:focus,.solaceExtraTemplateLibrary__template .solaceExtraTemplateLibrary__preview-button:hover {
+	color: #606b73;
+}
+
+#elementor-template-library-header-preview .solaceExtraTemplateLibrary__insert-button,#elementor-template-library-header-preview .solaceExtraTemplateLibrary__insert-button:focus,#elementor-template-library-header-preview .solaceExtraTemplateLibrary__insert-button:hover,#elementor-template-library-header-preview .solaceExtraTemplateLibrary__pro-button,#elementor-template-library-header-preview .solaceExtraTemplateLibrary__pro-button:focus,#elementor-template-library-header-preview .solaceExtraTemplateLibrary__pro-button:hover {
+	background-image: -webkit-gradient(linear,left top,right top,from(#fb8c87),to(#fb8c87));
+	background-image: -webkit-linear-gradient(left,#fb8c87 0,#fb8c87 100%);
+	background-image: linear-gradient(90deg,#fb8c87 0,#fb8c87 100%);
+	color: #fff
+}
+
+@media only screen and (max-width: 1440px) {
+	.solaceExtraTemplateLibrary__iframe-wrapper iframe {
+		width: 1220px !important;
+	}
+}
+
+@media only screen and (max-width: 998px) {
+	.solaceExtraTemplateLibrary__iframe-wrapper iframe {
+		width: 123vw !important;
+	}
+}

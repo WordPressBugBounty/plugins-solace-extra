@@ -1,0 +1,194 @@
+/*--------------------------------------------------------------
+ == Checkout Page
+--------------------------------------------------------------*/
+.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout {
+	display: flex;
+}
+
+.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details {
+	display: flex;
+}
+
+.elementor-element-edit-mode .solace-extra-checkout-horizontal .woocommerce-checkout .col2-set,
+.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details .solace-extra-customer-details-wrapper {
+	width: 60%;
+}
+
+.elementor-element-edit-mode .solace-extra-checkout-horizontal .solace-extra-checkout-order-review-table,
+.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details .nv-order-review {
+	width: 40%;
+}
+
+.elementor-element-edit-mode .solace-extra-checkout-vertical form.checkout.woocommerce-checkout,
+.solace-extra-checkout-vertical form.checkout.woocommerce-checkout {
+	display: block;
+}
+
+.elementor-element-edit-mode .solace-extra-checkout-vertical .woocommerce-checkout .col2-set,
+.solace-extra-checkout-vertical form.checkout.woocommerce-checkout .nv-customer-details .solace-extra-customer-details-wrapper,
+.elementor-element-edit-mode .solace-extra-checkout-vertical .solace-extra-checkout-order-review-table,
+.solace-extra-checkout-vertical form.checkout.woocommerce-checkout .nv-customer-details .nv-order-review {
+	width: 100%;
+}
+
+@media only screen and (max-width: 1024px) {
+	.elementor-element-edit-mode .solace-extra-checkout-horizontal .solace-extra-customer-details-wrapper,
+	.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details {
+		flex-direction: column;
+	}
+
+	.elementor-element-edit-mode .solace-extra-checkout-horizontal .woocommerce-checkout .col2-set,
+	.solace-extra-checkout-horizontal .woocommerce-checkout .col2-set {
+		margin-right: 0 !important;
+	}
+
+	.elementor-element-edit-mode .solace-extra-checkout-horizontal .woocommerce-checkout .col2-set,
+	.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details .solace-extra-customer-details-wrapper {
+		width: 100%;
+	}
+	
+	.elementor-element-edit-mode .solace-extra-checkout-horizontal .solace-extra-checkout-order-review-table,
+	.solace-extra-checkout-horizontal form.checkout.woocommerce-checkout .nv-customer-details .nv-order-review {
+		width: 100%;
+	}
+}
+
+.elementor-widget-solace-extra-page-checkout .checkout_coupon p:first-child {
+    margin: 0;
+}
+
+.elementor-widget-solace-extra-page-checkout .checkout_coupon .form-row-first {
+    width: 80%;
+}
+
+.elementor-widget-solace-extra-page-checkout .checkout_coupon .form-row-last {
+    width: 18%;
+}
+
+.elementor-widget-solace-extra-page-checkout .checkout_coupon .form-row-last button {
+    width: 100%;
+}
+
+.solace-extra-checkout-order-review-table {
+    overflow: hidden;
+}
+
+.woocommerce.woocommerce-checkout .solace-extra-checkout-order-review-table-inner #order_review,
+.woocommerce.woocommerce-checkout .solace-extra-checkout-order-review-table-inner #order_review_heading,
+.woocommerce-page.woocommerce-checkout .solace-extra-checkout-order-review-table-inner #order_review,
+.woocommerce-page.woocommerce-checkout .solace-extra-checkout-order-review-table-inner #order_review_heading {
+    float: none;
+    width: auto;
+}
+
+.solace-extra-checkout-order-review-table #order_review table {
+  border: none !important;
+}
+
+.solace-extra-checkout-order-review-table #order_review thead th:first-child {
+  border-left-style: none !important;
+  border-top-style: none !Important;
+}
+
+.solace-extra-checkout-order-review-table #order_review thead th:last-child {
+  border-right-style: none !important;
+  border-top-style: none !Important;
+}
+
+.solace-extra-checkout-order-review-table #order_review tbody td:first-child {
+  border-left-style: none !important;
+}
+
+.solace-extra-checkout-order-review-table #order_review tbody td:last-child {
+  border-right-style: none !important;
+}
+
+.solace-extra-checkout-order-review-table #order_review tfoot tr th:first-child {
+  border-left-style: none !important;
+}
+
+.solace-extra-checkout-order-review-table #order_review tfoot tr td:last-child {
+  border-right-style: none !important;
+}
+
+.solace-extra-checkout-order-review-table #order_review tfoot tr:last-child td,
+.solace-extra-checkout-order-review-table #order_review tfoot tr:last-child th {
+  border-bottom-style: none !important;
+}
+
+.solace-extra-checkout-horizontal .woocommerce-checkout .col2-set {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+
+/* check why doesn't apply or rendered as different classes */
+.solace-extra-checkout-horizontal .solace-extra-customer-details-wrapper {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.solace-extra-checkout-horizontal .col2-set .col-1,
+.solace-extra-checkout-horizontal .col2-set .col-2 {
+  float: none;
+  width: 100%;
+}
+
+.solace-extra-checkout-vertical .col2-set .col-1,
+.solace-extra-checkout-vertical .col2-set .col-2 {
+    float: none;
+    width: 100%;
+}
+
+.elementor-widget-solace-extra-page-checkout ul {
+    padding: 0;
+}
+
+.elementor-widget-solace-extra-page-checkout .select2-container--focus span,
+.elementor-widget-solace-extra-page-checkout .select2-container--default .select2-selection--single {
+    border: none !important;
+    outline: none !important;
+}
+
+.elementor-widget-solace-extra-page-checkout .select2-selection {
+    position: relative;
+}
+
+.elementor-widget-solace-extra-page-checkout table.shop_table {
+    margin: 0;
+    border-collapse: collapse;
+}
+
+.elementor-widget-solace-extra-page-checkout form .form-row {
+    margin: 0;
+}
+
+.elementor-widghet-solace-extra-page-checkout .woocommerce-form-login__rememberme {
+    display: block;
+}
+
+.elementor-widget-solace-extra-page-checkout select {
+    padding: 0;
+}
+
+.elementor-widget-solace-extra-page-checkout .select2-container .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+}
+
+@media screen and (max-width: 670px) {
+    .solace-extra-checkout-horizontal .solace-extra-customer-details-wrapper {
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+                flex-direction: column;
+    }
+
+    .solace-extra-checkout-horizontal .solace-extra-customer-details-wrapper .solace-extra-checkout-order-review-table {
+       max-width: 100%;
+    }
+}

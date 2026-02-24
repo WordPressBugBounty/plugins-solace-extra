@@ -1,5 +1,5 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
-<?php $customizer_link = admin_url('customize.php'); ?>
+<?php $solace_extra_customizer_link = admin_url('customize.php'); ?>
 
 <div class="wrap">
     <?php require_once plugin_dir_path(dirname(__FILE__)) . 'partials/header.php'; ?>

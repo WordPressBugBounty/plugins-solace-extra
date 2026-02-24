@@ -1,0 +1,170 @@
+/*--------------------------------------------------------------
+ == Cart Page
+--------------------------------------------------------------*/
+.solace-extra-cart-wrapper,
+.solace-extra-cart-section-wrap .coupon {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.solace-extra-cart-section-table-wrap, 
+.solace-extra-cart-wrapper .cart_totals {
+    overflow-x: auto;
+}
+
+.solace-extra-cart-section-table-wrap table.shop_table {
+    margin-bottom: 0;
+}
+
+.solace-extra-cart-section-table-wrap table.shop_table,
+.cart_totals table.shop_table {
+    border: none;
+}
+
+.solace-extra-cart-wrapper table.shop_table,
+.woocommerce-cart .cart-collaterals .cart_totals table {
+    border-collapse: collapse;
+}
+
+.solace-extra-cart-wrapper table th,
+.solace-extra-cart-wrapper table td {
+    border: 0;
+}
+
+.solace-extra-cart-wrapper form .form-row {
+    margin: 0;
+}
+
+.solace-extra-cart-wrapper table.shop_table {
+    /* border-collapse: collapse !important; */
+    border-radius: 0;
+}
+
+.solace-extra-cart-wrapper table.shop_table td {
+    border: none;
+}
+
+.elementor-widget[class*="elementor-widget-wpr-"] table.shop_table .variation {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+.elementor-widget[class*="elementor-widget-wpr-"] table.shop_table .wc-item-meta li {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    margin-right: 10px;
+}
+
+.elementor-widget[class*="elementor-widget-wpr-"] .variation-Size,
+.elementor-widget[class*="elementor-widget-wpr-"] .wc-item-meta-label {
+    float: none !important;
+}
+
+.solace-extra-cart-vertical .solace-extra-cart-wrapper {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+            flex-direction: column;
+}
+
+@media screen and (max-width: 881px) {
+    .solace-extra-cart-horizontal .solace-extra-cart-wrapper {
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+            -ms-flex-direction: column;
+                flex-direction: column;
+    }
+}
+
+.solace-extra-cart-wrapper table.shop_table img {
+    vertical-align: middle;
+}
+
+.solace-extra-cart-horizontal .solace-extra-cart-wrapper .cart-collaterals .cart_totals,
+.solace-extra-cart-vertical .cart-collaterals .cart_totals {
+    float: none;
+    width: 100%;
+}
+
+.solace-extra-cart-sticky-yes .cart-collaterals {
+    position: sticky;
+    top: 0;
+}
+
+.solace-extra-cart-wrapper .select2-selection--single .select2-selection__rendered {
+    padding-left: 0;
+}
+
+.solace-extra-checkout-flex-justify .wc-proceed-to-checkout a {
+    width: 100%;
+}
+
+.solace-extra-cart-wrapper .form-row.coupon-col {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+}
+
+.solace-extra-cart-wrapper .form-row.coupon-col .coupon-col-start {
+    /* flex: 2; */
+}
+
+.solace-extra-cart-wrapper .form-row.coupon-col .coupon-col-end {
+    /* flex: 1; */
+    height: 100%;
+}
+
+.solace-extra-cart-wrapper .form-row.coupon-col .coupon-col-end button {
+    width: 100%;
+    height: 100%;
+}
+ 
+.solace-extra-cart-wrapper a.remove:before {
+    font-family: "Font Awesome 5 Free";
+    content: '\f00d';
+    position: absolute;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+    text-indent: 0;
+}
+
+.solace-extra-cart-wrapper .product-remove .remove {
+    position: relative;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+    -ms-flex-line-pack: center;
+        align-content: center;
+    vertical-align: middle;
+    text-indent: -9999px;
+}
+
+.solace-extra-cart-wrapper .product-remove .remove:hover {
+    background-color: transparent;
+    color: black;
+}
+
+.solace-extra-cart-wrapper img {
+    display: inline;
+}
+
+.solace-extra-cart-wrapper .select2-selection {
+    position: relative;
+}
+
+.solace-extra-cart-wrapper .select2-container--focus span,
+.solace-extra-cart-wrapper .select2-container--default .select2-selection--single {
+    border: none !important;
+    outline: none !important;
+}

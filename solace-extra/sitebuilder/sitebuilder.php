@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
  * @subpackage Solace_Extra/public
  */
 
-
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function check_current_page_type() {
     $message = ''; 
 
@@ -120,6 +120,7 @@ function check_current_page_type() {
     return 'basic-archives';
 }
 
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function get_solace_header_conditions() {
     global $wpdb;
 
@@ -165,6 +166,7 @@ function get_solace_header_conditions() {
 
 }
 
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function get_solace_footer_conditions() {
     global $wpdb;
 
@@ -210,6 +212,7 @@ function get_solace_footer_conditions() {
 
 }
 
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function get_solace_single_product_conditions() {
     global $wpdb;
 
@@ -254,6 +257,7 @@ function get_solace_single_product_conditions() {
 
 }
 
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function get_solace_footer_conditionsx() {
     global $wpdb;
 
@@ -312,6 +316,19 @@ function solace_display_custom_header() {
 
     $solace_conditions = get_solace_header_conditions();
 
+    $post_id = null;
+
+    foreach ( $solace_conditions as $item ) {
+        if (
+            isset( $item['footer_status'], $item['post_id'] ) &&
+            $item['footer_status'] == 1
+        ) {
+            $post_id = $item['post_id'];
+            break;
+        }
+    }
+    echo "<div style='display: none !important;' class='solace-custom-header-footer solace-custom-header' post-id='" . absint( $post_id ) ."'></div>";    
+
     $valid_archive_types = [
         'post|all|taxarchive|post_tag',
         'post|all|taxarchive|category',
@@ -364,7 +381,7 @@ function solace_display_custom_header() {
                                 echo '</div>';
                             } else {
                                 $output = '<div class="custom-header-content basic-global">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output ); 
                             }
@@ -414,7 +431,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
                             } else {
                                 $output = '<div class="custom-header-content page-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -457,7 +474,7 @@ function solace_display_custom_header() {
                                 } else {
                                     // Fallback to post content if Elementor data is not available
                                     $output = '<div class="custom-header-content basic-archives">';
-                                    $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                    $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                     $output .= '</div>';
                                     echo wp_kses_post( $output );
                                 }  
@@ -486,7 +503,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content post-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -512,7 +529,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-front">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -538,7 +555,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-date">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -564,7 +581,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-blog">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -590,7 +607,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-search">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -616,7 +633,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-404">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -642,7 +659,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content post-tag">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -668,7 +685,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content special-author">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -694,7 +711,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content post-category">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -720,7 +737,7 @@ function solace_display_custom_header() {
 			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );                            } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-header-content basic-singulars">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -747,7 +764,7 @@ function solace_display_custom_header() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -773,7 +790,7 @@ function solace_display_custom_header() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-category">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -799,7 +816,7 @@ function solace_display_custom_header() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -818,6 +835,81 @@ function solace_display_custom_header() {
 }
 
 
+/**
+ * Check if a post contains an icon-list widget in its Elementor data
+ *
+ * @param int $post_id The post ID to check
+ * @return bool True if icon-list widget is found, false otherwise
+ */
+function solace_post_has_icon_list_widget( $post_id ) {
+    if ( ! $post_id ) {
+        return false;
+    }
+
+    $elementor_data = get_post_meta( $post_id, '_elementor_data', true );
+    
+    if ( empty( $elementor_data ) ) {
+        return false;
+    }
+
+    $elements = json_decode( $elementor_data, true );
+    
+    if ( empty( $elements ) || ! is_array( $elements ) ) {
+        return false;
+    }
+
+    $has_icon_list = false;
+
+    /**
+     * Recursive function to search for icon-list widget in Elementor data
+     * 
+     * @param array $elements Array of Elementor elements to search through
+     */
+    $check_widgets = function( $elements ) use ( &$check_widgets, &$has_icon_list ) {
+        foreach ( $elements as $element ) {
+            // Check if element has a widget type
+            if ( isset( $element['widgetType'] ) && $element['widgetType'] === 'icon-list' ) {
+                $has_icon_list = true;
+                return; // Early return if found
+            }
+            
+            // Recursively check nested elements
+            if ( ! empty( $element['elements'] ) ) {
+                $check_widgets( $element['elements'] );
+            }
+        }
+    };
+
+    $check_widgets( $elements );
+
+    return $has_icon_list;
+}
+
+/**
+ * Enqueue icon-list widget CSS if post has the widget
+ *
+ * @param int $post_id The post ID to check
+ */
+function solace_enqueue_icon_list_css_if_needed( $post_id ) {
+    static $css_enqueued = false;
+    
+    // Only enqueue once per page load
+    if ( $css_enqueued ) {
+        return;
+    }
+    
+    if ( $post_id && solace_post_has_icon_list_widget( $post_id ) ) {
+        wp_enqueue_style( 
+            'solace-extra-widget-icon-list', 
+            SOLACE_EXTRA_ASSETS_URL . 'css/widget-icon-list.min.css', 
+            array(), 
+            SOLACE_EXTRA_VERSION, 
+            'all' 
+        );
+        $css_enqueued = true;
+    }
+}
+
 function solace_display_custom_footer() {
     if (did_action('elementor/loaded')) {
         \Elementor\Plugin::$instance->frontend->enqueue_styles();
@@ -826,6 +918,22 @@ function solace_display_custom_footer() {
 
     $solace_conditions = get_solace_footer_conditions();
 
+    $post_id = null;
+
+    foreach ( $solace_conditions as $item ) {
+        if (
+            isset( $item['footer_status'], $item['post_id'] ) &&
+            $item['footer_status'] == 1
+        ) {
+            $post_id = $item['post_id'];
+            break;
+        }
+    }
+    echo "<div style='display: none !important;' class='solace-custom-header-footer solace-custom-footer' post-id='" . absint( $post_id ) ."'></div>";
+    
+    // Check if post has icon-list widget and enqueue CSS
+    solace_enqueue_icon_list_css_if_needed( $post_id );
+    
     $valid_archive_types = [
         'post|all|taxarchive|post_tag',
         'post|all|taxarchive|category',
@@ -878,7 +986,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content basic-global">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }  
@@ -918,7 +1026,7 @@ function solace_display_custom_footer() {
                                 } else {
                                     // Fallback to post content if Elementor data is not available
                                     $output = '<div class="custom-footer-content basic-archives">';
-                                    $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                    $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                     $output .= '</div>';
                                     echo wp_kses_post( $output );
                                 }
@@ -948,7 +1056,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content page-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -975,7 +1083,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content post-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1002,7 +1110,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content special-front">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1029,7 +1137,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-foter-content special-date">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1056,7 +1164,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content special-blog">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1083,7 +1191,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content special-search">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1110,7 +1218,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content special-404">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1137,7 +1245,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content post-tag">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1164,7 +1272,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content special-author">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1191,7 +1299,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content post-category">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1219,7 +1327,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content basic-singulars">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1246,7 +1354,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1272,7 +1380,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-category">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1298,7 +1406,7 @@ function solace_display_custom_footer() {
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-all">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
                             }
@@ -1372,6 +1480,7 @@ function solace_set_taxonomy_based_on_part($post_id) {
     }
 
     // Check if 'part' parameter is set
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     if (isset($_GET['part'])) {
         $part = sanitize_text_field(wp_unslash($_GET['part']));
         $taxonomy = 'sitebuilder_part'; // The taxonomy you are using
@@ -1402,6 +1511,35 @@ function solace_update_sitebuilder_status() {
     $part = sanitize_text_field(wp_unslash($_POST['part']) );
     $status = sanitize_text_field(wp_unslash($_POST['status']) );
 
+    // Updated status sitebuilder part.
+    if ( $part ) {
+
+        // Set up the arguments for the custom query.
+        $args = array(
+            'post_type'      => 'solace-sitebuilder',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+            'meta_key'       => '_solace_'.$part .'_status',
+            'posts_per_page' => -1,
+        );
+
+        // Create a new custom query.
+        $query = new WP_Query( $args );
+
+        // Check if there are any posts found.
+        if ( $query->have_posts() ) {
+            while ( $query->have_posts() ) {
+                $query->the_post();
+
+                // Updated the value of the custom meta key.
+                update_post_meta( get_the_ID(), '_solace_'.$part.'_status', false );
+            }
+        }
+
+        // Reset post data after custom query to avoid interfering with other queries.
+        wp_reset_postdata();    
+
+    }
+
     // Update the post meta.
     if (update_post_meta($post_id, '_solace_'.$part.'_status', $status)) {
         wp_send_json_success('Status updated.');
@@ -1431,39 +1569,22 @@ function solace_update_sitebuilder_all_status() {
 
     $posts = get_posts([
         'post_type'      => 'solace-sitebuilder',
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'meta_key'       => '_solace_' . $part . '_status',
         'posts_per_page' => -1,
         'fields'         => 'ids'
     ]);
 
-    if ($status === '0') {
+    if ( ! $status ) {
         foreach ($posts as $post_id) {
-            $current_value = get_post_meta($post_id, $meta_key, true);
-
-            if ($current_value !== '' && $current_value !== '0') {
-                update_post_meta($post_id, $meta_key, '0');
-                // error_log("Updated post ID $post_id to 0");
-            } elseif ($current_value === '') {
-                // error_log("Post ID $post_id does not have the meta key, skipping update.");
-            } else {
-                // error_log("Post ID $post_id already has value 0.");
-            }
+            update_post_meta($post_id, $meta_key, false);
         }
-
         wp_send_json_success('Status updated to 0 for all posts.');
     } elseif ($status === '1') {
         foreach ($posts as $post_id) {
-            $current_value = get_post_meta($post_id, $meta_key, true);
-
-            if ($current_value !== '' && $current_value !== '1') {
-                update_post_meta($post_id, $meta_key, '1');
-                // error_log("Updated post ID $post_id to 1");
-            } elseif ($current_value === '') {
-                // error_log("Post ID $post_id does not have the meta key, skipping update.");
-            } else {
-                // error_log("Post ID $post_id already has value 1.");
-            }
+            update_post_meta($post_id, $meta_key, true);
+            break;
         }
-
         wp_send_json_success('Status updated to 1 for all posts.');
     } else {
         wp_send_json_error('Invalid status value. Only 0 or 1 is allowed.');
@@ -1530,7 +1651,7 @@ function solace_update_sitebuilder_all_status2() {
 add_action('wp_ajax_solace_update_sitebuilder_all_status', 'solace_update_sitebuilder_all_status');
 
 
-
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function load_template_preview() {
     
     if (isset($_GET['preview']) && !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['preview']))) === 'true') {
@@ -1548,6 +1669,7 @@ function load_template_preview() {
 add_action('template_redirect', 'load_template_preview');
 
 add_action('init', function() {
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     if (isset($_GET['post_id']) && is_numeric($_GET['post_id']) && isset($_GET['security'])) {
         // Verify the nonce
         if (!wp_verify_nonce(sanitize_key(wp_unslash($_GET['security'])), 'solace_preview_nonce_action')) {
@@ -1930,6 +2052,7 @@ function solace_save_conditions() {
     if (isset($part)){
         update_post_meta($post_id, '_solace_'.$part.'_status', 1);
     }
+    update_post_meta($post_id, '_solace_template', $part);
 
     $processed_conditions = array();
     foreach ($conditions as $condition) {
@@ -1943,11 +2066,8 @@ function solace_save_conditions() {
     }
 
     update_post_meta($post_id, '_solace_'.$part.'_conditions', $processed_conditions);
-    // error_log('Update Post Meta (613):'.$post_id);
     $response = array('post_id' => $post_id);
-    // error_log('Sending JSON response: ' . wp_json_encode($response));
     wp_send_json_success($response);
-    // wp_send_json_success();
 
 }
 
@@ -1992,133 +2112,145 @@ function solace_save_edit_conditions() {
     wp_send_json_success($response);
 }
 
-add_action('wp_ajax_create_and_edit_page_single_product', 'solace_create_and_edit_page_singleproduct');
-add_action('wp_ajax_nopriv_create_and_edit_page_single_product', 'solace_create_and_edit_page_singleproduct');
+/**
+ * Generalized function to create and set active a new custom 'solace-sitebuilder' post.
+ *
+ * @param string $meta_key      The meta key to mark active/inactive.
+ * @param string $title_prefix  Prefix for the post title.
+ * @return void Outputs JSON success or error response.
+ */
+function solace_extra_create_and_edit_page( $meta_key, $title_prefix ) {
+    // Query existing posts with the specific meta key.
+    $args = array(
+        'post_type'      => 'solace-sitebuilder',
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'meta_key'       => $meta_key,
+        'posts_per_page' => -1,
+    );
+    $query = new WP_Query( $args );
+    $post_count = count( $query->posts ) + 1;
 
-function solace_create_and_edit_page_singleproduct() { 
+    // Reset all existing posts' meta key to false.
+    if ( $query->have_posts() ) {
+        while ( $query->have_posts() ) {
+            $query->the_post();
+            update_post_meta( get_the_ID(), $meta_key, false );
+        }
+    }
+    wp_reset_postdata();
+
+    // Create a new draft post.
     $new_post = array(
-        'post_title'   => 'Single Product',
+        'post_title'   => $title_prefix . $post_count,
         'post_content' => '',
         'post_status'  => 'draft',
-        'post_type'    => 'solace-sitebuilder', 
+        'post_type'    => 'solace-sitebuilder',
     );
 
-    $post_id = wp_insert_post($new_post);
+    $post_id = wp_insert_post( $new_post );
+    // error_log('rico-post_id'.$post_id);
+    // error_log('rico-metakey'.$meta_key);
+    update_post_meta($post_id, '_solace_template', $meta_key);
 
-    if ($post_id) {
-        update_post_meta($post_id, '_solace_singleproduct_status', 1);
-        wp_send_json_success(array('post_id' => $post_id));
+    if ( $post_id ) {
+        update_post_meta( $post_id, $meta_key, 1 );
+
+        wp_send_json_success( array(
+            'post_id'    => $post_id,
+            'post_title' => esc_html( $title_prefix . $post_count ),
+        ) );
+        // error_log('rico3 meta_key'.$meta_key);
+        
+        update_post_meta($post_id, '_solace_template', $meta_key);
+        
     } else {
-        wp_send_json_error('Failed to create new post');
+        // error_log('rico-error'.$post_id);
+        wp_send_json_error( 'Failed to create new post' );
     }
+    // error_log('rico4 meta_key'.$meta_key);
 }
 
-add_action('wp_ajax_create_and_edit_page_blogsingle_post', 'solace_create_and_edit_page_blogsinglepost');
-add_action('wp_ajax_nopriv_create_and_edit_page_blogsingle_post', 'solace_create_and_edit_page_blogsinglepost');
+/**
+ * Unified AJAX handler for creating a custom 'solace-sitebuilder' post.
+ * Accepts POST parameter 'type': (e.g., 'shopproduct', 'blogsinglepost', 'blogarchive', '404' )
+ */
+function solace_extra_create_and_edit_page_ajax_handler() {
+    // Verify nonce.
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
+        wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+    }
 
-function solace_create_and_edit_page_blogsinglepost() { 
-    $new_post = array(
-        'post_title'   => 'Blog Single Post',
-        'post_content' => '',
-        'post_status'  => 'draft',
-        'post_type'    => 'solace-sitebuilder', 
+    // Check current user.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( array( 'error' => 'Unauthorized' ) );
+    }
+
+    // Validate and map the type to meta key and title prefix.
+    $type = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+
+    $types = array(
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'singleproduct'  => array( 'meta_key' => '_solace_singleproduct_status', 'title_prefix' => 'Single Product #' ),
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'shopproduct'  => array( 'meta_key' => '_solace_shopproduct_status', 'title_prefix' => 'Shop #' ),
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'purchase-summary'  => array( 'meta_key' => '_solace_purchase-summary_status', 'title_prefix' => 'Purchase Summary #' ),
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'blogsinglepost'  => array( 'meta_key' => '_solace_blogsinglepost_status', 'title_prefix' => 'Single Post #' ),
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        'blogarchive'  => array( 'meta_key' => '_solace_blogarchive_status', 'title_prefix' => 'Blog Archive #' ),
+        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+        '404'          => array( 'meta_key' => '_solace_404_status', 'title_prefix' => '404 #' ),
     );
 
-    $post_id = wp_insert_post($new_post);
+    // Check if provided type is valid
+    if ( empty( $type ) || ! array_key_exists( $type, $types ) ) {
+        wp_send_json_error( array( 'error' => 'Invalid type provided', 'allowed_types' => array_keys( $types ) ) );
+    }    
 
-    if ($post_id) {
-        update_post_meta($post_id, '_solace_blogsinglepost_status', 1);
-        wp_send_json_success(array('post_id' => $post_id));
+    $meta_key     = $types[ $type ]['meta_key'];
+    $title_prefix = $types[ $type ]['title_prefix'];
+
+
+
+    solace_extra_create_and_edit_page( $meta_key, $title_prefix );
+}
+add_action( 'wp_ajax_create_and_edit_page', 'solace_extra_create_and_edit_page_ajax_handler' );
+add_action( 'wp_ajax_nopriv_create_and_edit_page', 'solace_extra_create_and_edit_page_ajax_handler' );
+
+
+function solace_extra_delete_action_ajax_handler() {
+    // Check if the nonce is set and valid
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
+        wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+    }
+
+    // Check if the current user has the required capability
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( array( 'error' => 'Unauthorized' ) );
+    }
+
+    // Get and sanitize the ID from the request
+    $id = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+
+    if ( empty( $id ) ) {
+        wp_send_json_error( array( 'error' => 'Invalid ID.' ) );
+    }
+
+    // Optional: Log the ID for debugging
+    // error_log( '$id: ' . print_r( $id, true ) );
+
+    // Attempt to delete the post
+    $result = wp_delete_post( $id, true ); // true to force delete, bypass trash
+
+    if ( $result ) {
+        wp_send_json_success( array( 'message' => 'Item deleted successfully.' ) );
     } else {
-        wp_send_json_error('Failed to create new post');
+        wp_send_json_error( array( 'error' => 'Failed to delete item.' ) );
     }
 }
-
-add_action('wp_ajax_create_and_edit_page_blogarchive', 'solace_create_and_edit_page_blogarchive');
-add_action('wp_ajax_nopriv_create_and_edit_page_blogarchive', 'solace_create_and_edit_page_blogarchive');
-
-function solace_create_and_edit_page_blogarchive() { 
-    $new_post = array(
-        'post_title'   => 'Blog Archive',
-        'post_content' => '',
-        'post_status'  => 'draft',
-        'post_type'    => 'solace-sitebuilder', 
-    );
-
-    $post_id = wp_insert_post($new_post);
-
-    if ($post_id) {
-        update_post_meta($post_id, '_solace_blogarchive_status', 1);
-        wp_send_json_success(array('post_id' => $post_id));
-    } else {
-        wp_send_json_error('Failed to create new post');
-    }
-}
-
-add_action('wp_ajax_create_and_edit_page_shop_product', 'solace_create_and_edit_page_shop_product');
-add_action('wp_ajax_nopriv_create_and_edit_page_shop_product', 'solace_create_and_edit_page_shop_product');
-
-function solace_create_and_edit_page_shop_product() { 
-    $new_post = array(
-        'post_title'   => 'Shop Product Categories',
-        'post_content' => '',
-        'post_status'  => 'draft',
-        'post_type'    => 'solace-sitebuilder', 
-    );
-
-    $post_id = wp_insert_post($new_post);
-
-    if ($post_id) {
-        update_post_meta($post_id, '_solace_shopproduct_status', 1);
-        wp_send_json_success(array('post_id' => $post_id));
-    } else {
-        wp_send_json_error('Failed to create new post');
-    }
-}
-
-add_action('wp_ajax_create_new_post', 'solace_create_new_post');
-add_action('wp_ajax_nopriv_create_new_post', 'solace_create_new_post');
-
-function solace_create_new_post() {
-    $new_post = array(
-        'post_title'   => 'Solace Site Builder Title Here',
-        'post_content' => '',
-        'post_status'  => 'draft',
-        'post_type'    => 'solace-sitebuilder', 
-    );
-
-    $post_id = wp_insert_post($new_post);
-
-    if ($post_id) {
-        wp_send_json_success(array('post_id' => $post_id));
-    } else {
-        wp_send_json_error('Failed to create new post');
-    }
-}
-
-add_action('wp_ajax_create_new_post_404', 'solace_create_new_post_404');
-add_action('wp_ajax_nopriv_create_new_post_404', 'solace_create_new_post_404');
-
-function solace_create_new_post_404() {
-    check_ajax_referer('solace_conditions_nonce_action', 'nonce');
-
-    $new_post = array(
-        'post_title'   => '404 Layout',
-        'post_content' => '',
-        'post_status'  => 'draft', 
-        'post_type'    => 'solace-sitebuilder',   
-    );
-
-    $post_id = wp_insert_post($new_post);
-
-    if ($post_id) {
-        update_post_meta($post_id, '_solace_404_status', '1');
-
-        wp_send_json_success(array('post_id' => $post_id));
-    } else {
-        wp_send_json_error('Failed to create new post');
-    }
-}
+add_action('wp_ajax_delete_action', 'solace_extra_delete_action_ajax_handler');
+add_action('wp_ajax_nopriv_delete_action', 'solace_extra_delete_action_ajax_handler');
 
 function solace_get_condition_label($value) {
     switch ($value) {
@@ -2185,6 +2317,7 @@ function solace_get_condition_label($value) {
 // add_filter('template_include', 'solace_sitebuilder_custom_template');
 function solace_sitebuilder_custom_template($template) {
 
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     if (is_singular('solace-sitebuilder') || (isset($_GET['action']) && sanitize_text_field(wp_unslash($_GET['action'])) === 'elementor')) {
         if (isset($_GET['security'])) {
             $security_nonce = sanitize_key(wp_unslash($_GET['security']));
@@ -2255,7 +2388,7 @@ function solace_handle_delete_post() {
     // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	 --- We need this.
     $part = isset($_GET['part']) ? sanitize_text_field(wp_unslash($_GET['part'])) : 'header';
     
-    wp_redirect(admin_url('admin.php?page=dashboard-sitebuilder&part=' . $part));
+    wp_safe_redirect(admin_url('admin.php?page=dashboard-sitebuilder&part=' . $part));
     exit;
 }
 
@@ -2268,68 +2401,6 @@ function solace_check_elementor_plugin_status() {
 }
 add_action( 'wp_ajax_check_elementor_status', 'solace_check_elementor_plugin_status' );
 
-function solace_get_part_status1($part) {
-    $is_checked = false;
-    $image = $part . '.svg'; // Default image if no meta found
-    $lock_class = 'lock';    // Default lock class if no meta found
-    $active_blue = '';
-    $is_disabled = false;    // Default to not disabled
-
-
-    $posts = get_posts([
-        'post_type'      => 'solace-sitebuilder',
-        // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-        'meta_key'       => '_solace_' . $part . '_status',
-        'posts_per_page' => -1,
-        'fields'         => 'ids'
-    ]);
-
-    if (empty($posts)) {
-        $is_disabled = true; // Disable the switch if no posts found
-
-        return [
-            'image' => $part . '.svg', // Default image
-            'lock_class' => 'lock',    // Lock class
-            'is_checked' => false,
-            'active_blue' => $active_blue,
-            'is_disabled' => $is_disabled
-        ];
-    }
-
-    $found_value_1 = false;
-    $found_value_0 = true; // Default, assume all are 0
-
-    foreach ($posts as $post_id) {
-        $meta_value = get_post_meta($post_id, '_solace_' . $part . '_status', true);
-        if ($meta_value === '1') {
-            $found_value_1 = true;
-        }
-        if ($meta_value !== '0') {
-            $found_value_0 = false; // At least one value is not 0
-        }
-    }
-
-    if ($found_value_1) {
-        $active_blue = 'active';
-        $image = $part . '-active.svg'; // Image for active part
-        $lock_class = ''; // No lock class
-        $is_checked = true;
-    } elseif ($found_value_0) {
-        $active_blue = 'active';
-        $image = $part . '-active.svg'; // Image for active part (all 0)
-        $lock_class = ''; // No lock class
-        $is_checked = false;
-    }
-
-   return [
-        'image' => $image,
-        'lock_class' => $lock_class,
-        'is_checked' => $is_checked,
-        'active_blue' => $active_blue,
-        'is_disabled' => $is_disabled
-
-    ];
-}
 
 function solace_get_part_status($part) {
     $is_checked = false;
@@ -2435,12 +2506,12 @@ function solace_get_elementor_content_via_ajax() {
         echo wp_kses_post($kit_content);
 
         // Other theme or plugin styles
-        wp_enqueue_style('solace-theme', get_template_directory_uri() . '/assets-solace/css/theme.min.css', array(), SOLACE_VERSION);
+        wp_enqueue_style('solace-theme', get_template_directory_uri() . '/assets-solace/css/theme.min.css', array(), SOLACE_EXTRA_VERSION);
         wp_enqueue_style(
             'solace-widget-nav-menu',
             plugin_dir_url(__FILE__) . '../assets/css/widget-nav-menu.min.css',
             array(),
-            SOLACE_VERSION
+            SOLACE_EXTRA_VERSION
         );
 
         wp_head();
@@ -2504,3 +2575,130 @@ add_action('wp_footer', function() {
     </script>
     <?php
 });
+
+
+function solace_debug_full_page_info() {
+    $current_id = 0;
+    $title = 'N/A';
+    $post_type = 'N/A';
+    $is_editor = 'NO';
+
+    if ( is_admin() ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin debug context, reading GET for display only.
+        if ( isset( $_GET['post'] ) ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin context, value sanitized with intval().
+            $current_id = intval( $_GET['post'] );
+            $title = get_the_title( $current_id );
+            $post_type = get_post_type( $current_id );
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin context, reading GET for editor check.
+            $is_editor = ( isset( $_GET['action'] ) && $_GET['action'] == 'elementor' ) ? 'YES' : 'NO';
+        }
+    } else {
+        $queried_object = get_queried_object();
+        
+        if ( is_singular() ) {
+            $current_id = get_the_ID();
+            $title = get_the_title( $current_id );
+            $post_type = get_post_type( $current_id );
+        } elseif ( is_category() || is_tag() || is_tax() ) {
+            if ( $queried_object ) {
+                $current_id = $queried_object->term_id;
+                $title = $queried_object->name;
+                $post_type = 'Taxonomy: ' . $queried_object->taxonomy;
+            }
+        } elseif ( is_post_type_archive() ) {
+            if ( $queried_object ) {
+                $title = $queried_object->label;
+                $post_type = 'Archive: ' . $queried_object->name;
+            }
+        }
+    }
+
+    if ( ! $current_id && ! is_post_type_archive() ) return;
+
+    $solace_template_id = 'None';
+    if ( ! is_admin() && ( is_post_type_archive( 'product' ) || is_tax( 'product_cat' ) ) ) {
+        $solace_query = get_posts( [
+            'post_type'      => 'solace-sitebuilder',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+            'meta_key'       => '_solace_shopproduct_status',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+            'meta_value'     => '1',
+            'fields'         => 'ids',
+            'posts_per_page' => 1
+        ] );
+        if ( ! empty( $solace_query ) ) {
+            $solace_template_id = $solace_query[0];
+        }
+    }
+    
+}
+
+
+function solace_custom_body_class( $classes ) {
+    $template_id = null;
+
+    if ( is_post_type_archive('product') || is_tax('product_cat') || is_tax('product_tag') ) {
+        $solace_query = get_posts([
+            'post_type'      => 'solace-sitebuilder',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+            'meta_key'       => '_solace_shopproduct_status',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+            'meta_value'     => '1',
+            'fields'         => 'ids',
+            'posts_per_page' => 1
+        ]);
+        if ( ! empty( $solace_query ) ) {
+            $template_id = $solace_query[0];
+        }
+    } 
+    elseif ( is_singular() ) {
+        $template_id = get_the_ID();
+    }
+
+    if ( $template_id ) {
+        $layout = get_post_meta( $template_id, '_wp_page_template', true );
+        $layout_class = $layout ? $layout : 'default';
+        $classes[] = 'solace_' . sanitize_html_class( $layout_class );
+    }
+
+    return $classes;
+}
+
+
+function solace_render_custom_styles() {
+    ?>
+    <style type="text/css">
+        body.solace_elementor_header_footer .container,
+        body.solace_elementor_canvas .container {
+            max-width: none !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            margin: 0 !important;
+        }
+
+        body.solace_elementor_header_footer .elementor,
+        body.solace_elementor_canvas .elementor {
+            width: 100%;
+        }
+        body.theme-solace span.onsale {
+            z-index: 2;
+        }
+        body.solace-sitebuilder-singleproduct.single-product .container.shop-container .woocommerce-message {
+            margin-bottom: 0;
+        }
+        body.solace-sitebuilder-singleproduct.single-product .container.shop-container {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    </style>
+    <?php
+}
+
+// add_action( 'wp', 'solace_debug_full_page_info' );
+// add_action( 'admin_init', 'solace_debug_full_page_info' );
+
+add_filter( 'body_class', 'solace_custom_body_class' );
+add_action( 'wp_head', 'solace_render_custom_styles', 100 );
+

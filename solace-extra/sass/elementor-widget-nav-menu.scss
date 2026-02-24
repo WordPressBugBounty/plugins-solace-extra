@@ -1,0 +1,247 @@
+.elementor-widget-solace-extra-nav-menu {
+    z-index: 999;
+
+    ul {
+        li {
+            position: relative;
+
+            a {
+                .sub-arrow {
+                    padding: 10px;
+                    display: none;
+
+                    i {
+                        color: var(--sol-color-link-button-initial);
+                    }
+                }
+            }
+        }
+
+        li.menu-item-has-children {
+            .sub-arrow {
+                display: none;
+                flex-wrap: wrap;
+                align-items: center;
+                padding: 0;
+                cursor: pointer;
+
+                i {
+                    color: var(--sol-color-link-button-initial);
+                }
+            }
+
+            a {
+                .sub-arrow:first-child {
+                    display: flex;
+                    padding: 10px;
+                }
+            }
+
+            ul.sub-menu.active {
+                display: block;
+                position: relative;
+                top: 0;
+                left: 0;
+                z-index: 2;
+            }
+
+            ul.sub-menu:hover {
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 2;
+            }
+
+            &:hover {
+                ul.sub-menu {
+                    display: block;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    z-index: 2;
+                }
+            }
+        }
+    }
+
+    // Vertical
+    .elementor-nav-menu--layout-vertical {
+        ul {
+            li.menu-item-has-children {
+                ul.sub-menu {
+                    z-index: 3;
+                }
+            }
+        }
+    }
+
+    // Dropdown
+    .solace-elementor-nav-menu--dropdown {
+
+        ul {
+            li {
+                display: flex;
+                flex-wrap: wrap;
+    
+                a {
+                    width: 100%;
+                }
+            }
+
+            li.menu-item-has-children {
+
+                &:hover {
+                    ul.sub-menu {
+                        display: none;
+                        position: static;
+                    }
+                }
+
+                ul.sub-menu {
+                    display: none;
+                }
+            }
+
+            li.active {
+                >ul.sub-menu {
+                    width: 100%;
+                    display: block;
+                }
+            }
+        }
+    }
+
+    // Dropdown popup
+    .solace-elementor-menu-toggle.elementor-active {
+        position: fixed !important;
+        right: auto !important;
+        z-index: 9999 !important;
+    }
+
+    .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        padding-top: 110px;
+        z-index: 999 !important;        
+        border: none !important;
+        border-radius: 0 !important;
+
+        &.solace-dropdown-open {
+            margin: 0 !important;
+            overflow: auto !important;
+
+            ul {
+                border: none !important;
+            }
+
+            a:focus {
+                box-shadow: none !important;
+            }
+        }
+    }
+}
+
+.elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu {
+    .solace-elementor-nav-menu--dropdown {
+        width: 102vw;
+        overflow: hidden;
+        left: calc(-1.5 * var(--padding-inline-end));
+
+        ul {
+            li {
+                a {
+                    padding: 10px 40px;
+                    display: flex;
+                }
+            }
+        }
+    }
+}
+
+// Fix editor elementor fullwidth.
+.elementor-editor-active {
+    .elementor-element-edit-mode.e-con--row {
+        .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu {
+            .solace-elementor-nav-menu--dropdown {
+                width: auto;
+            }
+        }
+    }
+}
+
+@media only screen and (min-width: 1024px) {
+    .elementor-widget-solace-extra-nav-menu {
+        .elementor-nav-menu--layout-horizontal {
+            ul {
+                li.menu-item-has-children {
+                    ul.sub-menu {
+                        position: absolute !important;
+                        top: 100% !important;
+                        left: 0 !important;
+                        z-index: 99999 !important;
+                    }
+                }
+            }
+        }
+
+        .elementor-nav-menu--layout-vertical {
+            ul {
+                li.menu-item-has-children {
+                    ul.sub-menu {
+                        position: absolute !important;
+                        top: 0 !important;
+                        z-index: 99999 !important;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Fix control distance in dropdown popup.
+@media only screen and (max-width: 998px) {
+    .elementor-element.elementor-nav-menu--toggle.elementor-widget.elementor-widget-solace-extra-nav-menu {
+        .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown {
+            margin: 0 !important;
+        }
+    }
+}
+
+// Fix frond end gap space in tablet and mobile
+@media only screen and (max-width: 768px) {
+    // Fix editor elementor fullwidth.
+    .elementor-editor-active {
+        .elementor-element-edit-mode.e-con--row {
+            .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu {
+                .solace-elementor-nav-menu--dropdown {
+                    left: calc(-12.3 * var(--padding-inline-end));
+                    width: 105vw;
+                }
+            }
+        }
+    }
+
+    .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu {
+        .solace-elementor-nav-menu--dropdown {
+            width: 105vw;
+        }
+    }
+}
+
+// Fix frond end gap space in tablet and mobile
+@media only screen and (max-width: 576px) {
+    // Fix editor elementor fullwidth.
+    .elementor-editor-active {
+        .elementor-element-edit-mode.e-con--row {
+            .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu {
+                .solace-elementor-nav-menu--dropdown {
+                    left: calc(-9.5 * var(--padding-inline-end));
+                    width: 105vw;
+                }
+            }
+        }
+    }
+}

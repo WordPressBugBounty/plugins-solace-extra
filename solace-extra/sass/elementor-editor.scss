@@ -1,4 +1,17 @@
 body {
+    // solace icon
+    .elementor-panel .elementor-element div.icon .solace-extra::after {
+        position: absolute;
+        top: 5px;
+        right: -13px;
+        content: "WL";
+        font-size: 22px;
+        opacity: .7;
+        background-image: url(../images/solace-icon.png);
+        background-size: 13px;
+        background-repeat: no-repeat;
+        color: rgba(0, 0, 0, 0);
+    }
 
     // Solaceform.
     .solaceform-form {
@@ -23,12 +36,61 @@ body {
         }
     }
 
-    // Nav menu
-    .elementor-nav-menu {
-        li {
-            > .sub-arrow {
-                display: none;
+    // Product Meta.
+    .elementor-widget-solace-extra-product-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+
+        .solace_extra_product_meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+
+            span.detail-container {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+
+                &::after {
+                    display: inline-block;
+                }
             }
+        }
+    }    
+
+    // Product Meta - View Stacked
+    .elementor-woo-meta--view-stacked.elementor-widget-solace-extra-product-meta {
+
+        .solace_extra_product_meta {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .sku_wrapper,
+            .posted_in,
+            .tagged_as {
+                display: block;
+                padding-bottom: 0;
+            }
+
+            span.detail-container {
+                position: relative;
+                width: 100%;
+
+                &:not(:last-child) {
+                    &::after {
+                        left: 0;
+                        position: absolute !important;
+                    }
+                }
+            }
+        }
+
+    }    
+
+    // Product Meta - View Inline
+    .elementor-woo-meta--view-inline.elementor-widget-solace-extra-product-meta {
+        .solace_extra_product_meta {
         }
     }
 

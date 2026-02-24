@@ -1,290 +1,489 @@
 (function( $ ) {
 	'use strict';
-    
-    // const iframex = document.getElementById('solaceIframe');
 
-    // function postMessageToIframex(data) {
-    //     // Mengirim pesan ke iframe dengan data yang ditentukan
-    //     iframex.contentWindow.postMessage(data, 'https://solacewp.com'); // Sesuaikan URL sesuai dengan domain iframe
-    //     // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); // Sesuaikan URL sesuai dengan domain iframe
-    //     console.log('Post message sent to iframe:', data);
+	// Utility: Get URL parameter by name
+	function getParameterByName(name, url) {
+		if (!url) url = window.location.href;
+		name = name.replace(/[\[\]]/g, "\\$&");
+		var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+		var results = regex.exec(url);
+		if (!results) return '';
+		if (!results[2]) return '';
+		return decodeURIComponent(results[2].replace(/\+/g, " "));
+	}
 
-    // }
+	// Utility: Get URL parameter
+	function getUrlParameter(name) {
+		name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+		var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+		var results = regex.exec(location.search);
+		return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+	}
 
-    // // DELETE ALL TAB- FROM LIVE
-    // const defax = "";
-    // const datax = { type: 'deleteLocal', value: defax };
+	// Get demo type from URL
+	let demoType = getParameterByName('type');
+	demoType = demoType.toLowerCase().replace(/\s+/g, '-');
 
-    // // postMessageToIframex(datax);
-    // setTimeout(() => {
-    //     postMessageToIframex(datax);
-    // }, 5000); // 3000 milidetik = 3 detik
+	// Get the 'type' parameter from the URL
+	var getSolaceType = getUrlParameter('type');
+	var listType = ['elementor', 'gutenberg'];
+	var step2 = pluginUrl.admin_url + 'admin.php?page=dashboard-video';
 
-    // Function to get the value of a URL parameter by name
-    function getParameterByName(name, url) {
-        // If URL is not provided, use the current window's URL
-        if (!url) url = window.location.href;
+	// Check if 'type' is empty or not in the list of valid types
+	if (getSolaceType === '' || listType.indexOf(getSolaceType) === -1) {
+		window.location.href = step2;
+		return;
+	}
 
-        // Escape special characters in the parameter name
-        name = name.replace(/[\[\]]/g, "\\$&");
+	// Clean up localStorage and cookies
+	var currentDate = new Date();
+	currentDate.setTime(currentDate.getTime() - 24 * 60 * 60 * 1000);
+	localStorage.removeItem('solace_step5_font');
+	localStorage.removeItem('solace_step5_color');
+	localStorage.removeItem('solace_step5_logo');
+	document.cookie = "solace_step5_font=; expires=" + currentDate.toUTCString() + "; path=/";
+	document.cookie = "solace_step5_color=; expires=" + currentDate.toUTCString() + "; path=/";
+	document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=/";
 
-        // Create a regular expression to match the parameter in the URL
-        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+	// Get filter license value
+	function getFilterLicense() {
+		var $filterLicense = $('#filter_license');
+		return $filterLicense.length ? $filterLicense.val() || 'all' : 'all';
+	}
 
-        // Execute the regular expression on the URL
-        var results = regex.exec(url);
+	// Get current keyword from search input
+	function getCurrentKeyword() {
+		var keyword = $('section.start-templates .content-main aside .mycontainer .box-search input').val().trim();
+		return keyword.length === 0 ? 'empty' : keyword;
+	}
 
-        // If no results are found, return an empty string
-        if (!results) return '';
+	// Get checked categories
+	function getCheckedCategories() {
+		var checkedValues = [];
+		$('section.start-templates aside .box-checkbox input[type="checkbox"]:checked').each(function() {
+			checkedValues.push($(this).val());
+		});
+		return checkedValues.length > 0 ? checkedValues.join(', ') : 'show-all-demos';
+	}
 
-        // If the parameter is present but has no value, return an empty string
-        if (!results[2]) return '';
+	// Common AJAX data builder - includes all filter parameters
+	function getAjaxData(additionalData) {
+		return $.extend({
+			nonce: ajax_object.nonce,
+			getType: demoType,
+			filter_license: getFilterLicense(),
+			keyword: getCurrentKeyword(),
+			checked: getCheckedCategories()
+		}, additionalData || {});
+	}
 
-        // Decode the URI component and return the parameter value
-        return decodeURIComponent(results[2].replace(/\+/g, " "));
-    }	
+	// Get cookie value
+	function getCookie(name) {
+		var value = "; " + document.cookie;
+		var parts = value.split("; " + name + "=");
+		if (parts.length === 2) return parts.pop().split(";").shift();
+		return null;
+	}
 
-    // Get Data
-    let demoType = getParameterByName('type');
-    demoType = demoType.toLowerCase().replace(/\s+/g, '-');
+	// Set cookie value
+	function setCookie(name, value, days) {
+		var expires = "";
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+			expires = "; expires=" + date.toUTCString();
+		}
+		document.cookie = name + "=" + (value || "") + expires + "; path=/";
+	}
 
-    // Get Type
-    $('section.page-builder .mycontainer .boxes a .mybox').on("click", function(event) {
-        event.preventDefault()
-        let getType = $(this).attr('data-type');
-        window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-starter-templates&type=' + getType;
-    });
+	// Get cookie key for pagination (single cookie for page number)
+	function getPaginationCookieKey() {
+		return 'solaceLoadMore_page';
+	}
 
-    // Get Link
-    $('section.start-templates .content-main main .mycontainer').on("click", ".demo", function() {
-        let demoName = $(this).attr('data-name');
-        demoName = demoName.toLowerCase().replace(/\s+/g, '-');    
-        let demoUrl = 'https://solacewp.com/' + demoName;
+	// Get current page from cookie
+	function getCurrentPage() {
+		var cookieKey = getPaginationCookieKey();
+		var page = getCookie(cookieKey);
+		return page ? parseInt(page, 10) : 1; // Default page 1
+	}
 
-        // Add cookie page access.
-        $.ajax({ 
-            url: ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'continue-page-access',
-                nonce: ajax_object.nonce,
-            },
-            success: function(response) {
-                localStorage.setItem('solaceInfo', demoUrl);
-                localStorage.setItem('solaceDemoName', demoName);
-        
-                let adminUrl = pluginUrl.admin_url + `admin.php?page=dashboard-step5&type=${demoType}&demo=${demoName}&nonce=${ajax_object.nonce}`;
-                window.location.replace(adminUrl);
-            },
-            error: function(xhr, textStatus, errorThrown) {
-                console.log(errorThrown);
-            }
-        });        
+	// Set current page to cookie
+	function setCurrentPage(page) {
+		var cookieKey = getPaginationCookieKey();
+		setCookie(cookieKey, page, 1); // 1 day
+	}
 
-    });    
+	// Check if load more button should be shown
+	function shouldShowLoadMore(currentPage, totalCount, postsPerPage) {
+		if (!totalCount) {
+			return false;
+		}
+		var currentItems = currentPage * postsPerPage;
+		var remaining = totalCount - currentItems;
+		return remaining >= postsPerPage; // Only show if remaining >= posts_per_page
+	}
 
-    // Function to get URL parameters
-    function getUrlParameter(name) {
-        name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-    }     
+	// Common success handler for updating demo container
+	function updateDemoContainer(data, showLoadMore) {
+		var $container = $('section.start-templates main .mycontainer');
+		var $loadMoreBtn = $('section.start-templates .content-main main .box-load-more button');
+		var $loadMoreContainer = $('section.start-templates .content-main main .box-load-more');
+		var postsPerPage = 9;
 
-    // Get the 'type' parameter from the URL
-    var getSolaceType = getUrlParameter('type');
-    // Define the list of valid types
-    var listType = ['elementor', 'gutenberg'];
-    // Define the redirect URL
-    var step2 = pluginUrl.admin_url + 'admin.php?page=dashboard-video';
+		$container.html('');
+		$container.append(data);
+		$container.css('display', 'flex');
 
-    // Check if 'type' is empty or not in the list of valid types
-    if (getSolaceType === '' || listType.indexOf(getSolaceType) === -1) {
-        // Redirect to step2 if conditions are met
-        window.location.href = step2;
-        return;
-    }
+		// Get total filtered count from hidden span
+		var $totalCountSpan = $container.find('.total-filtered-count');
+		var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
 
-    var currentDate = new Date();
+		// Get current page (should be 1 after filter/search/checkbox change)
+		var currentPage = getCurrentPage();
+		var currentCount = $container.find('.demo').length;
+		
+		// Update button attribute with current page
+		$loadMoreBtn.attr('data-page', currentPage);
 
-    currentDate.setTime(currentDate.getTime() - 24 * 60 * 60 * 1000);
-    // Delete All LocalStorage and Cookie;
-    localStorage.removeItem('solace_step5_font');
-    localStorage.removeItem('solace_step5_color');
-    localStorage.removeItem('solace_step5_logo');
-    document.cookie = "solace_step5_font=; expires=" + currentDate.toUTCString() + "; path=/";
-    document.cookie = "solace_step5_color=; expires=" + currentDate.toUTCString() + "; path=/";
-    document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=/";    
+		// Check if load more should be shown
+		if (showLoadMore && totalFiltered > 0) {
+			var shouldShow = shouldShowLoadMore(currentPage, totalFiltered, postsPerPage);
+			$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+		} else {
+			$loadMoreContainer.css('display', 'none');
+		}
+	}
 
-	// Initialize an array to store checked checkbox values
-	const checkedValues = [];
+	// Get Type - Page builder click handler
+	$('section.page-builder .mycontainer .boxes a .mybox').on("click", function(event) {
+		event.preventDefault();
+		let getType = $(this).attr('data-type');
+		window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-starter-templates&type=' + getType;
+	});
 
-	// Ajax Checkbox
+	// Get Link - Demo click handler
+	$('section.start-templates .content-main main .mycontainer').on("click", ".demo", function() {
+		let demoName = $(this).attr('data-name');
+		demoName = demoName.toLowerCase().replace(/\s+/g, '-');
+		let demoUrl = 'https://solacewp.com/' + demoName;
+
+		$.ajax({
+			url: ajax_object.ajax_url,
+			type: 'POST',
+			data: {
+				action: 'continue-page-access',
+				nonce: ajax_object.nonce,
+			},
+			success: function(response) {
+				localStorage.setItem('solaceInfo', demoUrl);
+				localStorage.setItem('solaceDemoName', demoName);
+				let adminUrl = pluginUrl.admin_url + `admin.php?page=dashboard-step5&type=${demoType}&demo=${demoName}&nonce=${ajax_object.nonce}`;
+				window.location.replace(adminUrl);
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				console.log(errorThrown);
+			}
+		});
+	});
+
+	// Debounce function
+	function debounce(func, wait) {
+		var timeout;
+		return function() {
+			var context = this;
+			var args = arguments;
+			clearTimeout(timeout);
+			timeout = setTimeout(function() {
+				func.apply(context, args);
+			}, wait);
+		};
+	}
+
+	// Ajax Checkbox Handler
 	$('.start-templates .box-checkbox input[type="checkbox"]').change(function () {
-        // Get nonce
-        var nonce = ajax_object.nonce;
+		// DON'T clear search - keep all filters active
+		// Reset pagination to page 1 when filter changes
+		setCurrentPage(1);
 
-        // clear search
-        $('section.start-templates .content-main aside .mycontainer .box-search input').val('');
+		var $container = $('section.start-templates main .mycontainer');
+		var $loadMoreContainer = $('section.start-templates .content-main main .box-load-more');
 
-		// Get checkbox checked
-        let checkboxes = document.querySelectorAll('section.start-templates aside .box-checkbox input[type="checkbox"]');
-        let valueCheckboxes = '';
-        let getCheckbox = [];
-        
-        checkboxes.forEach(function(checkbox) {
-            if (checkbox.checked) {
-                let checkboxName = checkbox.getAttribute('value');
-                getCheckbox.push(checkboxName);
-            }
-        });
+		// Add skeleton class when AJAX starts
+		$container.addClass('skeleton');
 
-        if ( getCheckbox.length !== 0 ) {
-            valueCheckboxes = getCheckbox.join(', ');
-        }
+		// Make AJAX request with all current filter parameters
+		$.ajax({
+			url: ajax_object.ajax_url,
+			type: 'POST',
+			data: getAjaxData({
+				action: 'action_ajax_checkbox',
+			}),
+			success: function (data) {
+				// Remove skeleton class when AJAX completes
+				$container.removeClass('skeleton');
 
-        // Get All value checkbox (All Uncheck)
-        if ( getCheckbox.length === 0 ) {
-            let checkboxes = document.querySelectorAll('section.start-templates aside .box-checkbox input[type="checkbox"]');
-            checkboxes.forEach(function(checkbox) {
-                if (!checkbox.checked) {
-                    let checkboxName = checkbox.getAttribute('value');
-                    getCheckbox.push(checkboxName);
-                }
-            });
+				// Check if response is valid
+				if (!data || (typeof data === 'string' && (data.trim() === '' || data === '0'))) {
+					$container.html('');
+					$container.append('<span class="not-found" style="font-size:17px;">No demo found...</span>');
+					$container.css('display', 'flex');
+					$loadMoreContainer.css('display', 'none');
+					return;
+				}
 
-            // valueCheckboxes = getCheckbox.join(', ');
-            valueCheckboxes = 'show-all-demos';
-        }
+				// Update container
+				$container.html('');
+				$container.append(data);
+				$container.css('display', 'flex');
 
-        // console.log(valueCheckboxes);
+				// Get total filtered count
+				var $totalCountSpan = $container.find('.total-filtered-count');
+				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var currentPage = getCurrentPage();
+				var postsPerPage = 9;
 
-        // Ajax Unchecked
-        $.ajax({
-            url: ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'action_ajax_checkbox',
-                nonce: nonce,
-                checked: valueCheckboxes,
-                getType: demoType,
-            },
-            success: function (data) {
+				// Update button attribute with current page
+				var $loadMoreBtn = $loadMoreContainer.find('button');
+				$loadMoreBtn.attr('data-page', currentPage);
 
-                let createDiv = document.createElement('div');
-                createDiv.innerHTML = data;
-
-                // console.log(data);
-                $('section.start-templates main .mycontainer').html('');
-                $( 'section.start-templates .content-main main .mycontainer' ).append(data);
-
-                // Remove button load more
-                $('section.start-templates .content-main main .box-load-more button').css('display', 'none');
-
-                if ( valueCheckboxes === 'show-all-demos' ) {
-                    $('section.start-templates .content-main main .box-load-more button').css('display', 'block');
-                }
-            }
-        });
+				// Show/hide load more button - works for all filter combinations
+				if (totalFiltered > 0) {
+					var shouldShow = shouldShowLoadMore(currentPage, totalFiltered, postsPerPage);
+					$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+				} else {
+					$loadMoreContainer.css('display', 'none');
+				}
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				// Remove skeleton class when AJAX error
+				$container.removeClass('skeleton');
+				console.log('Error:', errorThrown);
+				console.log('Response:', xhr.responseText);
+			}
+		});
 	});
 
-	// Ajax Search
-	$('section.start-templates .content-main aside .mycontainer .box-search input').keyup(function () {
-        // Get nonce
-        var nonce = ajax_object.nonce;
+	// Ajax Search Handler with Debounce
+	var searchHandler = debounce(function() {
+		var $container = $('section.start-templates main .mycontainer');
+		var $loadMoreContainer = $('section.start-templates .content-main main .box-load-more');
+		
+		// DON'T clear checkboxes - keep all filters active
+		// Reset pagination to page 1 when search changes
+		setCurrentPage(1);
 
-		let keyword = $(this).val();
-		$('section.start-templates .content-main aside .mycontainer form .box-checkbox input').prop('checked', false);
-		// console.log(keyword);
-        // console.log(1);
-        
-        // if (event.keyCode === 8) {
-        //     return;
-        // }
+		// Add skeleton class when AJAX starts
+		$container.addClass('skeleton');
 
-        if (keyword.length == '') {
-            keyword = 'empty';
-        }
+		$.ajax({
+			url: ajax_object.ajax_url,
+			type: 'POST',
+			data: getAjaxData({
+				action: 'action_ajax_search',
+			}),
+			success: function (data) {
+				// Remove skeleton class when AJAX completes
+				$container.removeClass('skeleton');
 
-        $.ajax({
-            url: ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'action_ajax_search',
-                nonce: nonce,
-                keyword: keyword,
-                getType: demoType,
-            },
-            success: function (data) {
-                let createDiv = document.createElement('div');
-                createDiv.innerHTML = data;
+				// Check if response is valid
+				if (!data || (typeof data === 'string' && (data.trim() === '' || data === '0'))) {
+					$container.html('');
+					$container.append('<span class="not-found" style="font-size:17px;">No demo found...</span>');
+					$container.css('display', 'flex');
+					$loadMoreContainer.css('display', 'none');
+					return;
+				}
 
-                if (data == 0) {
-                    $('section.start-templates main .mycontainer').html('');
-                    $('section.start-templates main .mycontainer').append(`<span class="not-found" style="font-size:17px;">No demo found...</span>`);
-                    $('section.start-templates main .mycontainer').css('display', 'flex');
-                    return;
-                }
+				// Update container
+				$container.html('');
+				$container.append(data);
+				$container.css('display', 'flex');
 
-                $('section.start-templates main .mycontainer .not-found').remove();
-                $('section.start-templates main .mycontainer .demo').remove();
-                $('section.start-templates main .mycontainer').append(data);
-                $('section.start-templates main .mycontainer').css('display', 'flex');
+				// Get total filtered count
+				var $totalCountSpan = $container.find('.total-filtered-count');
+				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var currentPage = getCurrentPage();
+				var postsPerPage = 9;
 
-                // Remove button load more
-                $('section.start-templates .content-main main .box-load-more button').css('display', 'none');
+				// Update button attribute with current page
+				var $loadMoreBtn = $loadMoreContainer.find('button');
+				$loadMoreBtn.attr('data-page', currentPage);
 
-                if ( keyword === 'empty' ) {
-                    $('section.start-templates .content-main main .box-load-more button').css('display', 'block');
-                }
-            }
-        });
+				// Show/hide load more button - works for all filter combinations
+				if (totalFiltered > 0) {
+					var shouldShow = shouldShowLoadMore(currentPage, totalFiltered, postsPerPage);
+					$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+				} else {
+					$loadMoreContainer.css('display', 'none');
+				}
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				// Remove skeleton class when AJAX error
+				$container.removeClass('skeleton');
+				console.log('Error:', errorThrown);
+				console.log('Response:', xhr.responseText);
+			}
+		});
+	}, 500); // 500ms debounce delay
 
+	$('section.start-templates .content-main aside .mycontainer .box-search input').on('keyup', searchHandler);
+
+	// Filter License Change Handler
+	$('#filter_license').on('change', function() {
+		// DON'T clear search and checkboxes - keep all filters active
+		// Reset pagination to page 1 when filter changes
+		setCurrentPage(1);
+
+		var $container = $('section.start-templates main .mycontainer');
+		var $loadMoreContainer = $('section.start-templates .content-main main .box-load-more');
+
+		// Add skeleton class when AJAX starts
+		$container.addClass('skeleton');
+
+		// Make AJAX request with all current filter parameters
+		$.ajax({
+			url: ajax_object.ajax_url,
+			type: 'POST',
+			data: getAjaxData({
+				action: 'action_ajax_checkbox',
+			}),
+			success: function (data) {
+				// Remove skeleton class when AJAX completes
+				$container.removeClass('skeleton');
+
+				// Check if response is valid
+				if (!data || (typeof data === 'string' && (data.trim() === '' || data === '0'))) {
+					$container.html('');
+					$container.append('<span class="not-found" style="font-size:17px;">No demo found...</span>');
+					$container.css('display', 'flex');
+					$loadMoreContainer.css('display', 'none');
+					return;
+				}
+
+				// Update container
+				$container.html('');
+				$container.append(data);
+				$container.css('display', 'flex');
+
+				// Get total filtered count
+				var $totalCountSpan = $container.find('.total-filtered-count');
+				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var currentPage = getCurrentPage();
+				var postsPerPage = 9;
+
+				// Update button attribute with current page
+				var $loadMoreBtn = $loadMoreContainer.find('button');
+				$loadMoreBtn.attr('data-page', currentPage);
+
+				// Show/hide load more button - works for all filter combinations
+				if (totalFiltered > 0) {
+					var shouldShow = shouldShowLoadMore(currentPage, totalFiltered, postsPerPage);
+					$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+				} else {
+					$loadMoreContainer.css('display', 'none');
+				}
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				// Remove skeleton class when AJAX error
+				$container.removeClass('skeleton');
+				console.log('Error:', errorThrown);
+				console.log('Response:', xhr.responseText);
+			}
+		});
 	});
 
-    // Ajax load more
-    $('section.start-templates .content-main main .box-load-more button').on("click", function(event) {
-        // Get nonce
-        var nonce = ajax_object.nonce;        
+	// Ajax Load More Handler
+	var isLoadingMore = false;
+	var postsPerPage = 9;
 
-        let totalPosts = parseInt( $(this).attr('show-posts') );
-        let totalAllPosts = parseInt( $('section.start-templates .content-main aside .mycontainer span.desc .count').text() );
-        // let calc = totalPosts + totalPosts;
-        let calc = totalPosts + 9;
-        $('section.start-templates .content-main main .box-load-more button').addClass('active');
-        $('section.start-templates .content-main main .box-load-more button dotlottie-player').show();
+	$('section.start-templates .content-main main .box-load-more button').on("click", function(event) {
+		event.preventDefault();
 
-        $(this).addClass('active-button').css({
-            'width': '200px',
-            'padding-right': '85px',
-            'transition': 'width 1s ease, padding-right 1s ease'
-        });
-        
-        $.ajax({
-            url: ajax_object.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'action_load_more',
-                nonce: nonce,
-                totalPosts: totalPosts,
-                getType: demoType,
-            },
-            success: function (data) {
-                setTimeout(() => {
-                    $('section.start-templates .content-main main .box-load-more button').attr('show-posts', calc);
-                    if ( !(totalAllPosts > calc) ) {
-                        $('section.start-templates .content-main main .box-load-more button').hide();
-                    }
-                    $('section.start-templates main .mycontainer').append(data);
-                    $('section.start-templates .content-main main .box-load-more button').removeClass('active');
-                    $('section.start-templates .content-main main .box-load-more button dotlottie-player').hide();
-                    $('section.start-templates .content-main main .box-load-more button').removeClass('active-button').css({
-                        'width': 'auto',
-                        'padding-right': '30px',
-                        'transition': 'width 1s ease, padding-right 1s ease'
-                    });                    
-                }, 500);
-            }
-        });
-    }); 
+		var $button = $(this);
+		var $loadMoreContainer = $button.closest('.box-load-more');
+		var $container = $('section.start-templates main .mycontainer');
+
+		if (isLoadingMore) {
+			return;
+		}
+		isLoadingMore = true;
+
+		// Get current page from cookie
+		var currentPage = getCurrentPage();
+
+		// Add skeleton class when AJAX starts
+		$container.addClass('skeleton');
+
+		// Show loading state
+		$button.addClass('active active-button').css({
+			'width': '200px',
+			'padding-right': '85px',
+			'transition': 'width 1s ease, padding-right 1s ease'
+		});
+		$button.find('dotlottie-player').show();
+
+		$.ajax({
+			url: ajax_object.ajax_url,
+			type: 'POST',
+			data: getAjaxData({
+				action: 'action_load_more',
+			}), // getAjaxData already includes keyword, checked, filter_license
+			success: function (data) {
+				// Remove skeleton class when AJAX completes
+				$container.removeClass('skeleton');
+
+				// Trim to detect empty payload
+				var payload = (typeof data === 'string') ? data.trim() : '';
+
+				// Append if there is content
+				if (payload.length > 0) {
+					$container.append(payload);
+					
+					// Get new page number from response
+					var $newPageSpan = $container.find('.current-page');
+					var newPage = $newPageSpan.length ? parseInt($newPageSpan.text(), 10) : (currentPage + 1);
+					
+					// Get total filtered count
+					var $totalCountSpan = $container.find('.total-filtered-count');
+					var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+
+					// Update button attribute with new page
+					$button.attr('data-page', newPage);
+
+					// Update cookie with new page
+					setCurrentPage(newPage);
+
+					// Check if load more should still be shown
+					if (totalFiltered > 0) {
+						var shouldShow = shouldShowLoadMore(newPage, totalFiltered, postsPerPage);
+						$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+					} else {
+						$loadMoreContainer.css('display', 'none');
+					}
+				} else {
+					// No more data, hide button
+					$loadMoreContainer.css('display', 'none');
+				}
+
+				// Hide loading state
+				$button.removeClass('active active-button').css({
+					'width': 'auto',
+					'padding-right': '30px',
+					'transition': 'width 1s ease, padding-right 1s ease'
+				});
+				$button.find('dotlottie-player').hide();
+				isLoadingMore = false;
+			},
+			error: function(xhr, textStatus, errorThrown) {
+				// Remove skeleton class when AJAX error
+				$container.removeClass('skeleton');
+				console.log('Error:', errorThrown);
+				console.log('Response:', xhr.responseText);
+				$button.removeClass('active active-button');
+				$button.find('dotlottie-player').hide();
+				isLoadingMore = false;
+			}
+		});
+	});
 })( jQuery );

@@ -112,7 +112,7 @@ class Elementor {
 		wp_register_script( 'solaceform', self::$url . 'assets/form/form-builder.js?v=' . time(), array( 'jquery' ), SOLACE_EXTRA_VERSION, true );
 
 		// Enqueue the SweetAlert JavaScript library.
-		wp_register_script( 'solaceform-sweetalert', self::$url . 'assets/form/sweetalert.min.js?v=' . time(), array(), SOLACE_EXTRA_VERSION, true );		
+		// wp_register_script( 'solaceform-sweetalert', self::$url . 'assets/form/sweetalert.min.js?v=' . time(), array(), SOLACE_EXTRA_VERSION, true );		
 
 		wp_localize_script(
 			'solaceform',

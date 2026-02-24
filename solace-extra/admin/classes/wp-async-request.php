@@ -1,9 +1,14 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 /**
  * WP Async Request
  *
  * @package WP-Background-Processing
  */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WordPress importer uses core/legacy hook names for compatibility. 
 
 /**
  * Abstract WP_Async_Request class.
@@ -143,7 +148,8 @@ abstract class XWP_Async_Request {
 			'blocking'  => false,
 			'body'      => $this->data,
 			'cookies'   => $_COOKIE, // Passing cookies ensures request is performed as initiating user.
-			'sslverify' => apply_filters( 'https_local_ssl_verify', false ), // Local requests, fine to pass false.
+			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress core filter
+		'sslverify' => apply_filters( 'https_local_ssl_verify', false ), // Local requests, fine to pass false.
 		);
 
 		/**

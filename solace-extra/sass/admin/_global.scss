@@ -163,10 +163,32 @@
 }
 .js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(4),
 .js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(5),
-.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6) {
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6),
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(14) {
     display: block; 
 }
+.js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item {
+    display: block; 
+    background-color: #FF8F00;
+    border-radius: 30px;
+    font-weight: 700;
+    margin: 0 15px;
+    a {
+        color: #fff;
+        text-align: center;
+        &:hover {
+            box-shadow: none !important;
+        }
+    }
+}
+.js #adminmenu .toplevel_page_solace .wp-submenu li.support-menu-item {
+    display: block;
+}
 
+body .swal-footer {
+    display: flex;
+    justify-content: center;
+}
 
 body.solace_page_dashboard,
 body.solace_page_dashboard-sitebuilder,
@@ -249,6 +271,7 @@ body.solace_page_dashboard-congratulations {
         background: #f1f1f1;
         padding: 0;
         margin: 0;
+        overflow: auto;
 
         // Remove notif.
         div.notice {
@@ -465,7 +488,8 @@ body.toplevel_page_solace {
         }
     }
 }
-@media only screen and (max-width: 1050px) {
+
+@media only screen and (max-width: 1024px) {
     body.solace_page_dashboard-starter-templates,
     body.solace_page_dashboard-sitebuilder,
     body.solace_page_dashboard-type,
@@ -484,13 +508,10 @@ body.toplevel_page_solace {
 
             div.box-menu {
                 ul {
-                    flex-direction: column;
-                    text-align: center;
-                    gap: 15px;
 
-                    li.active {
+                    li {
                         &::after {
-                            top: 2px;
+                            top: 20px;
                         }
                     }
                 }
@@ -529,6 +550,40 @@ body.toplevel_page_solace {
         .wrap {
             footer.bottom {
                 left: 0;
+            }
+        }
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    body.solace_page_dashboard-starter-templates,
+    body.solace_page_dashboard-sitebuilder,
+    body.solace_page_dashboard-type,
+    body.solace_page_dashboard-video,
+    body.solace_page_dashboard-step5,
+    body.solace_page_dashboard-step6,
+    body.toplevel_page_solace,
+    body.solace_page_dashboard,
+    body.solace_page_dashboard-sitebuilder,
+    body.solace_page_dashboard-progress,
+    body.solace_page_dashboard-congratulations {
+
+        .wrap nav div.mycontainer {
+            flex-direction: column;
+            padding: 20px 10px;
+
+            div.box-menu {
+                ul {
+                    flex-direction: column;
+                    text-align: center;
+                    gap: 15px;
+
+                    li {
+                        &::after {
+                            top: 2px;
+                        }
+                    }
+                }
             }
         }
     }

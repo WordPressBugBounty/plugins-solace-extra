@@ -1,9 +1,14 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 /**
  * WP Background Process
  *
  * @package WP-Background-Processing
  */
+
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WordPress importer uses core/legacy hook names for compatibility.
 
 /**
  * Abstract WP_Background_Process class.
@@ -462,6 +467,8 @@ abstract class XWP_Background_Process extends XWP_Async_Request {
 
 		$key = $wpdb->esc_like( $this->identifier . '_batch_' ) . '%';
 
+		// Table and column names are WordPress core identifiers ($wpdb->options, $wpdb->sitemeta, 'option_name', 'meta_key', etc.), safe to use directly.
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter -- WordPress core table/column identifiers are safe
 		$sql = '
 			SELECT *
 			FROM ' . $table . '
@@ -477,7 +484,9 @@ abstract class XWP_Background_Process extends XWP_Async_Request {
 			$args[] = $limit;
 		}
 
-		$items = $wpdb->get_results( $wpdb->prepare( $sql, $args ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching -- Table/column names are WordPress core identifiers, $key is escaped via esc_like()
+		$items = $wpdb->get_results( $wpdb->prepare( $sql, $args ) );
+		// phpcs:enable PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 		$batches = array();
 

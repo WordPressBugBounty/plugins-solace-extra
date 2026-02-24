@@ -89,10 +89,11 @@ class FormHandler {
 	public function elementor_form_builder_form_ajax() {
 		check_ajax_referer( 'elementor_form_builder_form', 'nonce' );
 
-		$data    = isset( $_POST['dataSerialize'] ) ? wp_kses_post( wp_unslash( $_POST['dataSerialize'] ) ) : '';
-		$post_id = isset( $_POST['post_id'] ) ? sanitize_text_field( wp_unslash( $_POST['post_id'] ) ) : '';
-		$el_id   = isset( $_POST['el_id'] ) ? sanitize_text_field( wp_unslash( $_POST['el_id'] ) ) : '';
-		$max_file_size = 10 * 1024 * 1024; // 10 MB.
+		$data          = isset( $_POST['dataSerialize'] ) ? wp_kses_post( wp_unslash( $_POST['dataSerialize'] ) ) : '';
+		$post_id       = isset( $_POST['post_id'] ) ? sanitize_text_field( wp_unslash( $_POST['post_id'] ) ) : '';
+		$post_id2       = isset( $_POST['post_id2'] ) ? sanitize_text_field( wp_unslash( $_POST['post_id2'] ) ) : '';
+		$el_id         = isset( $_POST['el_id'] ) ? sanitize_text_field( wp_unslash( $_POST['el_id'] ) ) : '';
+		$max_file_size = 10 * 1024 * 1024; // 10 MB
 
 		$document = Plugin::$instance->documents->get( $post_id );
 		if ( ! $document ) {
@@ -100,37 +101,82 @@ class FormHandler {
 		}
 
 		$form     = Utils::find_element_recursive( $document->get_elements_data(), $el_id );
-		$settings = $form['settings'] ?? [];
+		$settings = [];
 
-		if ( empty( $data ) || empty( $settings['email_to'] ) ) {
-			wp_send_json_error( [ 'message' => 'Missing email recipient or form data.' ], 400 );
+		// Ensure $form contains valid settings
+		if ( is_array( $form ) && isset( $form['settings'] ) && is_array( $form['settings'] ) ) {
+			$settings = $form['settings'];
 		}
 
-		// Extract per-field MIME validation rules
-		$field_mime_map = $this->map_field_extensions_to_mimes( $settings['fields'] ?? [] );
+		// Fallback to raw _elementor_data if $settings is empty
+		if ( empty( $settings ) ) {
+			$content  = get_post_meta( $post_id, '_elementor_data', true );
+			$elements = json_decode( $content, true );
 
-		// Process uploaded files with per-field MIME validation
-		$attachments = $this->process_uploaded_files_with_field_validation( $field_mime_map, $max_file_size, $settings['fields'] );
+			if ( ! function_exists( 'solace_extra_find_elementor_widget_by_id' ) ) {
+				function solace_extra_find_elementor_widget_by_id( $elements, $el_id ) {
+					foreach ( $elements as $element ) {
+						if ( isset( $element['id'] ) && $element['id'] === $el_id ) {
+							return $element;
+						}
+						if ( isset( $element['elements'] ) && is_array( $element['elements'] ) ) {
+							$result = solace_extra_find_elementor_widget_by_id( $element['elements'], $el_id );
+							if ( $result ) {
+								return $result;
+							}
+						}
+					}
+					return null;
+				}
+			}
 
-		// Email configuration
+			$widget_data = solace_extra_find_elementor_widget_by_id( $elements, $el_id );
+
+			if ( ! empty( $widget_data ) ) {
+				// Use fallback settings if widget found
+				if ( $widget_data && isset( $widget_data['settings'] ) && is_array( $widget_data['settings'] ) ) {
+					$settings = $widget_data['settings'];
+				}
+			} else {
+				$content2  = get_post_meta( $post_id2, '_elementor_data', true );
+				$elements2 = json_decode( $content2, true );
+				$widget_data2 = solace_extra_find_elementor_widget_by_id( $elements2, $el_id );
+				// Use fallback settings if widget found
+				if ( $widget_data2 && isset( $widget_data2['settings'] ) && is_array( $widget_data2['settings'] ) ) {
+					$settings = $widget_data2['settings'];
+				}
+			}
+		}
+
+		// Safe default response messages
+		$response = [
+			'error_message'   => sanitize_text_field( $settings['error_message'] ?? 'Form error.' ),
+			'success_message' => sanitize_text_field( $settings['success_message'] ?? 'Thank you!' ),
+		];
+
+		// Validate required values
+		if ( empty( $data ) || empty( $settings['email_to'] ) ) {
+			wp_send_json_error( $response, 500 );
+		}
+
+		// Ensure fields is always an array
+		$fields = isset( $settings['fields'] ) && is_array( $settings['fields'] ) ? $settings['fields'] : [];
+
+		// Prepare MIME rules and file uploads
+		$field_mime_map = $this->map_field_extensions_to_mimes( $fields );
+		$attachments    = $this->process_uploaded_files_with_field_validation( $field_mime_map, $max_file_size, $fields );
+
+		// Email setup
+		$email  = array_map( 'trim', explode( ',', $settings['email_to'] ) );
 		$headers = [ 'Content-Type: text/html; charset=UTF-8' ];
-		$send    = wp_mail(
-			sanitize_email( $settings['email_to'] ),
-			sanitize_text_field( $settings['email_subject'] ?? 'Form Submission' ),
-			$data,
-			$headers,
-			$attachments
-		);
+		$subject = sanitize_text_field( $settings['email_subject'] ?? 'Form Submission' );
 
-		// Clean up temporary uploaded files
+		$send = wp_mail( $email, $subject, $data, $headers, $attachments );
+
+		// Clean up temp files
 		foreach ( $attachments as $attachment ) {
 			wp_delete_file( $attachment );
 		}
-
-		$response = [
-			'error_message'   => sanitize_text_field( $settings['error_message'] ?? '' ),
-			'success_message' => sanitize_text_field( $settings['success_message'] ?? '' ),
-		];
 
 		if ( is_wp_error( $send ) ) {
 			wp_send_json_error( $response, 500 );

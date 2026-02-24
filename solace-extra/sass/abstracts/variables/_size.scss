@@ -1,0 +1,22 @@
+// $container_padding: clamp(1.5rem, 5vw, 2rem);
+$container_padding: 32px;
+$container_padding_mobile: 15px;
+$container_margin_top: 64px;
+$container_margin_mobile: 15px;
+$container_margin_bottom: 64px;
+
+$max_width: 1280px;
+$max_the_content: 708px;
+$minus_container: 65px;
+
+$layout-breakpoint-large: 1024px;
+$layout-breakpoint-small: 768px;
+
+// $sol_tablet: '1024px';
+// $sol_mobile: '767px'; 
+
+$mobile: '580px';
+$tablet: '768px';
+$laptop: '1024px';
+$desktop: '1200px';
+$desktop-large: '1400px';

@@ -35,7 +35,7 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 	 * @return string Widget title.
 	 */
 	public function get_title() {
-		return esc_html__( 'Solace Site Logo', 'solace-extra' );
+		return esc_html__( 'Site Logo', 'solace-extra' );
 	}
 
 	/**
@@ -48,7 +48,7 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 	 * @return string Widget icon.
 	 */
 	public function get_icon() {
-		return 'eicon-site-logo';
+		return 'eicon-site-logo  solace-extra';
 	}
 
 	/**
@@ -316,7 +316,12 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 		$image_id = $settings['solace_extra_site_logo']['id'];
 		$image_size = $settings['solace_extra_image_resolution'];
 		$image_url = wp_get_attachment_image_url( $image_id, $image_size );
-	
+
+		// Fallback to raw URL
+		if ( empty( $image_url ) ) {
+			$image_url = $settings['solace_extra_site_logo']['url'];
+		}
+
 		// Get the caption if selected
 		$caption = '';
 		if ( 'attachment' === $settings['solace_extra_caption'] ) {

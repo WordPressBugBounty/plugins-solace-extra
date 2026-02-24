@@ -39,7 +39,7 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 	 * @return string Widget title.
 	 */
 	public function get_title() {
-		return esc_html__( 'Solace Nav Menu', 'solace-extra' );
+		return esc_html__( 'Nav Menu', 'solace-extra' );
 	}
 
 	/**
@@ -52,7 +52,7 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 	 * @return string Widget icon.
 	 */
 	public function get_icon() {
-		return 'eicon-nav-menu';
+		return 'eicon-nav-menu  solace-extra';
 	}
 
 	/**
@@ -96,7 +96,7 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 	 * @return array Widget style dependencies.
 	 */
 	public function get_style_depends(): array {
-		return [ 'solace-widget-nav-menu' ];
+		return [ 'solace-widget-nav-menu', 'solace-fix-widget-nav-menu' ];
 	}
 
 	protected function get_nav_menu_index() {
@@ -689,6 +689,21 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 			]
 		);
 
+		$this->add_control(
+			'color_indicator',
+			[
+				'label' => esc_html__( 'Indicator Color', 'solace-extra' ),
+				'type' => Controls_Manager::COLOR,
+				'global' => [
+					'default' => Global_Colors::COLOR_TEXT,
+				],
+				'default' => '',
+				'selectors' => [
+					'{{WRAPPER}} .elementor-nav-menu--main .elementor-item .sub-arrow i, {{WRAPPER}} ul li a .sub-arrow' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
 		$this->end_controls_tab();
 
 		$this->start_controls_tab(
@@ -1076,10 +1091,23 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 				'type' => Controls_Manager::COLOR,
 				'default' => '',
 				'selectors' => [
-					'{{WRAPPER}} .elementor-nav-menu--dropdown a, {{WRAPPER}} .elementor-menu-toggle' => 'color: {{VALUE}}',
+					'{{WRAPPER}} .elementor-nav-menu--dropdown a, {{WRAPPER}} .elementor-menu-toggle, {{WRAPPER}} .solace-elementor-menu-toggle.elementor-active i' => 'color: {{VALUE}}',
+					'{{WRAPPER}} .solace-elementor-menu-toggle.elementor-active svg, {{WRAPPER}} .solace-elementor-menu-toggle.elementor-active:hover svg' => 'fill: {{VALUE}} !important',
 				],
 			]
 		);
+
+		$this->add_control(
+			'color_dropdown_indicator',
+			[
+				'label' => esc_html__( 'Indicator Color', 'solace-extra' ),
+				'type' => Controls_Manager::COLOR,
+				'default' => '',
+				'selectors' => [
+					'{{WRAPPER}} .elementor-nav-menu--dropdown a .sub-arrow i' => 'color: {{VALUE}}',
+				],
+			]
+		);		
 
 		$this->add_control(
 			'background_color_dropdown_item',
@@ -1522,6 +1550,14 @@ class Solace_Extra_Nav_Menu extends \Elementor\Widget_Base {
 
 		// Check item has children.
 		if ( in_array( 'menu-item-has-children', $item->classes ) ) {
+			// Duplikat tag <a>...</a>
+			if ( preg_match( '/(<a\b[^>]*>.*?<\/a>)/i', $item_output, $matches ) ) {
+				$original_link = $matches[1];
+				// $duplicate_link = str_replace('<a', '<a style="display: inline-block;position: absolute;left: -99999999px;bottom: -999999999px;z-index: -99999;" class="extra-link"', $original_link);
+				$duplicate_link = str_replace('<a', '<a style="display: inline-block;position: absolute;left: -99999999px;z-index: -99999;" class="extra-link"', $original_link);
+				$item_output .= $duplicate_link;
+			}
+
 			// Define the SVG icon markup.
 			$icon_markup = '<span class="sub-arrow">' . $icon_content . '</span>';
 

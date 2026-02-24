@@ -40,6 +40,24 @@ class Solace_Extra_Starter_Templates {
 	private $version;
 
 	/**
+	 * Valid demo types
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      array    $valid_types
+	 */
+	private $valid_types = array( 'elementor', 'gutenberg' );
+
+	/**
+	 * Posts per page
+	 *
+	 * @since    1.0.0
+	 * @access   private
+	 * @var      int    $posts_per_page
+	 */
+	private $posts_per_page = 9;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -47,10 +65,8 @@ class Solace_Extra_Starter_Templates {
 	 * @param      string    $version    The version of this plugin.
 	 */
 	public function __construct( $plugin_name, $version ) {
-
 		$this->plugin_name = $plugin_name;
-		$this->version = $version;
-
+		$this->version      = $version;
 	}
 
 	/**
@@ -59,7 +75,252 @@ class Solace_Extra_Starter_Templates {
 	 * @since    1.0.0
 	 */
 	public function enqueue_admin_dashicons() {
-		wp_enqueue_style('dashicons');
+		wp_enqueue_style( 'dashicons' );
+	}
+
+	/**
+	 * Get demo data from API
+	 *
+	 * @since    1.0.0
+	 * @return   array|false    Demo data array or false on error
+	 */
+	private function get_demo_data() {
+		$api_url = SOLACE_EXTRA_DEMO_IMPORT_URL . 'api/wp-json/solace/v1/demo/';
+
+		$response = wp_remote_get( $api_url );
+
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$data = json_decode( $body, true );
+
+		if ( empty( $data ) || ! is_array( $data ) ) {
+			return false;
+		}
+
+		// Filter draft/pending demos for non-production domains
+		$domain = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		if ( 'solacewp.com' !== $domain ) {
+			$data = array_filter(
+				$data,
+				function( $demo ) {
+					return ! empty( $demo['demo_status'] ) && 'draft' !== $demo['demo_status'] && 'pending' !== $demo['demo_status'];
+				}
+			);
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Check if demo matches license filter
+	 *
+	 * @since    1.0.0
+	 * @param    array  $demo          Demo data.
+	 * @param    string $filter_license License filter (all, free, pro).
+	 * @return   bool
+	 */
+	private function matches_license_filter( $demo, $filter_license ) {
+		if ( 'all' === $filter_license || empty( $filter_license ) ) {
+			return true;
+		}
+
+		// Check for is_pro field (can be boolean or string)
+		$is_pro = false;
+		if ( isset( $demo['is_pro'] ) ) {
+			$is_pro = (bool) $demo['is_pro'];
+		} elseif ( isset( $demo['isPro'] ) ) {
+			$is_pro = (bool) $demo['isPro'];
+		} elseif ( isset( $demo['license'] ) ) {
+			$is_pro = ( 'pro' === strtolower( $demo['license'] ) );
+		}
+
+		if ( 'free' === $filter_license ) {
+			return ! $is_pro;
+		}
+
+		if ( 'pro' === $filter_license ) {
+			return $is_pro;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if demo matches type filter
+	 *
+	 * @since    1.0.0
+	 * @param    array  $demo    Demo data.
+	 * @param    string $getType Type filter.
+	 * @return   bool
+	 */
+	private function matches_type_filter( $demo, $getType ) {
+		if ( empty( $getType ) || ! in_array( $getType, $this->valid_types, true ) ) {
+			return false;
+		}
+
+		return ! empty( $demo['demo_type'] ) && $demo['demo_type'] === $getType;
+	}
+
+	/**
+	 * Get demo labels
+	 *
+	 * @since    1.0.0
+	 * @param    array $demo Demo data.
+	 * @return   array
+	 */
+	private function get_demo_labels( $demo ) {
+		$categories = ! empty( $demo['demo_category'] ) ? $demo['demo_category'] : array();
+
+		return array(
+			'new'          => in_array( 'New', $categories, true ),
+			'recommended' => in_array( 'Recommended', $categories, true ),
+		);
+	}
+
+	/**
+	 * Render demo item HTML
+	 *
+	 * @since    1.0.0
+	 * @param    array $demo Demo data.
+	 * @param    int   $index Item index.
+	 */
+	private function render_demo_item( $demo, $index = 1 ) {
+		$labels = $this->get_demo_labels( $demo );
+		
+		// Check if demo is pro
+		$is_pro = false;
+		if ( isset( $demo['is_pro'] ) ) {
+			$is_pro = (bool) $demo['is_pro'];
+		} elseif ( isset( $demo['isPro'] ) ) {
+			$is_pro = (bool) $demo['isPro'];
+		} elseif ( isset( $demo['license'] ) ) {
+			$is_pro = ( 'pro' === strtolower( $demo['license'] ) );
+		}
+		
+		// Build class string
+		$demo_classes = 'demo demo' . esc_attr( $index );
+		if ( $is_pro ) {
+			$demo_classes .= ' is-pro';
+		}
+		?>
+		<div class='<?php echo esc_attr( $demo_classes ); ?>' data-url='<?php echo esc_attr( $demo['demo_link'] ); ?>' data-name='<?php echo esc_attr( $demo['title'] ); ?>'>
+			<div class="box-image">
+				<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage ?>
+				<img src="<?php echo esc_url( $demo['demo_image'] ); ?>" alt="Demo Image" />
+			</div>
+			<div class="box-content">
+				<div class="top-content">
+					<?php if ( ! empty( $demo['title'] ) ) : ?>
+						<span class="title"><?php echo esc_html( $demo['title'] ); ?></span>
+					<?php endif; ?>
+					<?php if ( $labels['recommended'] ) : ?>
+						<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
+					<?php endif; ?>
+					<?php if ( $labels['new'] ) : ?>
+						<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
+					<?php endif; ?>
+					<?php if ( $is_pro ) : ?>
+						<span class="label pro"><?php esc_html_e( 'PRO', 'solace-extra' ); ?></span>
+					<?php endif; ?>
+				</div>
+				<div class="bottom-content">
+					<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $demo['demo_desc'] ); ?></p>
+				</div>
+			</div>
+		</div>
+		<?php
+		echo '<span class="count-demo" style="display: none;">' . absint( $index ) . '</span>';
+	}
+
+	/**
+	 * Filter demos based on criteria
+	 *
+	 * @since    1.0.0
+	 * @param    array  $demos          All demos.
+	 * @param    string $getType        Type filter.
+	 * @param    string $filter_license License filter.
+	 * @param    string $keyword        Search keyword.
+	 * @param    array  $categories     Selected categories.
+	 * @return   array
+	 */
+	private function filter_demos( $demos, $getType = '', $filter_license = 'all', $keyword = '', $categories = array() ) {
+		$filtered = array();
+
+		foreach ( $demos as $demo ) {
+			// Must have image
+			if ( empty( $demo['demo_image'] ) ) {
+				continue;
+			}
+
+			// Type filter
+			if ( ! $this->matches_type_filter( $demo, $getType ) ) {
+				continue;
+			}
+
+			// License filter
+			if ( ! $this->matches_license_filter( $demo, $filter_license ) ) {
+				continue;
+			}
+
+			// Category filter
+			if ( ! empty( $categories ) && 'show-all-demos' !== $categories[0] ) {
+				$demo_categories = ! empty( $demo['demo_category'] ) ? $demo['demo_category'] : array();
+				if ( empty( array_intersect( $categories, $demo_categories ) ) ) {
+					continue;
+				}
+			}
+
+			// Keyword search
+			if ( ! empty( $keyword ) && 'empty' !== $keyword ) {
+				$title = ! empty( $demo['title'] ) ? $demo['title'] : '';
+				$demo_search = ! empty( $demo['demo_search'] ) ? $demo['demo_search'] : '';
+				$demo_desc = ! empty( $demo['demo_desc'] ) ? $demo['demo_desc'] : '';
+				$search_text = strtolower( $title . ' ' . $demo_search . ' ' . $demo_desc );
+				$keyword_lower = strtolower( $keyword );
+				if ( strpos( $search_text, $keyword_lower ) === false ) {
+					continue;
+				}
+			}
+
+			$filtered[] = $demo;
+		}
+
+		return $filtered;
+	}
+
+	/**
+	 * Get cookie key for pagination (single cookie for page number)
+	 *
+	 * @since    1.0.0
+	 * @return   string
+	 */
+	private function get_pagination_cookie_key() {
+		return 'solaceLoadMore_page';
+	}
+
+	/**
+	 * Get current page from cookie
+	 *
+	 * @since    1.0.0
+	 * @return   int
+	 */
+	private function get_current_page() {
+		$cookie_key = $this->get_pagination_cookie_key();
+		return ! empty( $_COOKIE[ $cookie_key ] ) ? absint( $_COOKIE[ $cookie_key ] ) : 1;
+	}
+
+	/**
+	 * Set current page to cookie
+	 *
+	 * @since    1.0.0
+	 * @param    int    $page          Page number to save.
+	 */
+	private function set_current_page( $page ) {
+		$cookie_key = $this->get_pagination_cookie_key();
+		setcookie( $cookie_key, $page, time() + 86400, '/' ); // 1 day
 	}
 
 	/**
@@ -69,148 +330,52 @@ class Solace_Extra_Starter_Templates {
 	 */
 	public function action_ajax_search_server() {
 		// Verify nonce
-		if (isset($_POST['nonce']) && wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
 
-			// Keyword
-			$keyword = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
-			$getType = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
+		$keyword        = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+		$getType        = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
+		$filter_license = ! empty( $_POST['filter_license'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_license'] ) ) : 'all';
+		$checked        = ! empty( $_POST['checked'] ) ? sanitize_text_field( wp_unslash( $_POST['checked'] ) ) : '';
+		$list_checkbox  = ! empty( $checked ) && 'show-all-demos' !== $checked ? explode( ', ', $checked ) : array();
 
-			// Primary and backup API URLs
-			$url_solace_search = 'https://solacewp.com/api/wp-json/solace/v1/demo/';
-			$url_local_search = plugin_dir_url(__FILE__) . 'partials/demo.json';
+		if ( empty( $keyword ) ) {
+			$keyword = 'empty';
+		}
 
-			// Use wp_remote_get() instead of cURL
-			$response_search = wp_remote_get($url_solace_search);
+		$demos = $this->get_demo_data();
+		if ( false === $demos ) {
+			wp_send_json_error( array( 'error' => 'Failed to fetch demo data' ) );
+			return;
+		}
 
-			// Check for errors
-			if (is_wp_error($response_search)) {
-				// handle the error if needed
-			} else {
-				// Successful response retrieval
-				$http_code_search = wp_remote_retrieve_response_code($response_search);
+		$filtered_demos = $this->filter_demos( $demos, $getType, $filter_license, $keyword, $list_checkbox );
+		$total_filtered = count( $filtered_demos );
 
-				// Process the JSON data here
-				$data_search = json_decode(wp_remote_retrieve_body($response_search), true);
-				$domain = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		// Render results with pagination support for all combinations
+		if ( empty( $filtered_demos ) ) {
+			echo '<span class="not-found" style="font-size:17px;">No demo found...</span>';
+		} else {
+			// Use pagination based on page number
+			// Display all items from page 1 to current page
+			$current_page = $this->get_current_page();
+			$limit = $current_page * $this->posts_per_page;
+			$index_all_demos = 1;
+			$rendered_count  = 0;
 
-				if ( 'solacewp.com' !== $domain ) {
-					$data_search = array_filter($data_search, function($demo) {
-						return $demo['demo_status'] !== 'draft' && $demo['demo_status'] !== 'pending';
-					});
+			foreach ( $filtered_demos as $demo ) {
+				if ( $index_all_demos <= $limit ) {
+					$this->render_demo_item( $demo, $index_all_demos );
+					$rendered_count++;
 				}
-
-				// Print the result
-				$matching_api = array();
-				$index = 1;
-				$show_posts = 9;
-				foreach ($data_search as $value) {
-
-					$demo_image = $value['demo_image'];
-					$get_solace_type = $getType;
-					$arr_list_type = array('elementor', 'gutenberg');
-					$is_type = false;
-					$demo_search = strtolower($value['demo_search'] . ' ' . $value['demo_desc']);
-
-					if (in_array($get_solace_type, $arr_list_type)) {
-						$is_type = true;
-					}
-					if (!empty($demo_image) && !empty($get_solace_type)) {
-						if ($is_type && $value['demo_type'] === $get_solace_type) {
-
-							if (preg_match("/$keyword/i", $demo_search)) {
-								$matching_api[] = $value;
-								$label_new = false;
-								if ( in_array( 'New', $value['demo_category'] ) ) {
-									$label_new = true;
-								}								
-
-								$label_recommended = false;
-								if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-									$label_recommended = true;
-								}
-								?>
-								<div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
-									<div class="box-image">
-									<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
-									</div>
-									<div class="box-content">
-										<div class="top-content">
-											<?php if (!empty($value['title'])) : ?>
-												<span class="title"><?php echo esc_html( $value['title'] ); ?></span>
-											<?php endif; ?>
-											<?php if ( $label_recommended ) : ?>
-												<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
-											<?php endif; ?>											
-											<?php if ( $label_new ) : ?>
-												<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
-										<?php endif; ?>
-										</div>
-										<div class="bottom-content">
-											<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-										</div>
-									</div>
-								</div>
-								<?php
-								echo '<span class="count-demo" style="display: none;">' . absint($index) . '</span>';
-								$index++;
-							}
-						}
-					}
-				}
-
-				// Show All Demos
-				$solaceLoadMore = !empty($_COOKIE['solaceLoadMore']) ? (int)$_COOKIE['solaceLoadMore'] * 9: 9;
-				$index_all_demos = 1;
-				$show_default_posts = $solaceLoadMore;
-				foreach ($data_search as $value) {
-					$demo_image = $value['demo_image'];
-					if ( $keyword == 'empty' && ! empty( $demo_image ) ) {
-						$label_new = false;
-						if ( in_array( 'New', $value['demo_category'] ) ) {
-							$label_new = true;
-						}
-
-						$label_recommended = false;
-						if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-							$label_recommended = true;
-						}
-						?>
-						<div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
-							<div class="box-image">
-							<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
-							</div>
-							<div class="box-content">
-								<div class="top-content">
-									<?php if (!empty($value['title'])) : ?>
-										<span class="title"><?php echo esc_html( $value['title'] ); ?></span>
-									<?php endif; ?>
-									<?php if ( $label_recommended ) : ?>
-										<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
-									<?php endif; ?>
-									<?php if ( $label_new && false ) : ?>
-										<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
-									<?php endif; ?>
-								</div>
-								<div class="bottom-content">
-									<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-								</div>
-							</div>
-						</div>
-						<?php
-						// Looping Only $show_default_posts
-						if ($index_all_demos === $show_default_posts) {
-							break;
-						}
-						$index_all_demos++;
-					}
-				}
+				$index_all_demos++;
 			}
 
-		} else {
-			// Invalid nonce, respond with an error
-			$response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
-		}		
+			// Output total count for JavaScript to check if load more should be shown
+			echo '<span class="total-filtered-count" style="display:none;">' . absint( $total_filtered ) . '</span>';
+		}
 
 		wp_die();
 	}
@@ -221,285 +386,132 @@ class Solace_Extra_Starter_Templates {
 	 * @since    1.0.0
 	 */
 	public function action_ajax_checkbox() {
-
 		// Verify nonce
-		if (isset($_POST['nonce']) && wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
 
-			$getType = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
+		$getType         = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
+		$checked         = ! empty( $_POST['checked'] ) ? sanitize_text_field( wp_unslash( $_POST['checked'] ) ) : '';
+		$filter_license  = ! empty( $_POST['filter_license'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_license'] ) ) : 'all';
+		$keyword         = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+		$list_checkbox   = ! empty( $checked ) && 'show-all-demos' !== $checked ? explode( ', ', $checked ) : array();
 
-			// Primary and backup API URLs
-			$url_solace_checkbox = 'https://solacewp.com/api/wp-json/solace/v1/demo/';
-			$url_local_checkbox = plugin_dir_url(__FILE__) . 'partials/demo.json';
-	
-			// Use wp_remote_get() instead of cURL
-			$response_checkbox = wp_remote_get($url_solace_checkbox);
-	
-			// Check for errors
-			if (is_wp_error($response_checkbox)) {
-				// handle the error if needed
-			} else {
-				// Successful response retrieval
-				$http_code_checkbox = wp_remote_retrieve_response_code($response_checkbox);
-	
-				// Process the JSON data here
-				$data_checkbox = json_decode(wp_remote_retrieve_body($response_checkbox), true);
-				$domain = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
+		if ( empty( $keyword ) ) {
+			$keyword = 'empty';
+		}
 
-				if ( 'solacewp.com' !== $domain ) {
-					$data_checkbox = array_filter($data_checkbox, function($demo) {
-						return $demo['demo_status'] !== 'draft' && $demo['demo_status'] !== 'pending';
-					});
-				}
-	
-				// Print the result
-				$index = 1;
-				$show_posts = 9;
-				foreach ($data_checkbox as $value) {
-	
-					$demo_image = $value['demo_image'];
-					$get_solace_type = $getType;
-					$arr_list_type = array('elementor', 'gutenberg');
-					$is_type = false;
-					$checked = ! empty( $_POST['checked'] ) ? sanitize_text_field( wp_unslash( $_POST['checked'] ) ) : '';
-					$list_checkbox = explode(', ', $checked );
+		$demos = $this->get_demo_data();
+		if ( false === $demos ) {
+			wp_send_json_error( array( 'error' => 'Failed to fetch demo data' ) );
+			return;
+		}
 
-	
-					if (in_array($get_solace_type, $arr_list_type)) {
-						$is_type = true;
-					}
-					if (!empty($demo_image) && !empty($get_solace_type)) {
-	
-						// Show Only Checked
-						if ($is_type && $value['demo_type'] === $get_solace_type && array_intersect($value['demo_category'], $list_checkbox)) {
+		// Apply all filters together
+		$filtered_demos = $this->filter_demos( $demos, $getType, $filter_license, $keyword, $list_checkbox );
+		$total_filtered = count( $filtered_demos );
 
-							$label_new = false;
-							if ( in_array( 'New', $value['demo_category'] ) ) {
-								$label_new = true;
-							}							
-
-							$label_recommended = false;
-							if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-								$label_recommended = true;
-							}
-
-							?>
-							<div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
-								<div class="box-image">
-								<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
-								</div>
-								<div class="box-content">
-									<div class="top-content">
-										<?php if (!empty($value['title'])) : ?>
-											<span class="title"><?php echo esc_html( $value['title'] ); ?></span>
-										<?php endif; ?>
-										<?php if ( $label_recommended ) : ?>
-											<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
-										<?php endif; ?>											
-										<?php if ( $label_new ) : ?>
-											<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
-									<?php endif; ?>
-									</div>
-									<div class="bottom-content">
-										<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-									</div>
-								</div>
-							</div>
-							<?php
-							echo '<span class="count-demo" style="display: none;">' . absint($index) . '</span>';
-							$index++;
-						}
-					}
-				}
-
-				// Show All Demos
-				$solaceLoadMore = !empty($_COOKIE['solaceLoadMore']) ? (int)$_COOKIE['solaceLoadMore'] * 9: 9;
-				$index_all_demos = 1;
-				$show_default_posts = $solaceLoadMore;
-				foreach ($data_checkbox as $value) {
-					$demo_image = $value['demo_image'];
-					if ( $_POST['checked'] == 'show-all-demos' && ! empty( $demo_image ) ) {
-						$label_new = false;
-						if ( in_array( 'New', $value['demo_category'] ) ) {
-							$label_new = true;
-						}
-
-						$label_recommended = false;
-						if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-							$label_recommended = true;
-						}
-						?>
-						<div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
-							<div class="box-image">
-							<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
-							</div>
-							<div class="box-content">
-								<div class="top-content">
-									<?php if (!empty($value['title'])) : ?>
-										<span class="title"><?php echo esc_html( $value['title'] ); ?></span>
-									<?php endif; ?>
-									<?php if ( $label_recommended ) : ?>
-										<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
-									<?php endif; ?>
-									<?php if ( $label_new && false ) : ?>
-										<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
-									<?php endif; ?>
-								</div>
-								<div class="bottom-content">
-									<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-								</div>
-							</div>
-						</div>
-						<?php
-						// Looping Only $show_default_posts
-						if ($index_all_demos === $show_default_posts) {
-							break;
-						}
-						$index_all_demos++;
-					}
-				}				
-			}
-
+		// Render results with pagination support
+		if ( empty( $filtered_demos ) ) {
+			echo '<span class="not-found" style="font-size:17px;">No demo found...</span>';
 		} else {
-			// Invalid nonce, respond with an error
-			$response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
-		}		
+			// Use pagination based on page number
+			// Display all items from page 1 to current page
+			$current_page = $this->get_current_page();
+			$limit = $current_page * $this->posts_per_page;
+			$index_all_demos = 1;
+			$rendered_count  = 0;
 
-		wp_die();		
-
-	}
-
-	/**
-	 * Ajax Load More
-	 */
-	public function call_ajax_load_more() {
-		// Verify nonce
-		if (isset($_POST['nonce']) && wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {		
-
-			$getType = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
-			$totalPosts = ! empty( $_POST['totalPosts'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['totalPosts'] ) ) : '';
-			$postsPerPage = 9;
-			$page_load_more = $totalPosts / $postsPerPage + 1;
-
-			if (!empty($_COOKIE['solaceLoadMore'])) {
-				$solaceLoadMore = ! empty( $_COOKIE['solaceLoadMore'] ) ? absint( wp_unslash( $_COOKIE['solaceLoadMore'] ) ) : '';
-
-				if ($page_load_more > $solaceLoadMore) {
-					setcookie('solaceLoadMore', $page_load_more, time() + (10 * 24 * 60 * 60));
+			foreach ( $filtered_demos as $demo ) {
+				if ( $index_all_demos <= $limit ) {
+					$this->render_demo_item( $demo, $index_all_demos );
+					$rendered_count++;
 				}
-			} else {
-				setcookie('solaceLoadMore', $page_load_more, time() + (10 * 24 * 60 * 60));
+				$index_all_demos++;
 			}
 
-			// Keyword
-			$keyword = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
-
-			// Primary and backup API URLs
-			$url_solace_load_more = 'https://solacewp.com/api/wp-json/solace/v1/demo/';
-			$url_local_load_more = plugin_dir_url(__FILE__) . 'partials/demo.json';
-
-			// Use wp_remote_get() instead of cURL
-			$response_load_more = wp_remote_get($url_solace_load_more);
-
-			// Check for errors
-			if (is_wp_error($response_load_more)) {
-				// handle the error if needed
-			} else {
-				// Successful response retrieval
-				// if (wp_remote_retrieve_response_code($response_load_more) >= 400) {
-				// 	// The response_load_more code is 400 or greater
-				// 	// Switch to the backup URL
-				// 	$response_load_more = wp_remote_get($url_local_load_more);
-				// }
-
-				// Process the JSON data here
-				$data_load_more = json_decode(wp_remote_retrieve_body($response_load_more), true);
-				$domain = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-
-				if ( 'solacewp.com' !== $domain ) {
-					$data_load_more = array_filter($data_load_more, function($demo) {
-						return $demo['demo_status'] !== 'draft' && $demo['demo_status'] !== 'pending';
-					});
-				}
-
-				// Print the result
-				$matching_api = array();
-				$index = 1;
-				foreach ($data_load_more as $value) {
-
-					$demo_image = $value['demo_image'];
-					$get_solace_type = $getType;
-					$arr_list_type = array('elementor', 'gutenberg');
-					$is_type = false;
-
-					if (in_array($get_solace_type, $arr_list_type)) {
-						$is_type = true;
-					}
-					if (!empty($demo_image) && !empty($get_solace_type)) {
-						if ($is_type && $value['demo_type'] === $get_solace_type) {
-							// Start load more
-							if ($index > $totalPosts && $index <= ($totalPosts + $postsPerPage)) {
-								?>
-								<div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
-									<?php
-                                    $label_new = false;
-                                    if ( in_array( 'New', $value['demo_category'] ) ) {
-                                        $label_new = true;
-                                    }
-
-									$label_recommended = false;
-									if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-										$label_recommended = true;
-									}
-
-									?>
-									<div class="box-image">
-									<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
-									</div>
-									<div class="box-content">
-										<div class="top-content">
-											<?php if (!empty($value['title'])) : ?>
-												<span class="title"><?php echo esc_html( $value['title'] ); ?></span>
-											<?php endif; ?>
-											<?php if ( $label_recommended ) : ?>
-												<span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
-											<?php endif; ?>												
-											<?php if ( $label_new ) : ?>
-												<span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
-										<?php endif; ?>
-										</div>
-										<div class="bottom-content">
-											<p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-										</div>
-									</div>									
-								</div>
-								<?php
-								echo '<span class="count-demo" style="display: none;">' . absint($index) . '</span>';
-							}
-							$index++;
-						}
-					}
-				}
-			}
-		} else {
-			// Invalid nonce, respond with an error
-			$response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
+			// Output total count for JavaScript to check if load more should be shown
+			echo '<span class="total-filtered-count" style="display:none;">' . absint( $total_filtered ) . '</span>';
 		}
 
 		wp_die();
 	}
 
 	/**
+	 * Ajax Load More
+	 *
+	 * @since    1.0.0
+	 */
+	public function call_ajax_load_more() {
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
+
+		$getType         = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
+		$totalPosts      = ! empty( $_POST['totalPosts'] ) ? (int) sanitize_text_field( wp_unslash( $_POST['totalPosts'] ) ) : 0;
+		$filter_license  = ! empty( $_POST['filter_license'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_license'] ) ) : 'all';
+		$keyword         = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
+		$checked         = ! empty( $_POST['checked'] ) ? sanitize_text_field( wp_unslash( $_POST['checked'] ) ) : '';
+		$list_checkbox   = ! empty( $checked ) && 'show-all-demos' !== $checked ? explode( ', ', $checked ) : array();
+
+		if ( empty( $keyword ) ) {
+			$keyword = 'empty';
+		}
+
+		$demos = $this->get_demo_data();
+		if ( false === $demos ) {
+			wp_send_json_error( array( 'error' => 'Failed to fetch demo data' ) );
+			return;
+		}
+
+		// Apply all filters together
+		$filtered_demos = $this->filter_demos( $demos, $getType, $filter_license, $keyword, $list_checkbox );
+		$total_filtered = count( $filtered_demos );
+		
+		// Get current page and calculate next page
+		$current_page = $this->get_current_page();
+		$next_page = $current_page + 1;
+		
+		// Calculate offset and limit for next page
+		$offset = ( $next_page - 1 ) * $this->posts_per_page;
+		$limit = $next_page * $this->posts_per_page;
+		$index = 1;
+		$rendered_count = 0;
+
+		foreach ( $filtered_demos as $demo ) {
+			if ( $index > $offset && $index <= $limit ) {
+				$this->render_demo_item( $demo, $index );
+				$rendered_count++;
+			}
+			$index++;
+		}
+
+		// Update cookie with next page number
+		if ( $rendered_count > 0 ) {
+			$this->set_current_page( $next_page );
+		}
+
+		// Output total count and current page for JavaScript
+		echo '<span class="total-filtered-count" style="display:none;">' . absint( $total_filtered ) . '</span>';
+		echo '<span class="current-page" style="display:none;">' . absint( $next_page ) . '</span>';
+
+		wp_die();
+	}
+
+	/**
 	 * Add cookie page access.
+	 *
+	 * @since    1.0.0
 	 */
 	public function add_cookie_page_access() {
-        // Verify nonce
-        if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
-            $response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
-            wp_die();
-        }
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
 
 		// Set cookie
 		if ( empty( $_COOKIE['solace_page_access'] ) ) {
@@ -507,6 +519,5 @@ class Solace_Extra_Starter_Templates {
 		}
 
 		wp_die();
-	}	
-	
+	}
 }

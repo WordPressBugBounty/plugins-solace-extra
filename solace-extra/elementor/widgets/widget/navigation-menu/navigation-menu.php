@@ -35,7 +35,7 @@ class Solace_Extra_Navigation_Menu extends \Elementor\Widget_Base {
 	 * @return string Widget title.
 	 */
 	public function get_title() {
-		return esc_html__( 'Solace Nav Menu', 'solace-extra' );
+		return esc_html__( 'Nav Menu', 'solace-extra' );
 	}
 
 	/**
@@ -48,7 +48,7 @@ class Solace_Extra_Navigation_Menu extends \Elementor\Widget_Base {
 	 * @return string Widget icon.
 	 */
 	public function get_icon() {
-		return 'eicon-nav-menu';
+		return 'eicon-nav-menu  solace-extra';
 	}
 
 	/**

@@ -7,8 +7,17 @@
     };
 
     $('.status-switch').on('change', function() {
+
+        const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct'];
+
+        parts.forEach(part => {
+            $('.status-switch[data-part="' + part + '"]')
+                .not(this)
+                .prop('checked', false);
+        });
+            
         var postId = $(this).data('post-id');
-        var part = $(this).data('part');
+        var part = $(this).data('part').toString();
         var status = $(this).is(':checked') ? 1 : 0;
 
         $.ajax({
@@ -33,10 +42,56 @@
         });
     });
 
+    jQuery(document).ready(function($) {
+        $('.solace-extra-add-to-cart').on('submit', 'form.cart', function(e) {
+            e.preventDefault();
+        
+            var $form = $(this);
+            var $button = $form.find('.ajax_add_to_cart');
+            var product_id = $button.data('product_id');
+            var quantity = $form.find('.quantity').val();
+            var $viewCartButton = $form.siblings('.view_cart_button');
+        
+            $.ajax({
+                type: 'POST',
+                url: solaceSitebuilderParams.ajax_url,
+                data: {
+                    action: 'woocommerce_ajax_add_to_cart',
+                    product_id: product_id,
+                    quantity: quantity
+                },
+                beforeSend: function() {
+                    $button.addClass('loading').text('Adding...');
+                },
+                success: function(response) {
+                    $button.removeClass('loading');
+        
+                    if (response.success) {
+                        $button.hide();
+                        $viewCartButton.show();
+                    } else {
+                        alert(response.message || 'Failed to add product to cart.');
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                }
+            });
+        });
+        
+    });
+
+    
+
+    
+    
+    
+    
+
     $('.all-status-switch').click(function(event) {
         // BULK CHANGE ALL EVERY PART TO DISABLE OR ENABLE
-        var part = $(this).data('part-global');
-        var vpart = $(this).data('part-global').toUpperCase();  
+        var part = $(this).data('part-global').toString();
+        var vpart = $(this).data('part-global').toString().toUpperCase();  
 
 
         if ($(this).hasClass('disabled-checkbox')) {
@@ -213,141 +268,124 @@
 
     $('.button.addnew').attr('data-part', partValue);
 
+    // Event handler for 'Add New' button click
     $('.addnew').on('click', function(e) {
         e.preventDefault();
-        var part = $(this).data('part');
-        console.log('Add New Party:', part);
 
-        if (part=='singleproduct'){
-            $.ajax({
-                url: solaceSitebuilderParams.ajaxurl, 
-                method: 'POST',
-                data: {
-                    action: 'create_and_edit_page_single_product',
-                    // part: part,
-                    nonce: solaceSitebuilderParams.nonce,
-                }, 
-              success: function(response) {
-                if (response.success) {
-                    var postId = response.data.post_id;  
-                    console.log('postID sukses:'+postId);
-                    // window.location.href = response.data.edit_link;
-    
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
-                    console.log('editUrl:', editUrl);
-                    window.location.href = editUrl;
-                } else {
-                  alert('failed to create new page.');
-                }
-              },
-              error: function(error) {
-                console.error(error);
-                alert('Unknown Error, please try again.');
-              }
-            });
-        } else if (part=='shopproduct'){
-            $.ajax({
-                url: solaceSitebuilderParams.ajaxurl, 
-                method: 'POST',
-                data: {
-                    action: 'create_and_edit_page_shop_product',
-                    // part: part,
-                    nonce: solaceSitebuilderParams.nonce,
-                }, 
-              success: function(response) {
-                if (response.success) {
-                    var postId = response.data.post_id;  
-                    console.log('postID sukses:'+postId);
-                    // window.location.href = response.data.edit_link;
-    
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
-                    console.log('editUrl:', editUrl);
-                    window.location.href = editUrl;
-                } else {
-                    alert('failed to create new page.');
-                }
-              },
-              error: function(error) {
-                console.error(error);
-                alert('Unknown Error, please try again.');
-              }
-            });
-        } else if (part=='blogsinglepost'){
-            $.ajax({
-                url: solaceSitebuilderParams.ajaxurl, 
-                method: 'POST',
-                data: {
-                    action: 'create_and_edit_page_blogsingle_post',
-                    // part: part,
-                    nonce: solaceSitebuilderParams.nonce,
-                }, 
-              success: function(response) {
-                if (response.success) {
-                    var postId = response.data.post_id;  
-                    console.log('postID sukses:'+postId);
-                    // window.location.href = response.data.edit_link;
-    
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
-                    console.log('editUrl:', editUrl);
-                    window.location.href = editUrl;
-                } else {
-                    alert('failed to create new page.');
-                }
-              },
-              error: function(error) {
-                console.error(error);
-                alert('Unknown Error, please try again.');
-              }
-            });
-        } else if (part=='blogarchive'){
-            $.ajax({
-                url: solaceSitebuilderParams.ajaxurl, 
-                method: 'POST',
-                data: {
-                    action: 'create_and_edit_page_blogarchive',
-                    // part: part,
-                    nonce: solaceSitebuilderParams.nonce,
-                }, 
-              success: function(response) {
-                if (response.success) {
-                    var postId = response.data.post_id;  
-                    console.log('postID sukses:'+postId);
-                    // window.location.href = response.data.edit_link;
-    
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor');
-                    console.log('editUrl:', editUrl);
-                    window.location.href = editUrl;
-                } else {
-                    alert('failed to create new page.');
-                }
-              },
-              error: function(error) {
-                console.error(error);
-                alert('Unknown Error, please try again.');
-              }
-            });
-        }else {
+        const part = String($(this).data('part')).trim();
+        // Allowed page types for creation
+        const allowedTypes = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404'];
 
-            $('#add-new-popup').attr('data-part', part); 
-            $('#add-new-popup').attr('data-popup-type', 'add-new');
-            $('#add-new-popup .new-conditions-container').html(`
-                <div class="condition-item">
-                    <select name="condition_1_exclude_include" class="condition-exclude-include-select">
-                        <option value="include">${solaceConditions.includeLabel}</option>
-                        <option value="exclude">${solaceConditions.excludeLabel}</option>
-                    </select>
-                    <select name="condition_1_value" class="condition-select">
-                        ${generateOptionsHtml()}
-                    </select>
-                    <a href="#" class="delete-condition dashicons dashicons-trash" title="Delete Condition"></a>
-                </div>
-            `);
-
-            $('#add-new-popup').fadeIn(400);
-            $('#add-new-overlay').fadeIn(400); 
+        // Validate if the provided type is allowed
+        if ( ! allowedTypes.includes(part) ) {
+            console.warn('Invalid type provided:', part);
+            return;
         }
-        
+
+        // Disable button to prevent multiple clicks during request
+        const $button = $(this);
+        $button.prop('disabled', true);
+
+        // If 'part' exists, initiate AJAX request to create a new page
+        if ( part && part !== 'header' && part !== 'footer' ) {
+            createAndRedirect(part, $button);
+        } else if ( part === 'header' || part === 'footer' ) {
+            showAddNewPopup(part);
+            $button.prop('disabled', false);
+        }
     });
+
+    /**
+     * AJAX call to create a new custom post and redirect to Elementor editor.
+     * @param {string} part - The type of page to create.
+     * @param {object} $button - The jQuery button element to re-enable after completion.
+     */
+    function createAndRedirect(part, $button) {
+        $.ajax({
+            url: solaceSitebuilderParams.ajaxurl,
+            method: 'POST',
+            data: {
+                action: 'create_and_edit_page',
+                type: part,
+                nonce: solaceSitebuilderParams.nonce,
+            },
+            success: function(response) {
+                if (response.success) {
+                    const postId = response.data.post_id;
+                    let editUrl = solaceSitebuilderParams.edit_url
+                        .replace('{post_id}', postId)
+                        .concat('&post_type=solace-sitebuilder&action=elementor');
+
+                    // Add conditional GET parameters based on part type
+                    if (part === 'header' || part === 'footer' || part === '404') {
+                        editUrl += '&solace-extra=1';
+                    } else if (part === 'singleproduct') {
+                        editUrl += '&solace-extra-single=1';
+                    } else if (part === 'shopproduct' || part === 'purchase-summary') {
+                        editUrl += '&solace-extra-woocommerce=1';
+                    } else if (part === 'blogsinglepost') {
+                        editUrl += '&solace-extra-single-post=1';
+                    } else if (part === 'blogarchive') {
+                        editUrl += '&solace-extra-archive=1';
+                    }
+
+                    // Append part parameter if not empty
+                    if (part && part.trim() !== '') {
+                        editUrl += '&part=' + encodeURIComponent(part);
+                    }
+
+                    // Redirect to the constructed URL
+                    window.location.href = editUrl;
+                } else {
+                    alert('Failed to create new page.');
+                }
+            },
+            error: function(xhr) {
+                console.error(xhr);
+                let errorMsg = 'Unknown Error, please try again.';
+
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response?.data?.error) {
+                        errorMsg = response.data.error;
+                    }
+                } catch (e) {
+                    // Ignore JSON parse errors
+                }
+
+                alert(errorMsg);
+            },
+            complete: function() {
+                // Always re-enable the button regardless of success/failure
+                $button.prop('disabled', false);
+            }
+        });
+    }
+
+    /**
+     * Displays the 'Add New' popup with default condition selectors.
+     * @param {string} part - The type of page to associate with the popup (may be empty).
+     */
+    function showAddNewPopup(part) {
+        $('#add-new-popup')
+            .attr('data-part', part)
+            .attr('data-popup-type', 'add-new');
+
+        $('#add-new-popup .new-conditions-container').html(`
+            <div class="condition-item">
+                <select name="condition_1_exclude_include" class="condition-exclude-include-select">
+                    <option value="include">${solaceConditions.includeLabel}</option>
+                    <option value="exclude">${solaceConditions.excludeLabel}</option>
+                </select>
+                <select name="condition_1_value" class="condition-select">
+                    ${generateOptionsHtml()}
+                </select>
+                <a href="#" class="delete-condition dashicons dashicons-trash" title="Delete Condition"></a>
+            </div>
+        `);
+
+        $('#add-new-popup, #add-new-overlay').fadeIn(400);
+    }
 
     $('.newpart').on('click', function(e) {
         $('#all-add-new-popup').fadeIn(400);
@@ -379,6 +417,60 @@
         $('#add-404-popup').fadeIn(400);
         $('#add-404-popup-overlay').fadeIn(400); 
 
+    }); 
+
+    // Attach a click event listener to elements with class 'delete-column' inside the specified selector
+    $('.solace-list-item .group.action .delete-column .delete').on('click', function(e) {
+        e.preventDefault();
+        const id = Number($(this).attr('data-id'));
+        const listItem = $(this).parent().parent().parent().parent();
+
+        Swal.fire({
+            title: solaceSitebuilderI18n.delete_confirm_title,
+            text: solaceSitebuilderI18n.delete_confirm_text,
+            icon: "warning",
+            showCancelButton: true,
+            showCloseButton: true,
+            confirmButtonText: solaceSitebuilderI18n.delete_confirm_button,
+            cancelButtonText: solaceSitebuilderI18n.delete_cancel_button,
+            reverseButtons: true,
+            customClass: {
+                confirmButton: 'swal2-confirm btn btn-danger',
+                cancelButton: 'swal2-cancel btn btn-secondary'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Send an AJAX request to delete the item
+                $.ajax({
+                    url: solaceSitebuilderParams.ajaxurl,
+                    method: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'delete_action',
+                        id: id,
+                        nonce: solaceSitebuilderParams.nonce
+                    },
+                    success: function(response) {
+                        console.log('AJAX Response:', response);
+
+                        if (response.success) {
+                            // Animate the removal of the item
+                            listItem.fadeOut(350, function() {
+                                $(this).remove(); // Remove from DOM after fade out
+                            });
+                        } else {
+                            alert(response.data?.error || solaceSitebuilderI18n.delete_failed_message);
+                            $(this).css('cursor', 'pointer'); // Reset cursor if failed
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error('AJAX error:', textStatus, errorThrown);
+                        alert(solaceSitebuilderI18n.delete_error_message);
+                        $(this).css('cursor', 'pointer'); // Reset cursor on error
+                    }
+                });
+            }
+        });       
     });
 
     $('#save-new-conditions').on('click', function(e) {
@@ -476,8 +568,7 @@
                 console.log('AJAX response saveEditConditions:', response);
 
                 if (response.success) {
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor&part=' + part);
-                    console.log('editUrl:', editUrl);
+                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor&solace-extra=1&part=' + part);
                     window.location.href = editUrl;
                 } else {
 
@@ -646,21 +737,6 @@
 
     });
     
-    $('.solace-list-item .delete').on('click', function(e) {
-        e.preventDefault(); 
-
-        var deleteLink = $(this).attr('href'); 
-
-        
-        var confirmDelete = confirm('Are you sure you want to delete this item?');
-        
-        if (confirmDelete) {
-            window.location.href = deleteLink;
-        }
-        
-    });
-    
-
     $('#add-condition').on('click', function() {
         var conditionsContainer = $('.conditions-container:visible');
         var conditionCount = conditionsContainer.find('.condition-item').length + 1;
@@ -787,68 +863,124 @@
 
     var selectedPostId = null; // To keep track of the selected post
 
-    // When the rename button is clicked
-    $('.solace-rename-button.rename').on('click', function(e) {
-        e.preventDefault(); // Prevent default action of the link
+    // When the Rename button is clicked
+    $('.solace-rename-button').on('click', function(e) {
+        e.preventDefault();
 
-        // Get post ID from data-post-id attribute
-        selectedPostId = $(this).data('post-id'); 
+        const $button = $(this);
+        const postId = $button.data('post-id');
+        const $item = $button.closest('.solace-list-item');
+        const $titleColumn = $item.find('.title-column');
 
-        // Find the closest parent with class 'solace-list-item' and then find 'title-column' within it
-        var currentTitle = $(this).closest('.solace-list-item').find('.title-column').text().trim();
-        console.log('Current Title: ' + currentTitle);
+        // Prevent action if the rename input is already active in this item
+        if ($titleColumn.find('.rename-input').length) {
+            return;
+        }
 
-        // Set current title in the input field
-        $('#solace-rename-field').val(currentTitle); 
+        // Reset all title columns back to their original titles (if any)
+        $('.solace-list-item .title-column').each(function() {
+            const $col = $(this);
+            const originalTitle = $col.data('original-title');
 
-        // Show the popup
-        $('#solace-rename-popup').fadeIn(400);
+            // Restore the original title only if it was previously saved
+            if (originalTitle) {
+                $col.text(originalTitle);
+            }
+        });
+
+        // Store the current title as a data attribute for possible reset later
+        const currentTitle = $titleColumn.text().trim();
+        $titleColumn.data('original-title', currentTitle);
+
+        // Replace the title text with an input field, save button, and cancel button
+        $titleColumn.html(`
+            <input style="border-radius: 8px; border: 1px solid #f1f1f1;" type="text" class="rename-input" value="${currentTitle}" />
+            <button style="margin-left: 10px; padding: 0 20px;" class="button save-rename" data-post-id="${postId}">Save</button>
+            <button style="margin-left: 5px; padding: 0 20px;" class="button cancel-rename">Cancel</button>
+        `);
+
+        // Focus the input after it has been added to the DOM
+        const $input = $titleColumn.find('.rename-input');
+        $input.focus();
+
+        // Move cursor to the end of the text
+        const inputEl = $input.get(0);
+        inputEl.setSelectionRange(inputEl.value.length, inputEl.value.length);
+
     });
 
-    // When the save button is clicked in the popup
-    $('#solace-save-rename').on('click', function() {
+    // When the Save button is clicked
+    $(document).on('click', '.save-rename', function(e) {
+        e.preventDefault();
 
-        var assetsUrl = solaceSitebuilderParams.assetsUrl; 
-        
-        $('#solace-save-rename').addClass('active');
-        $('#solace-save-rename dotlottie-player').fadeIn(1000);
+        const $saveBtn = $(this);
+        const postId = $saveBtn.data('post-id');
+        const $input = $saveBtn.siblings('.rename-input');
+        const newTitle = $input.val();
 
+        // Send AJAX request to WordPress to update the post title
+        $.ajax({
+            url: solaceSitebuilderParams.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'solace_rename_post_title',
+                post_id: postId,
+                new_title: newTitle,
+                nonce: solaceSitebuilderParams.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    $saveBtn.closest('.title-column')
+                        .text(newTitle)
+                        .data('original-title', newTitle); // Update the original title
 
-        $(this).addClass('active-button').css({
-            'width': '250px',
-            'padding-right': '85px',
-            'transition': 'width .5s ease, padding-right .5s ease'
-        });
-        
-        var newTitle = $('#solace-rename-field').val(); // Get the new title
-        console.log ('new title:'+newTitle);
-
-        if (selectedPostId && newTitle) {
-            $.ajax({
-                url: solaceSitebuilderParams.ajaxurl, 
-                type: 'POST',
-                data: {
-                    action: 'rename_post_title', // Custom action to handle renaming
-                    post_id: selectedPostId,
-                    new_title: newTitle,
-                    security: solaceSitebuilderParams.nonce, // Use existing nonce
-                    nonce: solaceSitebuilderParams.nonce,
-                },
-                success: function(response) {
-                    if (response.success) {
-                        // Refresh the page after successful rename
-                        location.reload();
-                    } else {
-                        alert('Failed to rename post. Please try again.');
-                    }
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    console.error('AJAX error:', textStatus, errorThrown);
-                    alert('An error occurred while renaming. Please try again.');
+                    Swal.fire({
+                        icon: 'success',
+                        title: solaceSitebuilderI18n.rename_success_title,
+                        text: solaceSitebuilderI18n.rename_success_text,
+                        showCloseButton: true,
+                        customClass: {
+                            confirmButton: 'swal2-confirm-orange'
+                        },
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: solaceSitebuilderI18n.rename_failed_title,
+                        text: solaceSitebuilderI18n.rename_failed_text,
+                        showCloseButton: true,
+                    });
                 }
-            });
-        } else {
-            alert('Please enter a new title.');
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: solaceSitebuilderI18n.ajax_error_title,
+                    text: solaceSitebuilderI18n.ajax_error_text,
+                    showCloseButton: true,
+                });
+            }
+        });
+    });
+
+    // When the Cancel button is clicked
+    $(document).on('click', '.cancel-rename', function(e) {
+        e.preventDefault();
+
+        const $cancelBtn = $(this);
+        const $titleColumn = $cancelBtn.closest('.title-column');
+        const originalTitle = $titleColumn.data('original-title');
+
+        if (originalTitle) {
+            $titleColumn.text(originalTitle);
+        }
+    });
+
+    // Trigger save on Enter key in rename input
+    $(document).on('keydown', '.rename-input', function(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            $(this).siblings('.save-rename').trigger('click');
         }
     });
 
@@ -905,63 +1037,6 @@
         });
     });
     
-
-    // Close the popup when cancel is clicked
-    $('.solace-close-popup').on('click', function() {
-        $('#solace-rename-popup').fadeOut();
-    });
-
-    // document.addEventListener("DOMContentLoaded", function () {
-    //     const iframe = document.querySelector("iframe");
-    //     const headerContent = document.querySelector(".preview-content");
-
-    //     const updateHeight = () => {
-    //     if (iframe.contentWindow && iframe.contentWindow.document.body) {
-    //         const iframeHeight = iframe.contentWindow.document.body.scrollHeight;
-    //         headerContent.style.height = iframeHeight + "px";
-    //     }
-    //     };
-
-    //     iframe.addEventListener("load", updateHeight);
-
-    //     const observer = new MutationObserver(updateHeight);
-    //     observer.observe(iframe.contentWindow.document.body, {
-    //     childList: true,
-    //     subtree: true,
-    //     attributes: true,
-    //     });
-    // });
-
-    // document.addEventListener("DOMContentLoaded", function () {
-    //     const headerContents = document.querySelectorAll(".preview-content");
-
-    //     headerContents.forEach((headerContent) => {
-    //     const iframe = headerContent.querySelector("iframe");
-
-    //     const updateHeight = () => {
-    //         if (iframe.contentWindow && iframe.contentWindow.document.body) {
-    //         const iframeHeight = iframe.contentWindow.document.body.scrollHeight;
-    //         headerContent.style.height = iframeHeight + "px";
-    //         }
-    //     };
-
-    //     iframe.addEventListener("load", updateHeight);
-
-    //     iframe.addEventListener("load", () => {
-    //         const observer = new MutationObserver(updateHeight);
-    //         if (iframe.contentWindow.document.body) {
-    //         observer.observe(iframe.contentWindow.document.body, {
-    //             childList: true,
-    //             subtree: true,
-    //             attributes: true,
-    //         });
-    //         }
-    //     });
-    //     });
-    // });
-
-    
-
     document.addEventListener("DOMContentLoaded", function() {
         const iframe = document.getElementById("responsive-iframe");
         const customHeaderContent = document.getElementById("custom-header-content");
@@ -1049,3 +1124,13 @@
 
 })(jQuery);
 
+document.addEventListener("DOMContentLoaded", function() {
+    const upgradeUrl = solaceSitebuilderParams.upgradeUrl;
+
+    document.querySelectorAll(".lock button").forEach(function(btn) {
+        btn.addEventListener("click", function(e) {
+            e.preventDefault();
+            window.open(upgradeUrl, "_blank");
+        });
+    });
+});

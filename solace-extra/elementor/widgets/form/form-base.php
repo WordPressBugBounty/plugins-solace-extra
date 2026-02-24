@@ -15,15 +15,15 @@ use Elementor\Icons_Manager;
 abstract class SolaceFormBase extends WidgetBase {
 
 	protected function input( array $params ) {
-
-		$placeholder    = $params['placeholder'] ? $params['placeholder'] : esc_html__( 'Enter your value here... ', 'solace-extra');
+		$generated_field_name = 'field_' . '_' . wp_rand(10, 99999) . '_' . wp_rand(10, 9999);
+		$placeholder    = $params['placeholder'] ? $params['placeholder'] : '';
 		$value          = $params['value'] ? 'value=' . $params['value'] . '' : '';
 		$required       = $params['required'] ? 'required' : '';
 		$id             = $params['id'] ? 'id=' . $params['id'] . '' : '';
 		$class          = $params['class'] ? $params['class'] : '';
 		$multiple_files = $params['multiple_files'] ? 'multiple' : '';
 		$file_types     = $params['file_types'] ? 'accept=' . $params['file_types'] . '' : 'accept=""';
-		$name           = $params['name'] ? $params['name'] : '';
+		$name           = $params['name'] ? $params['name'] : $generated_field_name;
 		$type           = $params['type'] ? $params['type'] : '';
 		$label          = $params['label'] ? $params['label'] : '';
 		$is_mark        = $params['is_mark'] ? $params['is_mark'] : '';
@@ -33,7 +33,7 @@ abstract class SolaceFormBase extends WidgetBase {
 			$this->label( $label );
 		}
 
-		if ( $required && $is_mark ) {
+		if ( $required && $is_mark) {
 			$this->mark();
 		}
 		?>
@@ -43,6 +43,9 @@ abstract class SolaceFormBase extends WidgetBase {
 					name="<?php echo esc_attr( 'solaceFile[]' ); ?>"
 				<?php } else { ?>
 						name="<?php echo esc_attr( $name ); ?>"
+				<?php } ?>
+				<?php if ( $label ) { ?>
+					get_label="<?php echo esc_attr( $label ); ?>"
 				<?php } ?>
 				type="<?php echo esc_attr( $type ); ?>"
 				class="<?php echo esc_attr( $class ); ?> solaceform-style-field"
@@ -68,12 +71,12 @@ abstract class SolaceFormBase extends WidgetBase {
 	}
 
 	protected function textarea( array $params ) {
-
-		$placeholder    = $params['placeholder'] ? $params['placeholder']  : esc_html__( 'Enter your value here... ', 'solace-extra');		
+		$generated_field_name = 'field_' . '_' . wp_rand(10, 99999) . '_' . wp_rand(10, 9999);
+		$placeholder    = $params['placeholder'] ? $params['placeholder']  : '';		
 		$required    = $params['required'] ? 'required' : '';
 		$id          = $params['id'] ? 'id=' . $params['id'] . '' : '';
 		$class       = $params['class'] ? $params['class'] : '';
-		$name        = $params['name'] ? $params['name'] : '';
+		$name        = $params['name'] ? $params['name'] : $generated_field_name;
 		$label       = $params['label'] ? $params['label'] : '';
 		$rows        = $params['rows'] ? $params['rows'] : '';
 		$is_mark     = $params['is_mark'] ? $params['is_mark'] : '';
@@ -83,7 +86,7 @@ abstract class SolaceFormBase extends WidgetBase {
 			$this->label( $label );
 		}
 
-		if ( $required && $is_mark ) {
+		if ( $required && $is_mark) {
 			$this->mark();
 		}
 		?>
@@ -92,6 +95,9 @@ abstract class SolaceFormBase extends WidgetBase {
 				class="<?php echo esc_attr( $class ); ?> solaceform-style-field"
 				rows="<?php echo esc_attr( $rows ); ?>"
 				placeholder="<?php echo esc_attr( $placeholder ); ?>"
+			<?php if ( $label ) { ?>
+				get_label="<?php echo esc_attr( $label ); ?>"
+			<?php } ?>
 		<?php echo esc_attr( $id ); ?>
 		<?php echo esc_attr( $required ); ?>
 			></textarea>
@@ -99,14 +105,15 @@ abstract class SolaceFormBase extends WidgetBase {
 	}
 
 	protected function multi( array $params ) {
-
-		$options  = $params['options'] ? $params['options'] : '';
-		$required = $params['required'] ? 'required' : '';
-		$name     = $params['name'] ? $params['name'] : '';
-		$type     = $params['type'] ? $params['type'] : '';
-		$label    = $params['label'] ? $params['label'] : '';
-		$is_mark  = $params['is_mark'] ? $params['is_mark'] : '';
-		$is_label = $params['is_label'] ? $params['is_label'] : '';
+		$generated_field_name = 'field_' . '_' . wp_rand(10, 99999) . '_' . wp_rand(10, 9999);
+		$options     = $params['options'] ? $params['options'] : '';
+		$inline_list = $params['inline_list'] ? $params['inline_list'] : '';
+		$required    = $params['required'] ? 'required' : '';
+		$name        = $params['name'] ? $params['name'] : $generated_field_name;
+		$type        = $params['type'] ? $params['type'] : '';
+		$label       = $params['label'] ? $params['label'] : '';
+		$is_mark     = $params['is_mark'] ? $params['is_mark'] : '';
+		$is_label    = $params['is_label'] ? $params['is_label'] : '';
 
 		$items = preg_split( '/\r\n|\r|\n/', $options );
 
@@ -114,17 +121,17 @@ abstract class SolaceFormBase extends WidgetBase {
 			$this->label( $label );
 		}
 
-		if ( $required && $is_mark ) {
+		if ( $required && $is_mark) {
 			$this->mark();
 		}
 
 		if ( isset( $items ) ) {
 			?>
-				<div class="solaceform-multi-fields">
+				<div class="solaceform-multi-fields <?php echo $inline_list ? 'inline' : 'block'; ?>">
 			<?php
 			if ( $type === 'select' ) {
 				?>
-							<select name="<?php echo esc_attr( $name ); ?>" class="solaceform-style-field">
+							<select name="<?php echo esc_attr( $name ); ?>" class="solaceform-style-field" <?php echo $label ? 'get_label="' . esc_attr( $label ) . '"' : 'get_label=""'; ?>>
 				<?php
 			}
 
@@ -145,15 +152,19 @@ abstract class SolaceFormBase extends WidgetBase {
 			foreach ( $items as $item ) {
 				if ( $type === 'radio' ) {
 					?>
-								<input type="radio" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $item ); ?>">
+							<div class="box">
+								<input type="radio" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $item ); ?>" <?php echo $label ? 'get_label="' . esc_attr( $label ) . '"' : 'get_label=""'; ?> <?php echo esc_attr( $required ); ?>>
 								<span><?php echo esc_html( $item ); ?></span>
+							</div>
 						 <?php
 				}
 
 				if ( $type === 'checkbox' ) {
 					?>
-								<input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $item ); ?>">
+							<div class="box">
+								<input type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="<?php echo esc_attr( $item ); ?>" <?php echo $label ? 'get_label="' . esc_attr( $label ) . '"' : 'get_label=""'; ?> <?php echo $required ? 'data-required="true" class="required-checkbox"' : ''; ?> <?php echo esc_attr( $required ); ?>>
 								<span><?php echo esc_attr( $item ); ?></span>
+							</div>
 						<?php
 				}
 
@@ -187,6 +198,36 @@ abstract class SolaceFormBase extends WidgetBase {
 			<?php
 		}
 	}
+
+	protected function acceptance( array $params ) {
+		$generated_field_name = 'field_' . '_' . wp_rand(10, 99999) . '_' . wp_rand(10, 9999);
+		$name        = $params['name'] ? $params['name'] : $generated_field_name;
+		$acceptance  = $params['field_acceptance'] ? $params['field_acceptance'] : '';
+		$label       = $params['label'] ? $params['label'] : '';
+		$is_mark     = $params['is_mark'] ? $params['is_mark'] : '';
+		$field_acceptance    = $params['field_acceptance'] ? $params['field_acceptance'] : '';
+		$required       = $params['required'] ? $params['required'] : '';
+		$field_checked_by_default    = $params['field_checked_by_default'] ? $params['field_checked_by_default'] : '';
+
+		?>
+			<div class="solaceform-multi-fields">
+				<div class="solaceform-checkbox-warp">
+					<div class="box">
+						<label for="acceptance" style="display: block;">
+							<?php echo esc_attr( $label ); ?>
+							<?php 
+							if ( $required && $is_mark) {
+								$this->mark();
+							}
+							?>
+						</label>
+						<input id="acceptance" type="checkbox" name="<?php echo esc_attr( $name ); ?>" value="<?php echo '✅ ' . esc_attr( $field_acceptance ); ?>" <?php echo $label ? 'get_label="' . esc_attr( $label ) . '"' : 'get_label=""'; ?> <?php echo esc_attr( $field_checked_by_default ? 'checked' : '' ); ?> <?php echo esc_attr( $required ? 'required' : '' ); ?> />
+						<span style="margin-left: 3px;"><?php echo esc_attr( $acceptance ); ?></span>
+					</div>
+				</div>
+			</div>
+			<?php
+	}	
 
 	protected function html( string $html, string $label, string $is_label ) {
 
@@ -245,45 +286,113 @@ abstract class SolaceFormBase extends WidgetBase {
 		string $text,
 		array $icon,
 		string $position,
-		string $id
+		string $id,
+		string $class
 	) {
-		$id = $id ? 'id=' . $id . '' : '';
+		$settings = $this->get_settings_for_display();
+        $hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
+        $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
 
+		$id = $id ? 'id="' . $id . '"' : '';
+		
+		// Get responsive column width values
+		$column_width = $settings['button_column_width'] ?? $class;
+		$column_width_tablet = $settings['button_column_width_tablet'] ?? '';
+		$column_width_mobile = $settings['button_column_width_mobile'] ?? '';
+		
+		// If tablet/mobile not set, use desktop value as fallback (Elementor behavior)
+		if ( empty( $column_width_tablet ) ) {
+			$column_width_tablet = $column_width;
+		}
+		if ( empty( $column_width_mobile ) ) {
+			$column_width_mobile = $column_width_tablet ?: $column_width;
+		}
+		
+		// Build responsive width classes
+		$width_classes = [];
+		if ( ! empty( $column_width ) ) {
+			$width_classes[] = 'efb-field-width-' . $column_width;
+		}
+		if ( ! empty( $column_width_tablet ) ) {
+			$width_classes[] = 'efb-field-width-tablet-' . $column_width_tablet;
+		}
+		if ( ! empty( $column_width_mobile ) ) {
+			$width_classes[] = 'efb-field-width-mobile-' . $column_width_mobile;
+		}
+		$class = ! empty( $width_classes ) ? implode( ' ', $width_classes ) : '';
+		
+		// Set display style based on button width
+		$display_style = ($class && strpos($class, 'efb-field-width-auto') === false) ? 'display: inline-block;' : 'display: block;';
+		
+		// Check if stretch is selected for button alignment (desktop, tablet, mobile)
+		$button_align = $settings['button_align'] ?? '';
+		$button_align_tablet = $settings['button_align_tablet'] ?? '';
+		$button_align_mobile = $settings['button_align_mobile'] ?? '';
+		
+		// If tablet/mobile not set, use desktop value as fallback (Elementor behavior)
+		if ( empty( $button_align_tablet ) ) {
+			$button_align_tablet = $button_align;
+		}
+		if ( empty( $button_align_mobile ) ) {
+			$button_align_mobile = $button_align_tablet ?: $button_align;
+		}
+		
+		$is_stretch = 'stretch' === $button_align;
+		$is_stretch_tablet = 'stretch' === $button_align_tablet;
+		$is_stretch_mobile = 'stretch' === $button_align_mobile;
+		
+		// Build stretch classes for responsive breakpoints
+		// Add all classes, CSS media queries will handle which one is active
+		$stretch_classes = [];
+		if ( $is_stretch ) {
+			$stretch_classes[] = 'stretch-desktop';
+		}
+		if ( $is_stretch_tablet ) {
+			$stretch_classes[] = 'stretch-tablet';
+		}
+		if ( $is_stretch_mobile ) {
+			$stretch_classes[] = 'stretch-mobile';
+		}
+		$stretch_class = ! empty( $stretch_classes ) ? ' ' . implode( ' ', $stretch_classes ) : '';
+		
 		?>
-			<div class="solaceform-form-button-wrap" <?php echo esc_attr( $id ); ?>>
-				<?php
-				if (
-					isset( $settings['button_align'] ) || 
-					isset( $settings['button_align_tablet'] ) || 
-					isset( $settings['button_align_mobile'] )
-				) {
-					$alignments = [
-						'desktop' => $settings['button_align'] ?? '',
-						'tablet' => $settings['button_align_tablet'] ?? '',
-						'mobile' => $settings['button_align_mobile'] ?? ''
-					];
+			<div style="<?php echo esc_attr( $display_style ); ?>" class="solaceform-form-button-wrap <?php echo esc_attr( $class ); ?>" <?php echo esc_attr( $id ); ?>>
+				<div class="box-button">
+					<?php
+					if (
+						isset( $settings['button_align'] ) || 
+						isset( $settings['button_align_tablet'] ) || 
+						isset( $settings['button_align_mobile'] )
+					) {
+						$alignments = [
+							'desktop' => $settings['button_align'] ?? '',
+							'tablet' => $settings['button_align_tablet'] ?? '',
+							'mobile' => $settings['button_align_mobile'] ?? ''
+						];
 
-					$classes = array_map(
-						fn($key, $value) => 'justify' === $value ? "$key-full-width" : '',
-						array_keys($alignments),
-						$alignments
-					);
+						$classes = array_map(
+							fn($key, $value) => 'justify' === $value ? "$key-full-width" : '',
+							array_keys($alignments),
+							$alignments
+						);
 
-					$button_classes = implode(' ', array_filter($classes));
-					?>
-					<button class="solaceform-form-button <?php echo esc_attr($button_classes); ?>" type="submit">
-				<?php } else { ?>
-					<button class="solaceform-form-button" type="submit">
-				<?php } ?>
-					<?php if ( $position === 'left' ) : ?>
-						<?php Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) ); ?>
-					<?php endif; ?>
-					<?php echo esc_html( $text ); ?>
-					<?php if ( $position === 'right' ) : ?>
-						<?php Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) ); ?>
-					<?php endif; ?>
-					<div class="solace-spinner"></div>
-				</button>
+						$button_classes = implode(' ', array_filter($classes));
+						?>
+						<button class="<?php echo esc_attr( $hover_class ); ?> elementor-button solaceform-form-button <?php echo esc_attr($button_classes . $stretch_class); ?>" type="submit">
+					<?php } else { ?>
+						<button class="<?php echo esc_attr( $hover_class ); ?> elementor-button solaceform-form-button<?php echo esc_attr( $stretch_class ); ?>" type="submit">
+					<?php } ?>
+						<?php if ( $position === 'left' ) : ?>
+							<?php Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) ); ?>
+						<?php endif; ?>
+						<?php echo esc_html( $text ); ?>
+						<?php if ( $position === 'right' ) : ?>
+							<?php Icons_Manager::render_icon( $icon, array( 'aria-hidden' => 'true' ) ); ?>
+						<?php endif; ?>
+						<div class="solace-spinner"></div>
+					</button>
+				</div>
+				<div class="solaceform-form-msg" style="display: none;"><span></span></div>
 			</div>
 		<?php
 	}

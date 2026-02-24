@@ -225,7 +225,7 @@ body.solace_page_dashboard {
                     display: flex;
                     flex-wrap: wrap;
                     flex-direction: column;
-                    justify-content: center;
+                    justify-content: unset;
                     align-items: center;
 
                     span {
@@ -234,6 +234,8 @@ body.solace_page_dashboard {
 
                     svg {
                         margin-bottom: 21px;
+                        width: 46px;
+                        height: 46px;
                     }
 
                     span.title {

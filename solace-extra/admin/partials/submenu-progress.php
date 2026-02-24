@@ -1,12 +1,68 @@
 <?php defined( 'ABSPATH' ) || exit;
 
 if ( empty( $_COOKIE['solace_page_access'] ) ) {
-    $url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
-    wp_redirect( $url, 301 ); 
+    $solace_redirect_url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
+    wp_safe_redirect( $solace_redirect_url, 301 ); 
     exit;
 }
 
-$customizer_link = admin_url('customize.php'); 
+$solace_customizer_link = admin_url('customize.php'); 
+
+$solace_saved_key = get_option( 'solace_license_key', '' );
+$status    = get_option( 'solace_license_status', '' );
+$solace_license_info = false;
+$solace_is_license_valid = false;
+
+// Check license if function exists (from solace-extra-pro plugin)
+if ( function_exists( 'solace_check_license' ) && ! empty( $solace_saved_key ) ) {
+    $solace_license_info = solace_check_license( $solace_saved_key );
+
+    if ( $solace_license_info && isset( $solace_license_info->license ) ) {
+        // Check if license status is valid
+        $solace_license_status = $solace_license_info->license;
+        $solace_is_license_valid = ( 'valid' === $solace_license_status || 'active' === $solace_license_status );
+
+        // Determine if selected demo is PRO using server-side API (no UI flicker)
+        $solace_selected_demo_is_pro = false;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reading demo slug from URL for display only.
+        $solace_selected_demo_slug = ! empty( $_GET['demo'] ) ? sanitize_key( wp_unslash( $_GET['demo'] ) ) : '';
+        if ( ! empty( $solace_selected_demo_slug ) ) {
+            $solace_api_demo_url = SOLACE_EXTRA_DEMO_IMPORT_URL . 'api/wp-json/solace/v1/demo/';
+            $solace_api_demo_response = wp_remote_get( $solace_api_demo_url );
+            if ( ! is_wp_error( $solace_api_demo_response ) ) {
+                $solace_api_demo_body = wp_remote_retrieve_body( $solace_api_demo_response );
+                $solace_api_demo_data = json_decode( $solace_api_demo_body, true );
+                if ( ! empty( $solace_api_demo_data ) && is_array( $solace_api_demo_data ) ) {
+                    foreach ( $solace_api_demo_data as $solace_demo_item ) {
+                        if ( empty( $solace_demo_item['demo_link'] ) ) {
+                            continue;
+                        }
+                        $link = trim( $solace_demo_item['demo_link'] );
+                        $link = rtrim( $link, '/' );
+                        $solace_parts = explode( '/', $link );
+                        $solace_slug  = strtolower( end( $solace_parts ) );
+                        if ( $solace_slug === strtolower( $solace_selected_demo_slug ) ) {
+                            if ( isset( $solace_demo_item['is_pro'] ) ) {
+                                $solace_selected_demo_is_pro = (bool) $solace_demo_item['is_pro'];
+                            } elseif ( isset( $solace_demo_item['isPro'] ) ) {
+                                $solace_selected_demo_is_pro = (bool) $solace_demo_item['isPro'];
+                            } elseif ( isset( $solace_demo_item['license'] ) ) {
+                                $solace_selected_demo_is_pro = ( 'pro' === strtolower( $solace_demo_item['license'] ) );
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        }        
+
+        if ( $solace_selected_demo_is_pro && ! $solace_is_license_valid ) {
+            $solace_redirect_url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
+            wp_safe_redirect( $solace_redirect_url, 301 ); 
+            exit;
+        }
+    }
+}
 ?>
 <div class="wrap">
     <?php require_once plugin_dir_path(dirname(__FILE__)) . 'partials/header.php'; ?>

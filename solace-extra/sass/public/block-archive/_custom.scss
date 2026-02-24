@@ -1,0 +1,75 @@
+.main-all.main-index.main-layout-blog-1 {
+    .row1 {
+        .left {
+            article {
+                width: 100%;
+            }
+        }
+    }
+}
+
+.main-all.main-index.main-layout-blog-2 {
+    .row1 {
+        .left {
+            article {
+                width: 48%;
+            }
+        }
+    }
+}
+
+.main-all.main-index.main-layout-blog-3 {
+    .row1 {
+        .left {
+            article {
+                width: 32%;
+            }
+        }
+    }
+}
+
+.main-all.main-index.main-layout-blog-4 {
+    .row1 {
+        .left {
+            article {
+                width: 23.5%;
+            }
+        }
+    }
+}
+
+.main-all.main-index.main-layout-blog-5 {
+    .row1 {
+        .left {
+            article {
+                width: 18%;
+            }
+        }
+    }
+}
+
+.main-all.main-index.main-layout-blog-1,
+.main-all.main-index.main-layout-blog-2,
+.main-all.main-index.main-layout-blog-3,
+.main-all.main-index.main-layout-blog-4,
+.main-all.main-index.main-layout-blog-5  {
+    .row1 {
+        .left {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+            gap: 2%;
+
+            article {
+                @media (max-width: $layout-breakpoint-large) {
+                    width: 100%;
+                }
+            }
+
+            .navigation.pagination {
+                width: 100%;
+            }
+        }
+    }
+}

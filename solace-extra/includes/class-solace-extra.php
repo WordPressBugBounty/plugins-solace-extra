@@ -125,6 +125,11 @@ class Solace_Extra {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/starter-templates.php';
 
 		/**
+		 * Service class for Elementor sitebuilder image fixes.
+		 */
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/class-solace-extra-sitebuilder-images.php';		
+
+		/**
 		 * The class responsible for defining all actions that occur in the admin area submenu starter.
 		 */
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/import.php';		
@@ -142,17 +147,19 @@ class Solace_Extra {
 	/**
 	 * Define the locale for this plugin for internationalization.
 	 *
-	 * Uses the Solace_Extra_i18n class in order to set the domain and to register the hook
-	 * with WordPress.
+	 * Note: Since WordPress 4.6, manual text domain loading is no longer needed
+	 * when plugins are hosted on WordPress.org. WordPress automatically loads
+	 * translations as needed.
 	 *
 	 * @since    1.0.0
 	 * @access   private
 	 */
 	private function set_locale() {
 
-		$plugin_i18n = new Solace_Extra_i18n();
-
-		$this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
+		// WordPress automatically loads plugin translations since version 4.6
+		// No manual loading required for plugins hosted on WordPress.org
+		// $plugin_i18n = new Solace_Extra_i18n();
+		// $this->loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
 	}
 
@@ -213,10 +220,39 @@ class Solace_Extra {
 
 		// Regiser script for editor elementor.
 		$this->loader->add_action( 'elementor/editor/after_enqueue_scripts', $plugin_admin, 'solace_register_frontend_scripts' );
+		$this->loader->add_action( 'elementor/editor/after_enqueue_scripts', $plugin_admin, 'enqueue_elementor_editor_menu_customization_script' );
 
 		// Regiser script for frontend elementor.
 		$this->loader->add_action( 'elementor/frontend/after_enqueue_scripts', $plugin_admin, 'solace_register_frontend_scripts' );		
 
+		// Registers custom controls for Elementor.
+		$this->loader->add_action( 'elementor/controls/controls_registered', $plugin_admin, 'register_controls_elementor', 99999 );
+
+		// Sets the error reporting level.
+		// $this->loader->add_action( 'plugins_loaded', $plugin_admin, 'set_error_reporting_level' );
+
+		// Ajx site builder rename.
+		$this->loader->add_action( 'wp_ajax_solace_rename_post_title', $plugin_admin, 'handle_ajax_rename_post_title' );
+
+		// Preview single product (site builder)
+		$this->loader->add_action( 'template_redirect', $plugin_admin, 'preview_single_product' );		
+		$this->loader->add_action( 'wp_head', $plugin_admin, 'hide_header_footer_on_product_preview' );		
+
+		// Preview purchase-summary (site builder)
+		$this->loader->add_action( 'template_redirect', $plugin_admin, 'handle_preview_single_product' );		
+		$this->loader->add_action( 'template_redirect', $plugin_admin, 'handle_preview_purchase_summary' );		
+		$this->loader->add_action( 'template_redirect', $plugin_admin, 'handle_preview_single_post' );
+		$this->loader->add_action( 'template_redirect', $plugin_admin, 'handle_preview_404', 1 );		
+
+		$this->loader->add_action( 'elementor/elements/categories_registered', $plugin_admin, 'solace_extra_register_priority_category', 20 );
+	
+		$this->loader->add_action( 'elementor/editor/after_enqueue_scripts', $plugin_admin, 'enqueue_elementor_editor_scripts' );
+
+		// Modify WooCommerce add to cart button class for products shortcode only
+		$this->loader->add_filter( 'woocommerce_shortcode_products_query', $plugin_admin, 'detect_products_shortcode_start', 10, 3 );
+		$this->loader->add_filter( 'woocommerce_shortcode_sale_products_query', $plugin_admin, 'detect_products_shortcode_start', 10, 3 );
+		$this->loader->add_filter( 'do_shortcode_tag', $plugin_admin, 'wrap_products_shortcode', 10, 2 );
+		$this->loader->add_filter( 'woocommerce_loop_add_to_cart_link', $plugin_admin, 'modify_add_to_cart_button_class', 10, 2 );
 	}
 
 	/**
@@ -311,6 +347,15 @@ class Solace_Extra {
 		
 		// Enqueue style for frontend.
 		$this->loader->add_action( 'elementor/frontend/after_enqueue_styles', $plugin_public, 'enqueue_styles_elementor_frond_end' );
+
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'register_elementor_widget_assets' );
+
+		// Adds custom CSS classes dynamically based on active plugins or conditions.
+		$this->loader->add_action( 'body_class', $plugin_public, 'add_dynamic_classes' );
+
+		// Add custom body classes for Solace Extra WooCommerce widgets
+		$this->loader->add_filter( 'body_class', $plugin_public, 'add_solace_woocommerce_widget_body_classes' );		
+
 	}
 
 	/**

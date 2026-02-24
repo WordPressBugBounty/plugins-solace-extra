@@ -6,8 +6,26 @@
         }
     }
 }
-#adminmenu .toplevel_page_solace .wp-submenu li:nth-child(4),
-#adminmenu .toplevel_page_solace .wp-submenu li:nth-child(5),
-#adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6) {
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(4),
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(5),
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(6),
+.js #adminmenu .toplevel_page_solace .wp-submenu li:nth-child(14) {
+    display: block; 
+}
+.js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item {
+    display: block; 
+    background-color: #FF8F00;
+    border-radius: 30px;
+    font-weight: 700;
+    margin: 0 15px;
+    a {
+        color: #fff;
+        text-align: center;
+        &:hover {
+            box-shadow: none !important;
+        }
+    }
+}
+.js #adminmenu .toplevel_page_solace .wp-submenu li.support-menu-item {
     display: block;
 }

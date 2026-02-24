@@ -1,0 +1,54 @@
+.wl-my-account-left .woocommerce {
+	margin: 0 !important;
+	padding: 0 !important;
+	display: flex;
+}
+.wcd-customer-box .wcd-ab-img{
+	/*margin: auto;*/
+}
+.wl-my-account-top .woocommerce {
+	display: grid;
+}
+.wl-my-account .woocommerce-MyAccount-navigation{
+	width: 100%;
+}
+.wl-my-account .woocommerce-MyAccount-navigation ul{
+	list-style: none;
+	padding: 0;
+}
+.wl-my-account .woocommerce-MyAccount-navigation ul li {
+	padding: 10px 12px;
+	margin: 0;
+}
+.wl-my-account .woocommerce-MyAccount-navigation ul li a{}
+.wl-my-account .woocommerce-MyAccount-navigation ul li.is-active{}
+
+.wl-my-account-top .woocommerce-MyAccount-content{
+	width: 100%;
+}
+.wl-my-account-top .woocommerce-MyAccount-navigation{
+	width: 100%;
+	margin-bottom: 35px;
+}
+.wl-my-account-top .woocommerce-MyAccount-navigation ul li {
+	float: left;			
+}
+.wl-my-account-top .woocommerce-MyAccount-navigation ul li.is-active {}
+
+.wl-my-account-left .woocommerce-MyAccount-navigation{
+	width: 25%;
+	margin-right: 0px;
+}
+.wl.oceanwp-theme .wl-my-account-left .woocommerce-MyAccount-navigation{
+	width: 100%;
+	margin-right: 0px;
+}
+.wl-my-account-left .woocommerce-MyAccount-content{
+	width: 70%;
+}
+.wl.oceanwp-theme .wl-my-account .woocommerce-MyAccount-tabs .oceanwp-user-profile {
+	display: none;
+}
+.wl.oceanwp-theme .wl-my-account.wl-my-account-top .woocommerce-MyAccount-tabs{
+	width: 100%;
+}

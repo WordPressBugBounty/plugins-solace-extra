@@ -46,6 +46,30 @@ body.solace_page_dashboard-starter-templates {
         }
 
         section.start-templates {
+            .skeleton {
+                position: relative;
+            }
+            
+            .skeleton::before {
+                content: '';
+                display: block;
+                width: 20px;
+                height: 20px;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                animation: loaderAnimation 1s infinite linear alternate;
+                position: absolute;
+                left: 49%;
+                top: 370px;
+                z-index: 2;
+            }
+
+            @keyframes loaderAnimation {
+                0%  {box-shadow: 20px 0 #000, -20px 0 #0002; background: #000; }
+                33% {box-shadow: 20px 0 #000, -20px 0 #0002; background: #0002; }
+                66% {box-shadow: 20px 0 #0002,-20px 0 #000; background: #0002; }
+                100%{box-shadow: 20px 0 #0002,-20px 0 #000; background: #000; }
+            }            
 
             .content-top {
                 max-width: $max_width;
@@ -65,7 +89,6 @@ body.solace_page_dashboard-starter-templates {
                         flex-wrap: wrap;
                         align-items: center;
                         justify-content: space-between;
-                        justify-content: center;
                         width: 100%;
 
                         .col1 {
@@ -91,7 +114,6 @@ body.solace_page_dashboard-starter-templates {
 
                         .col3 {
                             display: flex;
-                            display: none;
                             flex-wrap: wrap;
                             justify-content: space-between;
 
@@ -113,6 +135,7 @@ body.solace_page_dashboard-starter-templates {
 
                             .dropdown1 {
                                 position: relative;
+                                display: none;
 
                                 select {
                                     margin-right: 6px;
@@ -129,6 +152,7 @@ body.solace_page_dashboard-starter-templates {
 
                             .dropdown3 {
                                 position: relative;
+                                display: none;
 
                                 select {
                                     height: 43px;
@@ -139,6 +163,15 @@ body.solace_page_dashboard-starter-templates {
                                     position: absolute;
                                     right: 20px;
                                     bottom: 12px;
+                                }
+                            }
+
+                            .filter-license {
+                                position: relative;
+
+                                select {
+                                    height: 43px;
+                                    background: #000f44 url(../images/starter-templates/arrow-down-alt.png) no-repeat right 12px top 55%;
                                 }
                             }
                         }
@@ -385,6 +418,12 @@ body.solace_page_dashboard-starter-templates {
                                         position: absolute;
                                         right: 0;
                                         top: 0;
+
+                                        &.pro {
+                                            background: #ff8f00;
+                                            color: #fff;
+                                            display: none;
+                                        }
                                     }
                                 }
 

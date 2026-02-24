@@ -1,0 +1,69 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+/*
+ * @wordpress-plugin
+ * Plugin Name:       WordPress Importer
+ * Plugin URI:        https://wordpress.org/plugins/wordpress-importer/
+ * Description:       Import posts, pages, comments, custom fields, categories, tags and more from a WordPress export file.
+ * Author:            wordpressdotorg
+ * Author URI:        https://wordpress.org/
+ * Version:           0.8.4
+ * Requires at least: 5.2
+ * Requires PHP:      5.6
+ * Text Domain:       wordpress-importer
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ */
+
+if ( ! defined( 'WP_LOAD_IMPORTERS' ) ) {
+	return;
+}
+
+/** Display verbose errors */
+if ( ! defined( 'IMPORT_DEBUG' ) ) {
+	define( 'IMPORT_DEBUG', WP_DEBUG );
+}
+
+/** WordPress Import Administration API */
+require_once ABSPATH . 'wp-admin/includes/import.php';
+
+if ( ! class_exists( 'WP_Importer' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WordPress Importer API compatibility
+	$class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
+	if ( file_exists( $class_wp_importer ) ) {
+		require $class_wp_importer;
+	}
+}
+
+/** Functions missing in older WordPress versions. */
+require_once __DIR__ . '/compat.php';
+
+/** Solace_Extra_WXR_Parser class */
+require_once __DIR__ . '/parsers/class-wxr-parser.php';
+
+/** Solace_Extra_WXR_Parser_SimpleXML class */
+require_once __DIR__ . '/parsers/class-wxr-parser-simplexml.php';
+
+/** Solace_Extra_WXR_Parser_XML class */
+require_once __DIR__ . '/parsers/class-wxr-parser-xml.php';
+
+/** Solace_Extra_WXR_Parser_Regex class */
+require_once __DIR__ . '/parsers/class-wxr-parser-regex.php';
+
+/** Solace_Extra_WP_Import class */
+require_once __DIR__ . '/class-wp-import.php';
+
+function solace_extra_wordpress_importer_init() {
+
+	/**
+	 * WordPress Importer object for registering the import callback
+	 * @global Solace_Extra_WP_Import $wp_import
+	 */
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WordPress Importer API compatibility
+	$GLOBALS['wp_import'] = new Solace_Extra_WP_Import();
+	// phpcs:ignore WordPress.WP.CapitalPDangit
+	register_importer( 'wordpress', 'WordPress', __( 'Import <strong>posts, pages, comments, custom fields, categories, and tags</strong> from a WordPress export file.', 'solace-extra' ), array( $GLOBALS['wp_import'], 'dispatch' ) );
+}
+add_action( 'admin_init', 'solace_extra_wordpress_importer_init' );

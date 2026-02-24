@@ -1,0 +1,77 @@
+.main-all.main-index.main-layout-blog-default {
+    .row1 {
+        .left {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+            gap: 0;
+            flex-basis: 100%;
+
+            article {
+                width: calc(33.33% - 32px);
+
+                @media (max-width: $layout-breakpoint-large) {
+                    width: 100%;
+                }
+            }
+
+            .navigation.pagination {
+                width: 100%;
+            }
+        }
+    }
+}
+
+// $laptop: '1024px';
+@media only screen and (max-width: $laptop) {
+    .main-all .container-all {
+        margin-top: 32px;
+    }
+
+    main.main-all section.container-all .row1 aside {
+        width: 100%;
+    }
+}
+
+// $tablet: '768px';
+@media only screen and (max-width: $tablet) {
+    .main-all .container-all {
+        margin-top: $container_margin_mobile;
+        padding-left: $container_padding_mobile;
+        padding-right: $container_padding_mobile;
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-image .the-category {
+        margin: $container_margin_mobile;
+
+        a {
+            font-size: 15px;
+        }
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-content .the-title h3 {
+        margin-bottom: $container_margin_mobile;
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-content .the-excerpt p {
+        margin-bottom: $container_margin_mobile;
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-content .the-readmore {
+        margin: $container_margin_mobile 0;
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-content {
+        padding-left: $container_padding_mobile;
+        padding-right: $container_padding_mobile;
+    }
+
+    .main-all .container-all .row1 .left .boxes .box-meta {
+        padding: $container_padding_mobile;
+    }
+
+    .main-all .container-all .row1 .left .boxes {
+        margin-bottom: 30px;
+    }
+}

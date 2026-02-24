@@ -66,7 +66,7 @@ class Solace_Extra_Public {
 
 		if ( is_single() ) {
 			wp_enqueue_style( $this->plugin_name . 'public', plugin_dir_url( __FILE__ ) . 'css/solace-extra-public.css', array(), $this->version, 'all' );
-		}		
+		}
 	}
 
 	/**
@@ -281,5 +281,122 @@ class Solace_Extra_Public {
 			<?php
 		}
 	}
+
+	/**
+	 * Register styles and scripts for Elementor widgets.
+	 *
+	 * This function registers third-party styles and scripts 
+	 * that will be used by custom Elementor widgets.
+	 *
+	 * @since 1.0.0
+	 */
+	public function register_elementor_widget_assets() {
+		// Register Fancybox styles.
+		wp_register_style(
+			'solace-extra-fancybox',
+			SOLACE_EXTRA_ASSETS_URL . 'third-party/fancybox/jquery.fancybox.min.css',
+			[],
+			'3.5.7',
+			'all'
+		);
+
+		// Register Fancybox script.
+		wp_register_script(
+			'solace-extra-fancybox',
+			SOLACE_EXTRA_ASSETS_URL . 'third-party/fancybox/jquery.fancybox.min.js',
+			[ 'jquery' ],
+			'3.5.7',
+			true
+		);
+	}	
+
+	/**
+	 * Adds custom CSS classes dynamically based on active plugins or conditions.
+	 *
+	 * This method checks if Elementor is active and adds a specific class to the array.
+	 * In the future, more conditions can be added to append additional classes.
+	 *
+	 * @param array $classes The existing array of CSS classes.
+	 * @return array The modified array with additional classes.
+	 */
+	public function add_dynamic_classes( $classes ) {
+
+		// Check if Elementor is active
+		if ( class_exists( 'Elementor\Plugin' ) ) {
+			$classes[] = 'wl';
+		}
+
+		// Future conditions can be added here
+		return $classes;
+	}
+
+	/**
+	 * Add custom body classes for Solace Extra WooCommerce widgets
+	 * 
+	 * This function detects if specific Solace Extra WooCommerce widgets (cart, checkout)
+	 * are present on the current page and adds corresponding body classes.
+	 * This allows for targeted CSS styling based on widget presence.
+	 * 
+	 * @param array $classes Array of body classes
+	 * @return array Modified array of body classes
+	 */
+	public function add_solace_woocommerce_widget_body_classes( $classes ) {
+		// Only process on singular pages (posts, pages, etc.)
+		if ( ! is_singular() ) {
+			return $classes;
+		}
+
+		global $post;
+
+		// Get Elementor data from post meta
+		$elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
+		$elementor_data = json_decode( $elementor_data, true );
+
+		// Initialize widget detection flags
+		$has_cart_widget = false;
+		$has_checkout_widget = false;
+
+		/**
+		 * Recursive function to search for specific widgets in Elementor data
+		 * 
+		 * @param array $elements Array of Elementor elements to search through
+		 */
+		$check_widgets = function( $elements ) use ( &$check_widgets, &$has_cart_widget, &$has_checkout_widget ) {
+			foreach ( $elements as $element ) {
+				// Check if element has a widget type
+				if ( isset( $element['widgetType'] ) ) {
+					// Detect Solace Extra WooCommerce Cart widget
+					if ( $element['widgetType'] === 'solace-extra-woocommerce-cart' ) {
+						$has_cart_widget = true;
+					}
+					// Detect Solace Extra WooCommerce Checkout widget
+					if ( $element['widgetType'] === 'solace-extra-woocommerce-checkout' ) {
+						$has_checkout_widget = true;
+					}
+				}
+				
+				// Recursively check nested elements
+				if ( ! empty( $element['elements'] ) ) {
+					$check_widgets( $element['elements'] );
+				}
+			}
+		};
+
+		// Process Elementor data if it exists
+		if ( ! empty( $elementor_data ) ) {
+			$check_widgets( $elementor_data );
+		}
+
+		// Add body classes based on detected widgets
+		if ( $has_cart_widget ) {
+			$classes[] = 'has-solace-cart-widget';
+		}
+		
+		if ( $has_checkout_widget ) {
+			$classes[] = 'has-solace-checkout-widget';
+		}
+
+		return $classes;
+	}	
 
 }

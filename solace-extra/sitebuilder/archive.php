@@ -1,27 +1,30 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 get_header();
 
-$args = array(
-    'post_type'      => 'solace_archive', 
+$solace_extra_archive_args = array(
+    'post_type'      => 'solace_archive',
     'posts_per_page' => 1,
     // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
     'meta_value'     => '1',
 );
 
-$archive_query = new WP_Query($args);
+$solace_extra_archive_query = new WP_Query( $solace_extra_archive_args );
 
-if ($archive_query->have_posts()) {
-    while ($archive_query->have_posts()) {
-        $archive_query->the_post();
-        $elementor_content = \Elementor\Plugin::$instance->frontend->get_builder_content(get_the_ID(), true);
-        
-        if (!empty($elementor_content)) {
-            echo wp_kses_post($elementor_content);
+if ( $solace_extra_archive_query->have_posts() ) {
+    while ( $solace_extra_archive_query->have_posts() ) {
+        $solace_extra_archive_query->the_post();
+        $solace_elementor_content = \Elementor\Plugin::$instance->frontend->get_builder_content( get_the_ID(), true );
+
+        if ( ! empty( $solace_elementor_content ) ) {
+            echo wp_kses_post( $solace_elementor_content );
         } else {
             echo '<p>No Elementor content found.</p>'; 
         }
     }
-    wp_reset_postdata(); 
+    wp_reset_postdata();
 } else {
     ?>
     <main id="main" class="site-main">

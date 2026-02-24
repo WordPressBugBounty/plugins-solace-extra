@@ -1,15 +1,15 @@
 <?php defined( 'ABSPATH' ) || exit;
 
 if ( empty( $_COOKIE['solace_page_access'] ) ) {
-    $url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
-    wp_redirect( $url, 301 ); 
+    $solace_extra_url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
+    wp_safe_redirect( $solace_extra_url, 301 ); 
     exit;
 }
 
 // Flush rewrite rules to ensure the changes take effect
 flush_rewrite_rules();
 
-$customizer_link = admin_url('customize.php'); 
+$solace_extra_customizer_link = admin_url( 'customize.php' ); 
 ?>
 
 <script type="text/javascript">
@@ -147,7 +147,7 @@ $customizer_link = admin_url('customize.php');
 
 </script>
 
-<?php $myadmin = site_url(); ?>
+<?php $solace_extra_myadmin = site_url(); ?>
 <style>
     div.cong_button {
         display: none!important;

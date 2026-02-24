@@ -256,7 +256,7 @@
     update_info_did_you_know();
     function update_info_did_you_know() {
         // Make a GET request to the API endpoint
-        fetch('https://solacewp.com/api/wp-json/wp/v2/info')
+        fetch(solaceDemoImport.demo_import_url + 'api/wp-json/wp/v2/info')
         .then(response => {
         // Check if the response is successful (status code 200-299)
         if (!response.ok) {

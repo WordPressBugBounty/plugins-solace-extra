@@ -1,13 +1,13 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
-<?php $customizer_link = admin_url('customize.php'); ?>
-<?php $myadmin = site_url(); ?>
+<?php $solace_extra_customizer_link = admin_url( 'customize.php' ); ?>
+<?php $solace_extra_myadmin = site_url(); ?>
 <div class="wrap">
     <?php require_once plugin_dir_path(dirname(__FILE__)) . 'partials/header.php'; ?>
     <section class="top">
         <div class="mycontainer">
             <h1><?php esc_html_e('Welcome to Solace', 'solace-extra'); ?></h1>
             <p class="desc"><?php esc_html_e('Solace is fast, fully customisable & beautiful WordPress theme suitable for blog, personal portfolio, business website and WooCommerce storefront. It is very lightweight and offers unparalleled speed.', 'solace-extra'); ?></p>
-            <a href="<?php echo esc_url($myadmin . '/wp-admin/customize.php'); ?>" target="_blank">
+            <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin/customize.php'); ?>" target="_blank">
                 <?php esc_html_e('START CUSTOMISING', 'solace-extra'); ?>
             </a>
         </div>
@@ -21,7 +21,7 @@
                         <div class="box1">
                             <span class="title"><?php esc_html_e('Starter Templates', 'solace-extra'); ?></span>
                             <span class="desc"><?php esc_html_e('Install a demo site in a few clicks.', 'solace-extra'); ?></span>
-                            <a href="<?php echo esc_url($myadmin . '/wp-admin/admin.php?page=dashboard-video'); ?>"><?php esc_html_e('START NOW', 'solace-extra'); ?></a>
+                            <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin/admin.php?page=dashboard-starter-templates&type=elementor'); ?>"><?php esc_html_e('START NOW', 'solace-extra'); ?></a>
                         </div>
                         <div class="box2">
                         <?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/dashboard/start-template.png' ); ?>" />
@@ -34,7 +34,7 @@
                         <div class="box1">
                             <span class="title"><?php esc_html_e('Customize Solace', 'solace-extra'); ?></span>
                             <span class="desc"><?php esc_html_e('Cusotomize any part of your website.', 'solace-extra'); ?></span>
-                            <a href="<?php echo esc_url($myadmin . '/wp-admin/customize.php'); ?>" target="_blank">
+                            <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin/customize.php'); ?>" target="_blank">
                                 <?php esc_html_e('CUSTOMIZE', 'solace-extra'); ?>
                             </a>
                         </div>
@@ -56,7 +56,21 @@
                     </svg>
                     <span class="title"><?php esc_html_e('Need some help?', 'solace-extra'); ?></span>
                     <span class="desc"><?php esc_html_e('We would love to be of any assistance.', 'solace-extra'); ?></span>
-                    <a href="https://wordpress.org/support/plugin/solace-extra/"><?php esc_html_e('Open Ticket', 'solace-extra'); ?></a>
+
+                    <?php
+                    if ( function_exists('solace_pro_card') ) {
+                        $solace_extra_result = solace_pro_card();
+
+                        if ( $solace_extra_result ) {
+                            echo '<a href="'. esc_url( SOLACE_UPGRADE_BASE_URL . 'submit-ticket/' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Open Ticket', 'solace-extra' ) . '</a>';
+                        } else {
+                            echo '<a href="https://wordpress.org/support/plugin/solace-extra/" target="_blank">' . esc_html__( 'Open Ticket', 'solace-extra' ) . '</a>';
+                        }
+                    } else {
+                            echo '<a href="https://wordpress.org/support/plugin/solace-extra/" target="_blank">' . esc_html__( 'Open Ticket', 'solace-extra' ) . '</a>';
+                        }
+                    ?>
+
                 </div>
                 <div class="col2">
                     <svg width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -68,8 +82,8 @@
                         <path d="M57.3113 50.9783L54.6449 38.8929C54.2676 37.1838 52.7653 36.0858 51.0751 36.2818L43.7093 37.1358L43.1177 34.4539C46.8245 34.4861 50.5289 34.8329 54.2101 35.4956C56.0124 35.8201 57.2901 34.5324 57.2901 33.3035V3.81183C57.2901 2.74744 56.4651 1.84749 55.2837 1.62315C46.5523 -0.0345151 37.6995 0.0217464 28.9663 1.78723C20.2332 0.021629 11.3804 -0.0343977 2.64908 1.62303C1.46771 1.84737 0.642578 2.74732 0.642578 3.81171V33.3035C0.642578 34.4867 1.86307 35.8304 3.72275 35.4956C12.0192 34.0017 20.4328 34.1102 28.7297 35.8175C28.886 35.8486 29.0468 35.8486 29.2031 35.8175C31.8736 35.2679 34.5563 34.885 37.2433 34.6669L37.9935 38.0673H9.11153C4.4417 38.0673 0.642578 41.8664 0.642578 46.5362C0.642578 51.206 4.4417 55.0052 9.11153 55.0052H41.7303L41.875 55.6613C42.2198 57.2227 43.8455 57.1295 44.1806 57.0231L56.0268 53.2579C56.9632 52.9603 57.5276 51.9591 57.3113 50.9783ZM54.941 51.1383L44.0468 54.6008L43.7922 53.4468L54.6863 49.9843L54.941 51.1383ZM38.727 30.4887C38.6469 30.1259 38.8666 29.7154 39.1973 29.6103C39.5086 29.5113 39.6741 29.7485 39.7185 29.9506L41.644 38.6778C41.7739 39.2663 42.3283 39.6611 42.9263 39.5915L51.3458 38.6152C51.8231 38.5596 52.237 38.8821 52.3511 39.399L54.1783 47.6806L42.5621 51.3725L35.247 47.0084C35.2467 46.9917 35.2503 46.9661 35.2673 46.9358C35.4419 46.624 35.7186 46.398 36.0258 46.3159C36.1928 46.2711 36.445 46.2493 36.6969 46.3994L40.743 48.8112C41.1454 49.0512 41.652 49.029 42.0318 48.7547C42.4117 48.4805 42.5923 48.0068 42.4913 47.5492L38.727 30.4887ZM3.30649 33.1837C3.16953 33.2082 3.05771 33.1826 2.9917 33.1549V3.95912C3.0159 3.9489 3.04761 3.93856 3.0872 3.93105C11.282 2.37534 19.5885 2.38215 27.7918 3.94937V33.2414C16.7004 31.1958 7.81329 32.3759 3.30649 33.1837ZM30.1409 33.2414V3.94937C38.3443 2.38227 46.6508 2.37545 54.8455 3.93105C54.8851 3.93856 54.9168 3.9489 54.9409 3.95912V33.1549C54.875 33.1827 54.7635 33.2084 54.6261 33.1837C50.6348 32.4651 46.6177 32.1053 42.5988 32.1022L42.0125 29.4444C41.8392 28.6592 41.3542 27.9867 40.6819 27.5992C40.0145 27.2145 39.2344 27.1336 38.4856 27.3716C36.9911 27.8466 36.0895 29.4381 36.4329 30.9949L36.7324 32.3522C34.531 32.5414 32.3324 32.8372 30.1409 33.2414ZM2.9917 46.5363C2.9917 43.1619 5.73713 40.4165 9.11153 40.4165H38.5117L39.6027 45.3618H39.5435L37.8993 44.3816C37.1536 43.9374 36.2728 43.8184 35.4187 44.0465C34.6613 44.249 33.9823 44.7183 33.4968 45.3616H18.104C17.571 43.712 16.0211 42.5151 14.1963 42.5151C12.3715 42.5151 10.8217 43.712 10.2887 45.3616H6.98933C6.34062 45.3616 5.81477 45.8876 5.81477 46.5362C5.81477 47.1848 6.34062 47.7108 6.98933 47.7108H10.2383C10.717 49.4475 12.3096 50.7272 14.1964 50.7272C16.0833 50.7272 17.6759 49.4475 18.1546 47.7108H33.0084C33.1689 48.2391 33.507 48.706 34.0003 49.0002L40.1281 52.656H9.11153C5.73701 52.656 2.9917 49.9107 2.9917 46.5363ZM15.9532 46.6212C15.9532 47.59 15.1651 48.3782 14.1963 48.3782C13.2276 48.3782 12.4394 47.59 12.4394 46.6212C12.4394 45.6525 13.2276 44.8643 14.1963 44.8643C15.1651 44.8643 15.9532 45.6525 15.9532 46.6212Z" fill="#001644" />
                     </svg>
                     <span class="title"><?php esc_html_e('Documentation', 'solace-extra'); ?></span>
-                    <span class="desc"><?php esc_html_e('Learn about any aspect of Solace Theme.', 'solace-extra'); ?></span>
-                    <a href="https://solacewp.com/documentation"><?php esc_html_e('Start reading', 'solace-extra'); ?></a>
+                    <span class="desc"><?php esc_html_e('Learn any aspect of Solace Theme.', 'solace-extra'); ?></span>
+                    <a href="https://solacewp.com/documentation" target="_blank"><?php esc_html_e('Start reading', 'solace-extra'); ?></a>
                 </div>
                 <div class="col3">
                     <svg width="46" height="47" viewBox="0 0 46 47" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -79,9 +93,23 @@
                         <path d="M10.5791 35.4349C10.0617 34.9174 9.22273 34.9174 8.70526 35.4349L0.388103 43.7521C-0.129368 44.2696 -0.129368 45.1086 0.388103 45.626C0.646838 45.8847 0.985871 46.0141 1.32499 46.0141C1.66411 46.0141 2.00323 45.8847 2.26188 45.6259L10.579 37.3087C11.0966 36.7913 11.0966 35.9524 10.5791 35.4349Z" fill="#001B44" />
                         <path d="M12.6697 39.3996L8.34367 43.7256C7.8262 44.2431 7.8262 45.082 8.34367 45.5995C8.60241 45.8583 8.94152 45.9876 9.28055 45.9876C9.61959 45.9876 9.9588 45.8583 10.2174 45.5995L14.5435 41.2734C15.061 40.756 15.061 39.9171 14.5435 39.3996C14.0261 38.8821 13.1871 38.8821 12.6697 39.3996Z" fill="#001B44" />
                     </svg>
-                    <span class="title"><?php esc_html_e('GO PRO', 'solace-extra'); ?></span>
-                    <span class="desc"><?php esc_html_e('Full access to premium features.', 'solace-extra'); ?></span>
-                    <a class="disabled" style="opacity: 0.5;"><?php esc_html_e('Upgrade', 'solace-extra'); ?></a>
+                    <?php
+                    if ( function_exists('solace_pro_card') ) {
+                        $solace_extra_result = solace_pro_card();
+
+                        if ( $solace_extra_result ) {
+                            echo '<span class="title">' . esc_html__( 'Pro Activated 🎉', 'solace-extra' ) . '</span>';
+                            echo '<span class="desc">' . esc_html__( 'Thank you for purchasing SolaceExtraPro', 'solace-extra' ) . '</span>';
+                            echo '<a href="#" rel="noopener noreferrer" class="upgrade-link" style="visibility:hidden;">&nbsp;</a>';
+                        } else {
+                            echo '<span class="title">' . esc_html__( 'GO PRO', 'solace-extra' ) . '</span>';
+                            echo '<span class="desc">' . esc_html__( 'Full access to premium features.', 'solace-extra' ) . '</span>';
+                        }
+                    } else {
+                        echo '<span class="title">' . esc_html__( 'GO PRO', 'solace-extra' ) . '</span>';
+                        echo '<span class="desc">' . esc_html__( 'Full access to premium features.', 'solace-extra' ) . '</span>';
+                    }
+                    ?>
                 </div>
                 <div class="col4">
                     <svg width="49" height="56" viewBox="0 0 49 56" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -100,7 +128,7 @@
                     </svg>
                     <span class="title"><?php esc_html_e('Suggestions', 'solace-extra'); ?></span>
                     <span class="desc"><?php esc_html_e('Let us know how we can improve.', 'solace-extra'); ?></span>
-                    <a href="https://solacewp.com/suggestions"><?php esc_html_e('Contact Us', 'solace-extra'); ?></a>
+                    <a href="https://solacewp.com/suggestions" target="_blank"><?php esc_html_e('Contact Us', 'solace-extra'); ?></a>
                 </div>
             </div>
         </div>
@@ -108,7 +136,7 @@
     <footer class="bottom">
         <div class="mycontainer">
             <div class="box left">
-                <a href="<?php echo esc_url($myadmin . '/wp-admin'); ?>">
+                <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin'); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
                         <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z" />
                     </svg>
@@ -117,13 +145,13 @@
             </div>
 
             <div class="box center">
-                <a href="<?php echo esc_url($myadmin . '/wp-admin'); ?>">
+                <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin'); ?>">
                     <span><?php esc_html_e('Back to WordPress Dashboard', 'solace-extra'); ?></span>
                 </a>
             </div>                 
 
             <div class="box right">
-                <a href="<?php echo esc_url($myadmin . '/wp-admin/admin.php?page=dashboard-video'); ?>">
+                <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin/admin.php?page=dashboard-video'); ?>">
                     <span><?php esc_html_e('Next', 'solace-extra'); ?></span>
                     <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg>
                 </a>

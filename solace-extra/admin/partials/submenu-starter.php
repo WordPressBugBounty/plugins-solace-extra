@@ -1,5 +1,6 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
-<?php $customizer_link = admin_url('customize.php'); ?>
+<?php $solace_extra_customizer_link = admin_url('customize.php'); ?>
+<?php $solace_extra_myadmin = site_url(); ?>
 <div class="wrap">
     <?php require_once plugin_dir_path( dirname( __FILE__ ) ) . 'partials/header.php'; ?>
     <section class="start-templates">
@@ -29,6 +30,12 @@
                                 <option value="new"><?php esc_html_e( 'New', 'solace-extra' ); ?></option>
                             </select>
                         </div>
+                        <div class="filter-license">
+                            <select name="filter_license" id="filter_license">
+                                <option value="all"><?php esc_html_e( 'All', 'solace-extra' ); ?></option>
+                                <option value="free"><?php esc_html_e( 'Free', 'solace-extra' ); ?></option>
+                            </select>
+                        </div>
                         </form>
                     </div>
                 </div>
@@ -37,8 +44,8 @@
         </div>
         <div class="content-main">
             <?php 
-            $show_posts = 9;
-            $get_show_posts = 0;
+            $solace_extra_show_posts = 9;
+            $solace_extra_get_show_posts = 0;
             $solaceLoadMore = 0;
             ?>
             <aside>
@@ -47,41 +54,28 @@
                     <span class="desc">
                         <?php esc_html_e('Search in over', 'solace-extra'); ?>
                         <?php
-                        // Primary and backup API URLs
-                        $url_solace_count_demo = 'https://solacewp.com/api/wp-json/solace/v1/demo/';
-                        $url_local_count_demo = plugin_dir_url(__FILE__) . 'demo.json';
-
-                        // Make the request using wp_remote_get()
-                        $response_count_demo = wp_remote_get($url_solace_count_demo);
-
-                        // Check for errors
-                        if (is_wp_error($response_count_demo)) {
-                            // echo 'cURL Error: ' . $response_count_demo->get_error_message();
-                        } else {
-                            // Successful response retrieval
-                            $http_code_count_demo = wp_remote_retrieve_response_code($response_count_demo);
-
-                            if ($http_code_count_demo >= 400) {
-                                // The response code is 400 or greater
-                                // Switch to the backup URL
-                                $response_count_demo = wp_remote_get($url_local_count_demo);
+                        // Get demo count from API
+                        $solace_extra_api_url = SOLACE_EXTRA_DEMO_IMPORT_URL . 'api/wp-json/solace/v1/demo/';
+                        $solace_extra_response = wp_remote_get($solace_extra_api_url);
+                        
+                        $solace_extra_demo_count = 0;
+                        if (!is_wp_error($solace_extra_response)) {
+                            $solace_extra_body = wp_remote_retrieve_body($solace_extra_response);
+                            $solace_extra_data = json_decode($solace_extra_body, true);
+                            
+                            if (!empty($solace_extra_data) && is_array($solace_extra_data)) {
+                                $solace_extra_domain = !empty($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+                                
+                                if ('solacewp.com' !== $solace_extra_domain) {
+                                    $solace_extra_data = array_filter($solace_extra_data, function($demo) {
+                                        return !empty($demo['demo_status']) && 'draft' !== $demo['demo_status'] && 'pending' !== $demo['demo_status'];
+                                    });
+                                }
+                                
+                                $solace_extra_demo_count = absint(count($solace_extra_data));
                             }
-
-                            // You can process the JSON data here, for example:
-                            $body_count_demo = wp_remote_retrieve_body($response_count_demo);
-                            $data_count_demo = json_decode($body_count_demo, true);
-                            $domain    = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';
-
-                            if ( 'solacewp.com' !== $domain ) {
-                                $data_count_demo = array_filter($data_count_demo, function($demo) {
-                                    return $demo['demo_status'] !== 'draft' && $demo['demo_status'] !== 'pending';
-                                });
-                            }
-
-                            // Calc total count demo
-                            $data_count_demo = absint(count($data_count_demo));
-                            echo '<span class="count">' . absint( $data_count_demo ) . '</span>';
                         }
+                        echo '<span class="count">' . esc_html($solace_extra_demo_count) . '</span>';
                         ?>
                         <?php esc_html_e(' total layouts', 'solace-extra'); ?>
                     </span>
@@ -98,55 +92,34 @@
                     <span class="cat"><?php esc_html_e('Categories', 'solace-extra'); ?></span>
                     <form action="#">
                         <?php
-                        if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
-                            // Primary and backup API URLs
-                            $url_solace_category = 'https://solacewp.com/api/wp-json/solace/v1/category';
-                            $url_local_category = plugin_dir_url(__FILE__) . 'category.json';
-
-                            // Make the request using wp_remote_get()
-                            $response_category = wp_remote_get($url_solace_category);
-
-                            // Check for errors
-                            if (is_wp_error($response_category)) {
-                                // echo 'cURL Error: ' . $response_category->get_error_message();
-                            } else {
-                                // Successful response retrieval
-                                $http_code_category = wp_remote_retrieve_response_code($response_category);
-
-                                if ($http_code_category >= 400) {
-                                    // The response code is 400 or greater
-                                    // Switch to the backup URL
-                                    $response_category = wp_remote_get($url_local_category);
-                                }
-
-                                // You can process the JSON data here, for example:
-                                $body_category = wp_remote_retrieve_body($response_category);
-                                $data_category = json_decode($body_category, true);
-
-                                // Print the result
-                                $index_data_category = 1;
-                                foreach ($data_category as $value) {
-                                    if ($value['category']) {
-                                        $value_sanitize = str_replace('&', '&amp;', $value['category']);
-                                    }
-
-                                    $get_solace_type    = ! empty( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : '';
-
-                                    $arr_list_type = array('elementor', 'gutenberg');
-
-                                    if (!empty($get_solace_type)) {
-                                        if (in_array($get_solace_type, $arr_list_type)) {
-                                            if ($value['type'] === $get_solace_type) {
-                                                ?>
-                                                <div class="box-checkbox">
-                                                    <input type="checkbox" id="<?php echo esc_html($value['category']); ?>" name="<?php echo esc_html($value['category']); ?>" value="<?php echo esc_html($value_sanitize); ?>">
-                                                    <label for="<?php echo esc_html($value['category']); ?>"><?php echo esc_html($value['category']); ?></label><br>
-                                                </div>
-                                                <?php
+                        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'ajax-nonce')) {
+                            // Get categories from API
+                            $solace_extra_api_url = SOLACE_EXTRA_DEMO_IMPORT_URL . 'api/wp-json/solace/v1/category/';
+                            $solace_extra_response = wp_remote_get($solace_extra_api_url);
+                            
+                            if (!is_wp_error($solace_extra_response)) {
+                                $solace_extra_body = wp_remote_retrieve_body($solace_extra_response);
+                                $solace_extra_data_category = json_decode($solace_extra_body, true);
+                                
+                                if (!empty($solace_extra_data_category) && is_array($solace_extra_data_category)) {
+                                    $solace_extra_get_solace_type = !empty($_GET['type']) ? sanitize_text_field(wp_unslash($_GET['type'])) : '';
+                                    $solace_extra_arr_list_type = array('elementor', 'gutenberg');
+                                    
+                                    if (!empty($solace_extra_get_solace_type) && in_array($solace_extra_get_solace_type, $solace_extra_arr_list_type, true)) {
+                                        foreach ($solace_extra_data_category as $solace_extra_value) {
+                                            if (empty($solace_extra_value['category']) || $solace_extra_value['type'] !== $solace_extra_get_solace_type) {
+                                                continue;
                                             }
+                                            
+                                            $solace_extra_value_sanitize = str_replace('&', '&amp;', $solace_extra_value['category']);
+                                            ?>
+                                            <div class="box-checkbox">
+                                                <input type="checkbox" id="<?php echo esc_attr($solace_extra_value['category']); ?>" name="<?php echo esc_attr($solace_extra_value['category']); ?>" value="<?php echo esc_attr($solace_extra_value_sanitize); ?>">
+                                                <label for="<?php echo esc_attr($solace_extra_value['category']); ?>"><?php echo esc_html($solace_extra_value['category']); ?></label>
+                                            </div>
+                                            <?php
                                         }
                                     }
-                                    $index_data_category++;
                                 }
                             }
                         }
@@ -160,119 +133,154 @@
             <main>
                 <div class="mycontainer">
                     <?php
-                    // Primary and backup API URLs
-                    $url_solace_demo = 'https://solacewp.com/api/wp-json/solace/v1/demo/';
-                    $url_local_demo = plugin_dir_url(__FILE__) . 'demo.json';
-                    $total_demo = 0;
-
-                    // Make the request using wp_remote_get()
-                    $response_demo = wp_remote_get($url_solace_demo);
-
-                    // Check for errors
-                    if (is_wp_error($response_demo)) {
-                        // echo 'cURL Error: ' . $response_demo->get_error_message();
-                    } else {
-                        // Successful response retrieval
-                        $http_code_demo = wp_remote_retrieve_response_code($response_demo);
-
-                        if ($http_code_demo >= 400) {
-                            // The response code is 400 or greater
-                            // Switch to the backup URL
-                            $response_demo = wp_remote_get($url_local_demo);
-                        }
-
-                        // You can process the JSON data here, for example:
-                        $body_demo = wp_remote_retrieve_body($response_demo);
-                        $data_demo = json_decode($body_demo, true);
-                        $total_demo = count($data_demo);
-                        $domain    = ! empty( $_SERVER['HTTP_HOST'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ) ) : '';           
-
-                        if ( 'solacewp.com' !== $domain ) {
-                            $data_demo = array_filter($data_demo, function($demo) {
-                                return $demo['demo_status'] !== 'draft' && $demo['demo_status'] !== 'pending';
-                            });
-                        }
-
-                        // Print the result
-                        $index = 1;
-                        foreach ($data_demo as $value) {
-                            $demo_image = $value['demo_image'];
-                            $get_solace_type    = ! empty( $_GET['type'] ) ? sanitize_text_field( wp_unslash( $_GET['type'] ) ) : '';                              
-                            $arr_list_type = array('elementor', 'gutenberg');
-                            $is_type = false;
-
-                            if (in_array($get_solace_type, $arr_list_type)) {
-                                $is_type = true;
+                    // Get demo data from API
+                    $solace_extra_api_url = SOLACE_EXTRA_DEMO_IMPORT_URL . 'api/wp-json/solace/v1/demo/';
+                    $solace_extra_response = wp_remote_get($solace_extra_api_url);
+                    
+                    $solace_extra_show_posts = 9;
+                    $solace_extra_get_show_posts = 0;
+                    $solace_extra_total_demo = 0;
+                    $solace_extra_total_filtered = 0; // Initialize
+                    
+                    if (!is_wp_error($solace_extra_response)) {
+                        $solace_extra_body = wp_remote_retrieve_body($solace_extra_response);
+                        $solace_extra_data_demo = json_decode($solace_extra_body, true);
+                        
+                        if (!empty($solace_extra_data_demo) && is_array($solace_extra_data_demo)) {
+                            $solace_extra_domain = !empty($_SERVER['HTTP_HOST']) ? sanitize_text_field(wp_unslash($_SERVER['HTTP_HOST'])) : '';
+                            
+                            if ('solacewp.com' !== $solace_extra_domain) {
+                                $solace_extra_data_demo = array_filter($solace_extra_data_demo, function($demo) {
+                                    return !empty($demo['demo_status']) && 'draft' !== $demo['demo_status'] && 'pending' !== $demo['demo_status'];
+                                });
                             }
-
-                            if (!empty($demo_image) && !empty($get_solace_type)) {
-                                if ($is_type && $value['demo_type'] === $get_solace_type) {
-
-                                    $label_new = false;
-                                    if ( in_array( 'New', $value['demo_category'] ) ) {
-                                        $label_new = true;
+                            
+                            $solace_extra_total_demo = count($solace_extra_data_demo);
+                            $solace_extra_get_solace_type = !empty($_GET['type']) ? sanitize_text_field(wp_unslash($_GET['type'])) : '';
+                            $solace_extra_arr_list_type = array('elementor', 'gutenberg');
+                            
+                            if (!empty($solace_extra_get_solace_type) && in_array($solace_extra_get_solace_type, $solace_extra_arr_list_type, true)) {
+                                // Get filter license from URL or default to 'all'
+                                $solace_extra_filter_license = !empty($_GET['filter_license']) ? sanitize_text_field(wp_unslash($_GET['filter_license'])) : 'all';
+                                
+                                // Get current page from cookie (single cookie for pagination)
+                                $solace_extra_cookie_key = 'solaceLoadMore_page';
+                                $solace_extra_current_page = !empty($_COOKIE[$solace_extra_cookie_key]) ? absint($_COOKIE[$solace_extra_cookie_key]) : 1;
+                                
+                                // Calculate limit based on page number
+                                // Display all items from page 1 to current page
+                                $solace_extra_limit = $solace_extra_current_page * $solace_extra_show_posts;
+                                
+                                // Filter demos by type and license
+                                $solace_extra_filtered_demos = array();
+                                foreach ($solace_extra_data_demo as $solace_extra_value) {
+                                    if (empty($solace_extra_value['demo_image']) || empty($solace_extra_value['demo_type']) || $solace_extra_value['demo_type'] !== $solace_extra_get_solace_type) {
+                                        continue;
                                     }
-
-                                    $label_recommended = false;
-                                    if ( in_array( 'Recommended', $value['demo_category'] ) ) {
-                                        $label_recommended = true;
+                                    
+                                    // License filter
+                                    $solace_extra_is_pro = false;
+                                    if (isset($solace_extra_value['is_pro'])) {
+                                        $solace_extra_is_pro = (bool)$solace_extra_value['is_pro'];
+                                    } elseif (isset($solace_extra_value['isPro'])) {
+                                        $solace_extra_is_pro = (bool)$solace_extra_value['isPro'];
+                                    } elseif (isset($solace_extra_value['license'])) {
+                                        $solace_extra_is_pro = ('pro' === strtolower($solace_extra_value['license']));
+                                    }
+                                    
+                                    if ('free' === $solace_extra_filter_license && $solace_extra_is_pro) {
+                                        continue;
+                                    }
+                                    if ('pro' === $solace_extra_filter_license && !$solace_extra_is_pro) {
+                                        continue;
+                                    }
+                                    
+                                    $solace_extra_filtered_demos[] = $solace_extra_value;
+                                }
+                                
+                                $solace_extra_total_filtered = count($solace_extra_filtered_demos);
+                                $solace_extra_index = 1;
+                                $solace_extra_rendered_count = 0;
+                                
+                                foreach ($solace_extra_filtered_demos as $solace_extra_value) {
+                                    // Use pagination based on page number
+                                    // Display all items from page 1 to current page
+                                    if ($solace_extra_index <= $solace_extra_limit) {
+                                    
+                                    $solace_extra_label_new = in_array('New', !empty($solace_extra_value['demo_category']) ? $solace_extra_value['demo_category'] : array(), true);
+                                    $solace_extra_label_recommended = in_array('Recommended', !empty($solace_extra_value['demo_category']) ? $solace_extra_value['demo_category'] : array(), true);
+                                    ?>
+                                    <?php
+                                    // Check if demo is pro
+                                    $solace_extra_is_pro = false;
+                                    if (isset($solace_extra_value['is_pro'])) {
+                                        $solace_extra_is_pro = (bool)$solace_extra_value['is_pro'];
+                                    } elseif (isset($solace_extra_value['isPro'])) {
+                                        $solace_extra_is_pro = (bool)$solace_extra_value['isPro'];
+                                    } elseif (isset($solace_extra_value['license'])) {
+                                        $solace_extra_is_pro = ('pro' === strtolower($solace_extra_value['license']));
+                                    }
+                                    
+                                    // Build class string
+                                    $solace_extra_demo_classes = 'demo demo' . esc_attr($solace_extra_index);
+                                    if ($solace_extra_is_pro) {
+                                        $solace_extra_demo_classes .= ' is-pro';
                                     }
                                     ?>
-                                    <div class='demo demo<?php echo esc_attr($index); ?>' data-url='<?php echo esc_attr($value['demo_link']); ?>' data-name='<?php echo esc_attr($value['title']); ?>'>
+                                    <div class='<?php echo esc_attr($solace_extra_demo_classes); ?>' data-url='<?php echo esc_attr($solace_extra_value['demo_link']); ?>' data-name='<?php echo esc_attr($solace_extra_value['title']); ?>'>
                                         <div class="box-image">
-                                        <?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url($demo_image); ?>" alt="Demo Image" />
+                                            <?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage ?>
+                                            <img src="<?php echo esc_url($solace_extra_value['demo_image']); ?>" alt="Demo Image" />
                                         </div>
                                         <div class="box-content">
                                             <div class="top-content">
-                                                <?php if (!empty($value['title'])) : ?>
-                                                    <span class="title"><?php echo esc_html( $value['title'] ); ?></span>
+                                                <?php if (!empty($solace_extra_value['title'])) : ?>
+                                                    <span class="title"><?php echo esc_html($solace_extra_value['title']); ?></span>
                                                 <?php endif; ?>
-                                                <?php if ( $label_recommended ) : ?>
-                                                    <span class="label-recommended"><?php esc_html_e( 'Recommended', 'solace-extra' ); ?></span>
+                                                <?php if ($solace_extra_label_recommended) : ?>
+                                                    <span class="label-recommended"><?php esc_html_e('Recommended', 'solace-extra'); ?></span>
                                                 <?php endif; ?>
-                                                <?php if ( $label_new && false ) : ?>
-                                                    <span class="label"><?php esc_html_e( 'New', 'solace-extra' ); ?></span>
+                                                <?php if ($solace_extra_is_pro) : ?>
+                                                    <span class="label pro"><?php esc_html_e('PRO', 'solace-extra'); ?></span>
                                                 <?php endif; ?>
-                                           </div>
-                                           <div class="bottom-content">
-                                                <p><strong><?php echo esc_html__( 'Ideal for: ', 'solace-extra' ); ?></strong><?php echo esc_html( $value['demo_desc'] ); ?></p>
-                                           </div>
+                                            </div>
+                                            <div class="bottom-content">
+                                                <p><strong><?php echo esc_html__('Ideal for: ', 'solace-extra'); ?></strong><?php echo esc_html($solace_extra_value['demo_desc']); ?></p>
+                                            </div>
                                         </div>
                                     </div>
                                     <?php
+                                        $solace_extra_rendered_count++;
+                                    }
+                                    $solace_extra_index++;
                                 }
-                            }
-
-                            $index++;
-
-                            $solaceLoadMore = !empty($_COOKIE['solaceLoadMore']) ? (int)$_COOKIE['solaceLoadMore'] : 0;
-                            $solaceLoadMore = $solaceLoadMore * $show_posts;
-                            if ($total_demo < $solaceLoadMore) {
-                                $solaceLoadMore = $total_demo;
-                            }
-
-                            if (empty($_COOKIE['solaceLoadMore'])) {
-                                if ($index > $show_posts) {
-                                    $get_show_posts = $show_posts;
-                                    break;
-                                }
-                            } else {
-                                if ($index > $solaceLoadMore) {
-                                    $get_show_posts = $solaceLoadMore;
-                                    break;
-                                }
+                                
+                                // Set get_show_posts to rendered count
+                                $solace_extra_get_show_posts = $solace_extra_rendered_count;
+                                
+                                // Output total filtered count for JavaScript
+                                echo '<span class="total-filtered-count" style="display:none;">' . absint($solace_extra_total_filtered) . '</span>';
                             }
                         }
                     }
                     ?>
-                    
                 </div>
-                <?php if ( $get_show_posts < $total_demo ) : ?>
+                <?php 
+                // Check if load more should be shown
+                // Only show if remaining items >= posts_per_page (9)
+                $solace_extra_should_show_load_more = false;
+                if ($solace_extra_total_filtered > 0) {
+                    $solace_extra_current_items = $solace_extra_current_page * $solace_extra_show_posts;
+                    $solace_extra_remaining = $solace_extra_total_filtered - $solace_extra_current_items;
+                    $solace_extra_should_show_load_more = ($solace_extra_remaining >= $solace_extra_show_posts); // Only show if remaining >= posts_per_page
+                }
+                ?>
+                <?php if ($solace_extra_should_show_load_more) : ?>
                     <div class="box-load-more">
-                        <button type="button" show-posts="<?php echo esc_attr( $get_show_posts ); ?>">
-                            <?php esc_html_e( 'Load More', 'solace-extra' ); ?>
+                        <button type="button" data-page="<?php echo esc_attr($solace_extra_current_page); ?>">
+                            <?php esc_html_e('Load More', 'solace-extra'); ?>
                             <div class="box-bubble">
-                                <dotlottie-player src="<?php echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/starter/loadmore.json' ); ?>" background="transparent" speed="1" style="width: 250px; height: 130px;" loop autoplay></dotlottie-player>
+                                <dotlottie-player src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/starter/loadmore.json'); ?>" background="transparent" speed="1" style="width: 250px; height: 130px;" loop autoplay></dotlottie-player>
                             </div>
                         </button>
                     </div>
@@ -283,7 +291,7 @@
     <footer class="bottom">
         <div class="mycontainer">
             <div class="box left">
-                <a href="<?php echo esc_url($myadmin . '/wp-admin/admin.php?page=dashboard-video'); ?>">
+                <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin/admin.php?page=dashboard-video'); ?>">
                     <svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512">
                         <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z" />
                     </svg>
@@ -292,7 +300,7 @@
             </div>
 
             <div class="box center">
-                <a href="<?php echo esc_url($myadmin . '/wp-admin'); ?>">
+                <a href="<?php echo esc_url($solace_extra_myadmin . '/wp-admin'); ?>">
                     <span><?php esc_html_e('Back to WordPress Dashboard', 'solace-extra'); ?></span>
                 </a>
             </div>              
@@ -306,3 +314,20 @@
         </div>
     </footer>    
 </div>
+<style>
+.box-checkbox {
+    justify-content: left;
+    align-items: center;
+    display: flex;
+}
+.mycontainer form {
+    display: flex;
+    flex-direction: column;
+}
+body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-main aside .mycontainer form .box-checkbox label {
+    line-height: 1.8;
+    }
+.mycontainer .box-checkbox input {
+    margin: 0;
+}
+</style>

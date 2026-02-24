@@ -11,6 +11,15 @@ defined( 'ABSPATH' ) || exit;
  * @subpackage Solace_Extra/admin
  */
 
+use Codexpert\Plugin\Base;
+use Codexpert\CoDesigner\Helper;
+use \Elementor\Plugin as Elementor_Plugin;
+use \Elementor\Controls_Manager;
+use \Elementor\Scheme_Typography;
+use \Elementor\Group_Control_Border;
+use \Elementor\Group_Control_Typography;
+use \Elementor\Group_Control_Box_Shadow;
+
 /**
  * The admin-specific functionality of the plugin.
  *
@@ -22,7 +31,6 @@ defined( 'ABSPATH' ) || exit;
  * @author     Solace <solacewp@gmail.com>
  */
 
- 
 class Solace_Extra_Admin {
 
 	/**
@@ -87,6 +95,14 @@ class Solace_Extra_Admin {
 			'appearance_page_tgmpa-install-plugins' === $hook
 		) {
 			wp_enqueue_style( 'solace-extra-admin-style', plugin_dir_url( __FILE__ ) . 'css/admin-style.min.css', array(), $this->version, 'all' );
+
+			// Fancybox
+			wp_enqueue_style( 'solace-extra-fancybox-style', SOLACE_EXTRA_ASSETS_URL . 'css/fancybox.min.css', array(), $this->version, 'all' );
+		}
+
+		if ( 'solace_page_dashboard-sitebuilder' === $hook ) {
+			// Sweetalert2.
+			wp_enqueue_style( 'solace-extra-sweetalert2-style', SOLACE_EXTRA_ASSETS_URL . 'css/sweetalert2.css', array(), $this->version, 'all' );
 		}
 
 	}
@@ -119,6 +135,86 @@ class Solace_Extra_Admin {
 			SOLACE_EXTRA_VERSION,
 			'all'
 		);	
+		wp_register_style(
+			'solace-fix-widget-nav-menu',
+			SOLACE_EXTRA_ASSETS_URL . 'css/elementor-widget-nav-menu.min.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);	
+		// Register style for Shop Widget
+		wp_register_style(
+			'solace-shop-style',
+			SOLACE_EXTRA_ASSETS_URL . 'css/shop/shop.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);
+		// Register style for Shop Widget
+		wp_register_style(
+			'solace-shop',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/shop/assets/css/style.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);
+
+		// Register style for Block Archive.
+		wp_register_style(
+			'solace-extra-block-archive',
+			SOLACE_EXTRA_ASSETS_URL . 'css/widget-block-archive.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);
+
+		// Register style for Purchase Summary.
+		wp_register_style(
+			'solace-extra-purchase-summary',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/purchase-summary/assets/css/style.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);		
+
+		// Register style for Social Share.
+		wp_register_style(
+			'solace-social-share-style',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/social-share/assets/css/style.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);		
+
+		// Register style for Cart.
+		wp_register_style(
+			'solace-cart',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/shop/assets/css/cart.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);			
+
+		// Register style for Checkout.
+		wp_register_style(
+			'solace-checkout',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/shop/assets/css/checkout.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);		
+
+		// Register style for My Account.
+		wp_register_style(
+			'solace-my-account',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/shop/assets/css/my-account.css',
+			[ 'elementor-frontend' ],
+			SOLACE_EXTRA_VERSION,
+			'all'
+		);			
+	
+		// Enqueue Shop Widget CSS
+		wp_enqueue_style('solace-shop-style');
 	}
 
 	/**
@@ -133,14 +229,39 @@ class Solace_Extra_Admin {
 	*/
 	public function solace_register_frontend_scripts() {
 
-		// Enqueue script for frontend and editor Elementor
+		// Enqueue script for frontend.
+		$elementor_frontend_script_deps = array( 'jquery' );
+		if ( wp_script_is( 'elementor-frontend', 'registered' ) ) {
+			$elementor_frontend_script_deps[] = 'elementor-frontend';
+		}
+
 		wp_enqueue_script(
-			'solace-elementor-editor-nav-menu',
+			'solace-elementor-frontend-nav-menu',
 			SOLACE_EXTRA_ASSETS_URL . 'js/solace-nav-menu.js',
-			['jquery', 'elementor-frontend'],
+			$elementor_frontend_script_deps,
 			'1.3.0',
 			true
 		);
+
+		// Register style for Social Share.
+		wp_register_script(
+			'solace-social-share-script',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/social-share/assets/js/script.js',
+			['jquery'],
+			SOLACE_EXTRA_VERSION,
+			true
+		);				
+
+		// Register style for Nav menu.
+		wp_register_script(
+			'solace-smartmenus',
+			SOLACE_EXTRA_DIR . 'elementor/widgets/widget/nav-menu/assets/js/script.js',
+			[
+				'jquery',
+			],
+			SOLACE_EXTRA_VERSION,
+			true
+		);		
 
 	}
 
@@ -160,6 +281,28 @@ class Solace_Extra_Admin {
 			'ajax_url' => admin_url('admin-ajax.php'),
 			'nonce'    => wp_create_nonce('ajax-nonce')
 		));
+
+		wp_localize_script(
+			$this->plugin_name,
+			'solaceSitebuilderI18n',
+			array(
+				// Delete confirmation dialog
+				'delete_confirm_title' => __('Are you sure?', 'solace-extra'),
+				'delete_confirm_text' => __('This item will be permanently deleted.', 'solace-extra'),
+				'delete_confirm_button' => __('Yes, delete it!', 'solace-extra'),
+				'delete_cancel_button' => __('Cancel', 'solace-extra'),
+				'delete_failed_message' => __('Failed to delete the item.', 'solace-extra'),
+				'delete_error_message' => __('An error occurred while deleting the item.', 'solace-extra'),
+				
+				// Rename functionality
+				'rename_success_title' => __('Title Updated', 'solace-extra'),
+				'rename_success_text' => __('The title has been renamed successfully.', 'solace-extra'),
+				'rename_failed_title' => __('Rename Failed', 'solace-extra'),
+				'rename_failed_text' => __('Failed to rename post.', 'solace-extra'),
+				'ajax_error_title' => __('AJAX Error', 'solace-extra'),
+				'ajax_error_text' => __('An unexpected error occurred while renaming the post.', 'solace-extra'),
+			)
+		);		
 
 		$site_url = site_url();
 		wp_localize_script( $this->plugin_name, 'step5', array(
@@ -187,6 +330,9 @@ class Solace_Extra_Admin {
 				true  // Load in the footer
 			);
 
+			// Fancybox
+			wp_enqueue_script( 'solace-extra-fancybox-script', SOLACE_EXTRA_ASSETS_URL . 'js/fancybox.min.js', array('jquery'), $this->version, true );			
+
 			// Check if WooCommerce is active
 			$is_woocommerce_active = class_exists('WooCommerce') ? true : false;
     
@@ -201,6 +347,7 @@ class Solace_Extra_Admin {
 					'assetsUrl' => esc_url(SOLACE_EXTRA_ASSETS_URL),
 					'ajaxurl' => admin_url('admin-ajax.php'),  // Ajax URL
 					'nonce'   => wp_create_nonce('solace_conditions_nonce_action'),  // Nonce for security
+					'admin_url' => $admin_url,
 					'new_page_url' => admin_url('post-new.php?post_type=page&action=elementor'),  // URL to create new page
 					'edit_url' => admin_url('post.php?post={post_id}&action=edit'),  // URL to edit post
 					'redirect_url' => esc_url(admin_url('post-new.php?post_type=solace-sitebuilder')),  // Redirect URL
@@ -208,7 +355,8 @@ class Solace_Extra_Admin {
 					'part_footer' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=footer')),  // Redirect URL
 					'part_singleblog' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=singleblog')),  // Redirect URL
 					'part_404' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=404')),  // Redirect URL
-					'woocommerce'   => $is_woocommerce_active  // WooCommerce active check
+					'woocommerce'   => $is_woocommerce_active,  // WooCommerce active check
+					'upgradeUrl' => SOLACE_UPGRADE_URL
 
 				)
 			);
@@ -258,11 +406,17 @@ class Solace_Extra_Admin {
 			// Kirim data ke JavaScript
 			wp_localize_script('solace-sitebuilder', 'solaceConditions', $solace_conditions);
 
+			// Sweetalert2.
+			wp_enqueue_script( 'solace-extra-sweetalert', SOLACE_EXTRA_ASSETS_URL . 'js/sweetalert2.min.js', array(), $this->version, true );
+
 		}		
 
 		// Only page progress
 		if ( $hook === 'solace_page_dashboard-progress' ) {
 			wp_enqueue_script( 'solace-extra-import', plugin_dir_url( __FILE__ ) . 'js/import.js', array( 'jquery' ), $timestamp, true );
+			wp_localize_script( 'solace-extra-import', 'solaceDemoImport', array(
+				'demo_import_url' => SOLACE_EXTRA_DEMO_IMPORT_URL,
+			));
 		}
 
 		// Only page starter templates
@@ -419,11 +573,8 @@ class Solace_Extra_Admin {
 		);
 
 	}
-	
-	
 
 	public function solace_add_custom_class_to_submenu( $menu ) {
-		// Cari link dengan ID yang spesifik dan tambahkan class
 		$menu = str_replace('dashboard-sitebuilder', 'dashboard-sitebuilder solace-sitebuilder-custom-class', $menu);
 		return $menu;
 	}
@@ -1228,13 +1379,13 @@ class Solace_Extra_Admin {
 
 			if ( ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) === 200 ) {
 				// If the response code is 200, redirect the user
-				wp_redirect( esc_url( $redirect_url ) );
+				wp_safe_redirect( $redirect_url );
 				exit;
 			} else {
 				// If there is an error or the response code is not 200, handle accordingly
 				// You can log the error, display a message, or take other actions
 				// Handle the error, for example, redirect to another page
-				wp_redirect( esc_url( admin_url() ) );
+				wp_safe_redirect( admin_url() );
 				exit;
 			}
 		}
@@ -1262,10 +1413,753 @@ class Solace_Extra_Admin {
 	
 			if ( ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) === 200 ) {
 				// If the response code is 200, redirect the user
-				wp_redirect( esc_url( $redirect_url ) );
+				wp_safe_redirect( $redirect_url );
 				exit;
 			}
 		}
 	
+	}
+
+	/**
+	 * Registers custom controls for Elementor.
+	 *
+	 * This function includes the necessary control files and registers them
+	 * with Elementor's controls manager. Additional controls can be added
+	 * to the `$controls` array in the future.
+	 *
+	 * @return void
+	 */
+	public function register_controls_elementor() {
+
+		$file_path = SOLACE_EXTRA_DIR_PATH . 'elementor/widgets/controls/gradient-text.php';
+
+		require_once( $file_path );
+
+        Elementor_Plugin::instance()->controls_manager->add_group_control( Solace_Extra_Group_Control_Gradient_Text::get_type(), new Solace_Extra_Group_Control_Gradient_Text() );		
+
+	}
+
+	/**
+	 * Sets the error reporting level to only show fatal errors and parse errors.
+	 *
+	 * This method limits error reporting to avoid displaying warnings and notices.
+	 * Useful in production environments where minor errors should not be exposed.
+	 *
+	 * @return void
+	 */
+	public function set_error_reporting_level() {
+		// Limit error reporting to fatal errors (E_ERROR) and parse errors (E_PARSE)
+		// error_reporting( E_ERROR | E_PARSE );
+	}
+
+	/**
+	 * Handle AJAX request to rename a post title.
+	 *
+	 * This function verifies the nonce, sanitizes and validates input,
+	 * updates the post title using wp_update_post(), and returns a JSON response.
+	 *
+	 * @return void
+	 */
+	public function handle_ajax_rename_post_title() {
+		// Verify nonce.
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+		}	
+
+		// Sanitize and prepare input
+		$post_id   = absint($_POST['post_id'] ?? 0);
+		$new_title = '';
+		if ( isset( $_POST['new_title'] ) ) {
+			$new_title = sanitize_text_field( wp_unslash( $_POST['new_title'] ) );
+		}
+
+		// Validate required parameters
+		if (!$post_id || !$new_title) {
+			wp_send_json_error('Invalid data.');
+		}
+
+		// Attempt to update the post title
+		$updated = wp_update_post([
+			'ID'         => $post_id,
+			'post_title' => $new_title,
+		], true);
+
+		// Return error if update fails
+		if (is_wp_error($updated)) {
+			wp_send_json_error($updated->get_error_message());
+		}
+
+		// Return success response
+		wp_send_json_success('Post title updated.');
+	}
+
+	/**
+	 * Set up single product preview context for Elementor.
+	 *
+	 * This function replaces the global post object with the selected product
+	 * to simulate a single product view using a query string.
+	 */
+	public function preview_single_product() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if (isset($_GET['solace-single-product-preview'], $_GET['product_id'])) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$product_id = absint($_GET['product_id']);
+			$product = get_post($product_id);
+
+			// Only proceed if the post exists and is a WooCommerce product
+			if ($product && $product->post_type === 'product') {
+				global $post, $wp_query;
+
+				// Override the global post and query to behave like a product single page
+				$post = $product;
+				setup_postdata($post);
+
+				$wp_query->post = $post;
+				$wp_query->posts = [$post];
+				$wp_query->queried_object = $post;
+				$wp_query->is_singular = true;
+				$wp_query->is_page = false;
+				$wp_query->is_single = true;
+			}
+		}
+	}
+
+	/**
+	 * Hide header and footer when previewing a single product with Elementor.
+	 *
+	 * Outputs inline CSS to hide header/footer elements during preview mode.
+	 */
+	public function hide_header_footer_on_product_preview() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if (isset($_GET['solace-single-product-preview'], $_GET['product_id'])) {
+			echo '<style>
+				header.header,
+				footer.site-footer,
+				.delayed-content {
+					display: none !important;
+				}
+			</style>';
+		}
+	}
+
+	/**
+	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * triggered by the `solace-single-product-preview` query parameter.
+	 *
+	 * Example: ?solace-single-product-preview=123
+	 */
+	public function handle_preview_single_product() {
+		// Check if the preview parameter is set in the URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['solace-single-product-preview'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$single_product_id = absint( $_GET['solace-single-product-preview'] );
+
+			// Validate the ID
+			if ( $single_product_id > 0 ) {
+
+				// Ensure Elementor is active and the method exists
+				if (
+					class_exists( '\Elementor\Plugin' ) &&
+					class_exists( 'WooCommerce' ) &&
+					method_exists( Elementor\Plugin::instance()->frontend, 'get_builder_content_for_display' )
+				) {
+					// Optional: Ensure the post exists and is of allowed type
+					$post = get_post( $single_product_id );
+					if ( $post ) {
+
+						// Output HTML structure
+						?><!DOCTYPE html>
+						<html <?php language_attributes(); ?>>
+						<head>
+							<meta charset="<?php bloginfo( 'charset' ); ?>">
+							<meta name="viewport" content="width=device-width, initial-scale=1">
+							<?php wp_head(); ?>
+							<style>
+								#wpadminbar,
+								header.header,
+								footer.site-footer,
+								.delayed-content {
+									display: none !important;
+								}
+								body {
+									overflow: hidden !important;
+								}
+								<?php
+								// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+								if ( isset( $_GET['solace-hide-overflow'] ) ) {
+									?>
+									body.single-solace-sitebuilder {
+										overflow: hidden !important;
+									}
+									<?php
+								}
+								?>
+							</style>
+						</head>
+						<body <?php body_class(); ?>>
+							<?php
+							// Render the Elementor content for the given ID
+							$elementor_instance = Elementor\Plugin::instance();
+							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $single_product_id ) );
+							wp_footer();
+							?>
+						</body>
+						</html>
+						<?php
+						exit;
+					}
+				}
+			}
+		}
+	}	
+
+	/**
+	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * triggered by the `solace-purchase-summary-preview` query parameter.
+	 *
+	 * Example: ?solace-purchase-summary-preview=123
+	 */
+	public function handle_preview_purchase_summary() {
+		// Check if the preview parameter is set in the URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['solace-purchase-summary-preview'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$purchase_summary_id = absint( $_GET['solace-purchase-summary-preview'] );
+
+			// Validate the ID
+			if ( $purchase_summary_id > 0 ) {
+
+				// Ensure Elementor is active and the method exists
+				if (
+					class_exists( '\Elementor\Plugin' ) &&
+					class_exists( 'WooCommerce' ) &&
+					method_exists( Elementor\Plugin::instance()->frontend, 'get_builder_content_for_display' )
+				) {
+					// Optional: Ensure the post exists and is of allowed type
+					$post = get_post( $purchase_summary_id );
+					if ( $post ) {
+
+						// Check if preview mode is active via query parameter
+						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						if ( isset( $_GET['solace-purchase-summary-preview'] ) ) {
+							// Output CSS to hide specific elements for cleaner preview
+							echo '<style>
+								#wpadminbar,
+								header.header,
+								footer.site-footer,
+								.delayed-content,
+								.main-page,
+								.wrapper {
+									display: none !important;
+								}
+								body {
+									background: #fff !important;
+									overflow: hidden !important;
+								}
+							</style>';
+						}
+
+						// Output CSS to hide specific elements overflow
+						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						if ( isset( $_GET['solace-hide-overflow'] ) ) {
+							echo '<style>
+							.woocommerce-order-received {
+								overflow: hidden !important;
+							}
+							</style>';
+						}
+
+						// Render the Elementor content for the given ID
+						$elementor_instance = Elementor\Plugin::instance();
+						echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $purchase_summary_id ) );
+	
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * triggered by the `solace-single-post-preview` query parameter.
+	 *
+	 * Example: ?solace-single-post-preview=123
+	 */
+	public function handle_preview_single_post() {
+		// Check if the preview parameter is set in the URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['solace-single-post-preview'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$single_post_id = absint( $_GET['solace-single-post-preview'] );
+
+			// Validate the ID
+			if ( $single_post_id > 0 ) {
+
+				// Ensure Elementor is active and the method exists
+				if (
+					class_exists( '\Elementor\Plugin' ) &&
+					method_exists( Elementor\Plugin::instance()->frontend, 'get_builder_content_for_display' )
+				) {
+					// Optional: Ensure the post exists and is of allowed type
+					$post = get_post( $single_post_id );
+					if ( $post ) {
+
+						// Output HTML structure
+						?><!DOCTYPE html>
+						<html <?php language_attributes(); ?>>
+						<head>
+							<meta charset="<?php bloginfo( 'charset' ); ?>">
+							<meta name="viewport" content="width=device-width, initial-scale=1">
+							<?php wp_head(); ?>
+							<style>
+								#wpadminbar,
+								header.header,
+								footer.site-footer,
+								.delayed-content {
+									display: none !important;
+								}
+								body {
+									overflow: hidden !important;
+								}								
+								<?php
+								// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+								if ( isset( $_GET['solace-hide-overflow'] ) ) {
+									?>
+									body.single-solace-sitebuilder {
+										overflow: hidden !important;
+									}
+									<?php
+								}
+								?>
+							</style>
+						</head>
+						<body <?php body_class(); ?>>
+							<?php
+							// Render the Elementor content for the given ID
+							$elementor_instance = Elementor\Plugin::instance();
+							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $single_post_id ) );
+							wp_footer();
+							?>
+						</body>
+						</html>
+						<?php
+						exit;
+					}
+				}
+			}
+		}
+	}	
+
+	/**
+	 * Handles the rendering of a 404 page preview via Elementor,
+	 * triggered by the `solace-404-preview` query parameter.
+	 *
+	 * Example: ?solace-404-preview=123
+	 */
+	public function handle_preview_404() {
+		// Check if the preview parameter is set in the URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['solace-404-preview'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$template_404_id = absint( $_GET['solace-404-preview'] );
+
+			// Validate the ID
+			if ( $template_404_id > 0 ) {
+
+				// Ensure Elementor is active and the method exists
+				if (
+					class_exists( '\Elementor\Plugin' ) &&
+					method_exists( Elementor\Plugin::instance()->frontend, 'get_builder_content_for_display' )
+				) {
+					// Ensure the post exists and is of allowed type
+					$post = get_post( $template_404_id );
+					if ( $post ) {
+
+						// Output HTML structure
+						?><!DOCTYPE html>
+						<html <?php language_attributes(); ?>>
+						<head>
+							<meta charset="<?php bloginfo( 'charset' ); ?>">
+							<meta name="viewport" content="width=device-width, initial-scale=1">
+							<?php wp_head(); ?>
+							<style>
+								#wpadminbar,
+								header.header,
+								footer.site-footer,
+								.delayed-content {
+									display: none !important;
+								}
+
+								body {
+									overflow: hidden !important;
+								}
+
+								.elementor-invisible {
+									visibility: hidden;
+									opacity: 0;
+									transform: translateY(-45px);
+								}
+
+								.elementor-invisible.solace-animate {
+									visibility: visible;
+									opacity: 1;
+									transform: translateY(0);
+									transition: opacity 0.6s ease, transform 0.6s ease;
+								}
+								<?php
+								// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+								if ( isset( $_GET['solace-hide-overflow'] ) ) {
+									?>
+									body.single-solace-sitebuilder {
+										overflow: hidden !important;
+									}
+									<?php
+								}
+								?>
+							</style>
+						</head>
+						<body <?php body_class(); ?>>
+							<?php
+							// Render the Elementor content for the given ID
+							$elementor_instance = Elementor\Plugin::instance();
+							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $template_404_id ) );
+							wp_footer();
+							?>
+							<script>
+							document.addEventListener('DOMContentLoaded', () => {
+								document.querySelectorAll('.elementor-invisible').forEach(el => {
+									el.classList.add('solace-animate');
+								});
+							});
+							</script>
+						</body>
+						</html>
+						<?php
+						exit;
+					}
+				}
+			}
+		}
+	}
+
+	public static function is_plugin_installed( $plugin_slug ) {
+		$plugin_file = WP_PLUGIN_DIR . '/' . $plugin_slug;
+		return file_exists( $plugin_file );
+	}
+
+	/**
+	 * Register dedicated Elementor categories and move them to the top.
+	 *
+	 * Runs only inside the Elementor editor when a Solace preview/edit flag is present
+	 * in the editor URL. Adds several Solace categories and reorders them to appear
+	 * at the top for better visibility.
+	 *
+	 * @param Elementor\Elements_Manager $elements_manager Elementor Elements Manager instance.
+	 * @return void
+	 */
+	function solace_extra_register_priority_category( $elements_manager ) {
+		// Only apply when the preview/editing flag exists in the Elementor editor URL.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$requested_priority_id = null;
+
+		// Define Solace categories to ensure they exist and are surfaced at the top.
+		$solace_categories = [
+			'solace-extra-woocommerce' => [
+				'title' => __( 'Solace Extra - WooCommerce', 'solace-extra' ),
+				'icon'  => 'eicon-woocommerce',
+			],
+			'solace-extra-shop' => [
+				'title' => __( 'Solace Extra - Shop', 'solace-extra' ),
+				'icon'  => 'eicon-products',
+			],
+			'solace-extra-archive' => [
+				'title' => __( 'Solace Extra - Blog', 'solace-extra' ),
+				'icon'  => 'eicon-archive',
+			],
+			'solace-extra-single-post' => [
+				'title' => __( 'Solace Extra - Single Post', 'solace-extra' ),
+				'icon'  => 'eicon-post',
+			],
+			'solace-extra-single' => [
+				'title' => __( 'Solace Extra - Single Product', 'solace-extra' ),
+				'icon'  => 'eicon-single-post',
+			],
+			'solace-extra-cart' => [
+				'title' => __( 'Solace Extra - Cart', 'solace-extra' ),
+				'icon'  => 'eicon-cart',
+			],
+			'solace-extra-checkout' => [
+				'title' => __( 'Solace Extra - Checkout', 'solace-extra' ),
+				'icon'  => 'eicon-checkout',
+			],
+			'solace-extra' => [
+				'title' => __( 'Solace Extra', 'solace-extra' ),
+				'icon'  => 'eicon-star',
+			],
+		];
+
+		// Determine if any specific Solace category key is present in the URL and set it as priority.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		foreach ( array_keys( $solace_categories ) as $cat_id ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( ! empty( $_GET[ $cat_id ] ) ) {
+				$requested_priority_id = $cat_id;
+				break;
+			}
+		}
+
+		// If no GET parameter matches any Solace category ID, bail out.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( null === $requested_priority_id ) {
+			return;
+		}
+
+		// Add or ensure each category exists.
+		// Only the requested category (if any) is given a top position.
+		foreach ( $solace_categories as $id => $data ) {
+			$position = ( $requested_priority_id === $id ) ? 1 : null;
+			$elements_manager->add_category( $id, [
+				'title' => $data['title'],
+				'icon'  => $data['icon'],
+			], $position );
+		}
+
+		// If a specific category is requested, move ONLY that category to the very top.
+		if ( $requested_priority_id ) {
+			$categories = $elements_manager->get_categories();
+			if ( isset( $categories[ $requested_priority_id ] ) ) {
+				$requested = [ $requested_priority_id => $categories[ $requested_priority_id ] ];
+				unset( $categories[ $requested_priority_id ] );
+				$reordered = $requested + $categories;
+
+				$reflection = new ReflectionObject( $elements_manager );
+				$property   = $reflection->getProperty( 'categories' );
+				$property->setAccessible( true );
+				$property->setValue( $elements_manager, $reordered );
+			}
+		}
+	}
+
+    /**
+     * Enqueue inline script to customize Elementor editor menu (popover) items.
+     * Adds a custom dashboard link and renames "Exit to WordPress" text.
+     */
+    public function enqueue_elementor_editor_menu_customization_script() {
+        // Valid part values
+        $valid_parts = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404'];
+        
+        // Get part parameter from URL
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $part_param = isset($_GET['part']) ? sanitize_text_field( wp_unslash( $_GET['part'] ) ) : '';
+        
+        // Return early if part parameter is not valid
+        if (empty($part_param) || !in_array($part_param, $valid_parts)) {
+            return;
+        }
+    ?>
+	<style>
+		a.solace-custom-menu-item {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 15px;
+			padding: 4px 16px;
+			color: #fff;
+			font-size: 0.875rem;
+			line-height: 1.43;
+		}
+	</style>
+    <script>
+    (function(){
+        'use strict';
+        // Gate modifier so it only runs when Elementor Logo button triggers the menu
+        var shouldModifyNextPopover = false;
+        function modifyPopover(pop) {
+            if (!pop || pop.dataset.solaceModified === '1' || !shouldModifyNextPopover) return;
+
+            // const exitSpan = Array.from(pop.querySelectorAll('span, .MuiTypography-root, .MuiListItemText-primary'))
+            //     .find(function(el){ return el.textContent && el.textContent.trim().match(/^Exit to WordPress$/i); });
+            // if (exitSpan) {
+            //     exitSpan.textContent = 'Kembali ke Dashboard';
+            // }
+
+            if (!pop.querySelector('.solace-custom-menu-item')) {
+                var listRoot = pop.querySelector('.MuiList-root');
+                if (listRoot) {
+                    var item = document.createElement('a');
+                    item.className = 'MuiButtonBase-root MuiMenuItem-root MuiMenuItem-gutters solace-custom-menu-item';
+                    item.setAttribute('role','menuitem');
+                    item.setAttribute('tabindex','-1');
+                    item.href = '#';
+                    item.innerHTML = '\n                        <div class="MuiListItemIcon-root">\n                            <svg width="14" height="24" viewBox="0 0 14 24" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n<rect width="14" height="24" fill="url(#pattern0_1_4)"/>\n<defs>\n<pattern id="pattern0_1_4" patternContentUnits="objectBoundingBox" width="1" height="1">\n<use xlink:href="#image0_1_4" transform="scale(0.0714286 0.0416667)"/>\n</pattern>\n<image id="image0_1_4" width="14" height="24" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAYCAYAAADKx8xXAAAD/0lEQVR4AXSUDUyVVRzGf+8BLldkVxAS+RjoBn6UWiqb+U2Z2nJdnTaRtkyZiZIwJUzAlpSFQ42SmYplEXWxMFRQnMLQFFiKGIEtFYYIUsZHECFfF+59O+cqbbn87zzvOf/n/zzvec/HXsHjw1Gb7odb6x5K9e/ouxhN+EO5cBQfJkOd4jSZ2K8nc7Aim87cqyRp4RgDJxBhz6Qjbh7+SiQ1jqbEKrdfeJNwvRDdaKBFC8NlQw5lUuE8NpZlnZ2UfBRFoxJKDif50NOWMKbne9qfCSUqNBFDSBLJgIuErSqR1/Xz6Od/4vP6XzgrJMnMAAydR7gSFcnlQ5lM9lzLc9euqQp6+lJCBov52+sJlr73PE4rviLfNIJRoiyWVZd20lxeTsrwFYyKO02rspjHY+z6luuRqyj6eD/BAXGYk3HMDgaGi1nTOdreyumFGeRLgyZhrU3lcF4Gf54qYJN7BP5bT/AXMtaEMaz3JPWDfVSKhnosmSWky82wV8UTL9dh72qjSQvD8OrXlEq9kLBWbOPAkVhqMy2Ej04iQpiM+G87xWVtEdqEaXy4NhK3aXvYKcXOErbSGN6QL9X9g5jU3UzD8WqaJI/QwaYGCrYO2pqdkRT66gmM6MmmMTCQSSsX4ewbzby0k6w/k0Dl1c1sV5+hPA8g+DefM4W3hrnhaROMPAZ2JQj0xEXvpSt0HIlCEf8Hbze8C/IxV1aRo5/B9nsKl155CYshmpCGPygXg7YHb+ORsA7S42pg7PIs8tYmMdLLn9Gm1QRLme5mwCS8ApksE0fTBGpDUDEtmKdDApiqxr/14mbvZUCNhyCOFxGjF6NnRzCz/R43zaH46he5332fMox49x/jnocrrpqVviGT6sXKLHK1BWjL5pDqN4XZEfMp2rSVoKl7eWdMPBHmHTyVs4saq/ERo3Tr1TuwDPNlymELEz02EvJpOV2SJ3EBXjkJ/NxSww+L3+cFyQkJBuxYxeA3dLoPUKctxyMql3pZUEXr3b2cSHmXhqxclvhsYeGPTajztn9ixscvmBmitZZbQRNZXZeGRZr6K95mg16Cfvc2Z7X5uMfkcUPyWlgY9raDFG1cx83N+/ATmisdTq8xxthOtTqvAF/ma3PRZh3gM2lwkhis2UXShQQG7tzgS1cznvuu0CLQ6ZdF/D8gtesOjaO3oP4rLpKzF0QxWz9Hv64zVnsRLTSdo5JXS9GFTxAvpy/nWUng5IIHMtZPZ0R3Hk1zZ3BoaSze45NYJ2k1u7rHjusnFu/Gfc1Ksur3U9jWSF1jKl9k7Oa2JYvFpkiezL9FjzSppjZH9Q6Iwmp6TasYl3uO7YE++BZXUSjP1bQ+l1+lQpP4j0HmjvYPAAAA///LG/44AAAABklEQVQDAHjRZxs0e4iWAAAAAElFTkSuQmCC"/>\n</defs>\n</svg>\n                        </div>\n                        <div class="MuiListItemText-root">\n                            <span class="MuiTypography-root MuiTypography-body2 MuiListItemText-primary">' + SolaceEditorData.text_submenu + '</span>\n                        </div>\n                    ';
+                    item.addEventListener('click', function(e){
+                        e.preventDefault();
+                        
+                        // Extract part parameter from current URL
+                        var currentUrl = new URL(window.location.href);
+                        var partParam = currentUrl.searchParams.get('part');
+                        
+                        // Build dashboard URL with part parameter if it exists
+                        var dashboardUrl = SolaceEditorData.admin_url + 'admin.php?page=dashboard-sitebuilder';
+                        if (partParam) {
+                            dashboardUrl += '&part=' + encodeURIComponent(partParam);
+                        }
+                        
+                        window.location.href = dashboardUrl;
+                    });
+                    var hr = pop.querySelector('hr.MuiDivider-root');
+                    if (hr && hr.parentNode) {
+                        hr.parentNode.insertBefore(item, hr);
+                    } else if (listRoot) {
+                        listRoot.appendChild(item);
+                    }
+                }
+            }
+            pop.dataset.solaceModified = '1';
+            // Reset the gate after successful modification
+            shouldModifyNextPopover = false;
+        }
+        var observer = new MutationObserver(function(mutations){
+            mutations.forEach(function(m){
+                Array.prototype.forEach.call(m.addedNodes, function(node){
+                    if (node.nodeType !== 1) return;
+                    if (node.matches && (node.matches('.MuiPaper-root') || node.matches('.MuiPopover-paper') || node.matches('.MuiMenu-paper') || node.querySelector('.MuiList-root'))) {
+                        var pop = node.matches('.MuiPaper-root') ? node : (node.querySelector('.MuiPaper-root, .MuiPopover-paper, .MuiMenu-paper, .MuiList-root'));
+                        if (pop) modifyPopover(pop);
+                    }
+                });
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('click', function(e){
+            var btn = e.target.closest('button');
+            if (!btn) return;
+
+            // Only react to the Elementor Logo toggle button
+            var titleEl = btn.querySelector('svg title');
+            var isElementorLogoButton = !!(titleEl && titleEl.textContent && titleEl.textContent.trim() === 'Elementor Logo');
+            if (!isElementorLogoButton) {
+                // Ensure we do not modify for other buttons' menus
+                shouldModifyNextPopover = false;
+                return;
+            }
+
+            // Arm the gate; the next popover opening should be modified
+            shouldModifyNextPopover = true;
+
+            var tries = 0;
+            var interval = setInterval(function(){
+                var pop = document.querySelector('.MuiPaper-root.MuiPopover-paper, .MuiPopover-paper, .MuiMenu-paper, .MuiPaper-root');
+                if (pop) { modifyPopover(pop); clearInterval(interval); }
+                tries++; if (tries > 20) clearInterval(interval);
+            }, 100);
+        }, true);
+    })();
+    </script>
+    <?php
+    }
+
+	/**
+	 * Enqueue custom scripts for Elementor editor
+	 * 
+	 * Registers and enqueues custom JavaScript for the Elementor editor interface
+	 * with localized data for AJAX functionality.
+	 * 
+	 * @since 1.0.0
+	 * @return void
+	 */
+	public function enqueue_elementor_editor_scripts() {
+		// Register custom JavaScript for Elementor editor
+		wp_register_script(
+			'solace-elementor-editor',
+			SOLACE_EXTRA_ASSETS_URL . 'js/solace-editor.js',
+			[ 'jquery' ],
+			SOLACE_EXTRA_VERSION,
+			true
+		);
+
+		wp_enqueue_script( 'solace-elementor-editor' );
+
+		// Localize script data for AJAX functionality
+		$localize_data = [
+			'ajax_url'     => admin_url( 'admin-ajax.php' ),
+			'admin_url'    => admin_url(),
+			'nonce'        => wp_create_nonce( 'solace_editor_nonce' ),
+			'text_submenu' => __( 'Solace Site Builder', 'solace-extra' ),
+			'editorMode'   => 'elementor', // Flag to indicate Elementor editor context
+		];
+
+		wp_localize_script( 'solace-elementor-editor', 'SolaceEditorData', $localize_data );
+	}
+
+	/**
+	 * Global counter to track if products shortcode is being processed
+	 * Using counter to handle multiple shortcodes on same page
+	 */
+	private static $products_shortcode_counter = 0;
+
+	/**
+	 * Detect when WooCommerce [products] shortcode starts processing
+	 *
+	 * @param array  $query_args Query arguments.
+	 * @param array  $atts       Shortcode attributes.
+	 * @param string $type       Shortcode type.
+	 * @return array Modified query arguments.
+	 */
+	public function detect_products_shortcode_start( $query_args, $atts, $type ) {
+		// Increment counter when any products-based shortcode is being processed (products, sale_products, etc.)
+		if ( strpos( $type, 'products' ) !== false ) {
+			self::$products_shortcode_counter++;
+		}
+		return $query_args;
+	}
+
+	/**
+	 * Wrap products shortcode to reset counter after output
+	 *
+	 * @param string $output Shortcode output.
+	 * @param string $tag    Shortcode tag.
+	 * @return string Modified output.
+	 */
+	public function wrap_products_shortcode( $output, $tag ) {
+		if ( $tag === 'products' && self::$products_shortcode_counter > 0 ) {
+			// Decrement counter after shortcode output
+			self::$products_shortcode_counter--;
+		}
+		return $output;
+	}
+
+	/**
+	 * Modify WooCommerce add to cart button class ONLY for products shortcode
+	 * Changes 'button' class to 'solace-extra-button' and ensures 'elementor-button' class exists
+	 *
+	 * @param string $link    Add to cart link HTML.
+	 * @param object $product Product object.
+	 * @return string Modified link HTML.
+	 */
+	public function modify_add_to_cart_button_class( $link, $product ) {
+		// Only modify if products shortcode is being processed (counter > 0)
+		if ( self::$products_shortcode_counter <= 0 ) {
+			return $link;
+		}
+
+		// Extract the class attribute value
+		if ( preg_match( '/class="([^"]*)"/', $link, $matches ) ) {
+			$classes = $matches[1];
+
+			// Replace 'button' with 'solace-extra-button'
+			$classes = preg_replace( '/\bbutton\b/', 'solace-extra-button', $classes );
+
+			// Add 'elementor-button' if it doesn't exist
+			if ( strpos( $classes, 'elementor-button' ) === false ) {
+				$classes .= ' elementor-button';
+			}
+
+			// Replace the class attribute in the link
+			$link = preg_replace( '/class="[^"]*"/', 'class="' . esc_attr( trim( $classes ) ) . '"', $link );
+		}
+
+		return $link;
 	}
 }

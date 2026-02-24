@@ -1,0 +1,20 @@
+.main-all.main-index.main-layout-blog-grid {
+    .row1 {
+        .left {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+
+            // flex-basis: max-content;
+
+            article {
+                width: 100%;
+            }
+
+            .navigation.pagination {
+                width: 100%;
+            }
+        }
+    }
+}

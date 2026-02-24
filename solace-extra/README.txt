@@ -3,8 +3,8 @@ Contributors: solacewp
 Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
-Tested up to: 6.8
-Stable tag: 1.3.3
+Tested up to: 6.9
+Stable tag: 1.5.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,61 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.5.0 - 24 February 2026 =
+* Feat: Added pagination and products-per-page options to the Shop widget.
+* Feat: Added label color and typography settings to the Form Builder widget.
+* Feat: Integrated all input styles with Elementor Form Field Site Settings for better global consistency.
+* Feat: Added product card reordering functionality in the Shop widget.
+* Feat: Added button animation options to Shop, Related Products, Product Tab, Add to Cart, Mini Cart, and Post Comment widgets.
+* Fix: Resolved plugin check (VIP/Standard) compatibility issues.
+* Fix: Fixed PHP notice during Elementor front-page enqueue.
+* Fix: Resolved image visibility issues during demo import.
+* Fix: Fixed layout synchronization issues with Elementor Page Layout.
+* Fix: Fixed template preview functionality in Site Builder.
+* Fix: Resolved various issues in Checkout, Cart, Mini Cart, and My Account widgets.
+* Fix: Fixed navigation menu and Blog Archive widget glitches.
+* Fix: General bug fixes and performance improvements.
+
+= 1.4.0 - 8 September 2025 =
+* Feat: Added Separator Elementor widget
+* Feat: Added Social Share Elementor widget
+* Feat: Added Blog Elementor widget for Blog page
+* Feat: Added Shop Elementor widget for Shop page
+* Feat: Added Cart Elementor widget for Cart page
+* Feat: Added Checkout Elementor widget for Checkout page
+* Feat: Added Purchase Summary Elementor widget for Purchase Summary page
+* Feat: Added My Account Elementor widget for My Account page
+* Feat: Added Related Posts Elementor widget for Single Post
+* Feat: Added Post Author Elementor widget for Single Post
+* Feat: Added Post Categories Elementor widget for Single Post
+* Feat: Added Post Excerpt Elementor widget for Single Post
+* Feat: Added Post Title Elementor widget for Single Post
+* Feat: Added Featured Image Elementor widget for Single Post
+* Feat: Added Full Content Elementor widget for Single Post
+* Feat: Added Post Tags Elementor widget for Single Post
+* Feat: Added Post Date Time Elementor widget for Single Post
+* Feat: Added Post Comments Elementor widget for Single Post
+* Feat: Added Post Breadcrumb Elementor widget for Single Post
+* Feat: Added Post Navigation Elementor widget for Single Post
+* Feat: Added Related Posts Elementor widget for Single Post
+* Feat: Added Additional Information Elementor widget for Single Product
+* Feat: Added Product Breadcrumbs Elementor widget for Single Product
+* Feat: Added Product Categories Elementor widget for Single Product
+* Feat: Added Product Gallery Elementor widget for Single Product
+* Feat: Added Product Long Description Elementor widget for Single Product
+* Feat: Added Product Meta Elementor widget for Single Product
+* Feat: Added Product Price Elementor widget for Single Product
+* Feat: Added Product Rating Elementor widget for Single Product
+* Feat: Added Product Short Description Elementor widget for Single Product
+* Feat: Added Product SKU Elementor widget for Single Product
+* Feat: Added Product Stock Elementor widget for Single Product
+* Feat: Added Product Tags Elementor widget for Single Product
+* Feat: Added Product Title Elementor widget for Single Product
+* Feat: Added Product Upsells Elementor widget for Single Product
+* Feat: Added Related Products Elementor widget for Single Product
+* Feat: Added Product Add to Cart Elementor widget for Single Product
+* Feat: Added Product Tabs Elementor widget for Single Product
 
 = 1.3.3 - 25 August 2025 =
 * Fix: Resolved the Patchstack Server Side Request Forgery (SSRF) vulnerability reported by Que Thanh Tuan - Blue Rock.

@@ -1,0 +1,32 @@
+.solace-extra-box-woocommerce-my-account ul {
+    margin-top: 0;
+}
+
+.solace-extra-box-woocommerce-my-account.layout-2 .woocommerce-MyAccount-navigation,
+.solace-extra-box-woocommerce-my-account.layout-2 .woocommerce-MyAccount-content {
+    float: none;
+    width: 100%;
+}
+
+.solace-extra-box-woocommerce-my-account.layout-2 .woocommerce-MyAccount-navigation {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.solace-extra-box-woocommerce-my-account.layout-2 .woocommerce-MyAccount-navigation ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    width: 100%;
+}
+
+.elementor-page.woocommerce-page span.select2-dropdown.select2-dropdown--below {
+    margin-top: 5px;
+}
+.elementor-page.woocommerce-page input.select2-search__field {
+    background-color: inherit !important;
+    color: inherit !important;
+    border-radius: inherit !important;
+    box-shadow: inherit !important;
+    border-width: 1px !important;
+}

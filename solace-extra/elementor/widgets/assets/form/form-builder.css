@@ -43,14 +43,11 @@
 }
 
 .solaceform-form-button {
-	background: #1c1c1c;
 	display: inline-block;
-	color: #fff;
-	padding: 10px 20px;
-	margin: 10px 0;
 	cursor: pointer;
-	font-size: 14px;
-	transition: background 0.3s ease;
+    background: var(--sol-color-button-initial);
+    color: var(--sol-color-page-title-text);
+	border-radius: 0;
 }
 
 .solaceform-form-button .solace-spinner {
@@ -114,7 +111,7 @@
 }
 
 .solaceform-fields label {
-	display: block;
+	display: inline-block;
 }
 
 .solaceform-fields input[type="file"] {
@@ -133,6 +130,30 @@
     gap: 5px;
 }
 
+.solaceform-multi-fields.block div {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.solaceform-multi-fields.inline div {
+	display: flex;
+    flex-wrap: wrap;
+	margin-right: 15px;
+}
+
+.solaceform-multi-fields.inline div span {
+	padding-left: 6px;
+}
+
+.solaceform-multi-fields.block div .box {
+	display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
 .solaceform-multi-fields select {
 	width: 100%;
 	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMCAyMCI+PHBhdGggZmlsbD0iIzYyNjI2MiIgZD0iTTE1IDhsLTQgNi00LTZoOHoiLz48L3N2Zz4=) right center / 18px no-repeat, var(--formfieldbgcolor);
@@ -142,12 +163,38 @@
 	padding: 5px;
 }
 
+/* Default button width: auto for left, center, right */
+.solaceform-form-button-wrap .box-button button {
+	width: auto;
+}
+
+/* Desktop stretch - only active on desktop (min-width: 1025px) */
+@media only screen and (min-width: 1025px) {
+	.solaceform-form-button-wrap .box-button button.stretch-desktop {
+		width: 100% !important;
+	}
+}
+
+/* Tablet stretch - only active on tablet (max-width: 1024px and min-width: 769px) */
+@media only screen and (max-width: 1024px) and (min-width: 768px) {
+	.solaceform-form-button-wrap .box-button button.stretch-tablet {
+		width: 100% !important;
+	}
+}
+
+/* Mobile stretch - only active on mobile (max-width: 767px) */
+@media only screen and (max-width: 767px) {
+	.solaceform-form-button-wrap .box-button button.stretch-mobile {
+		width: 100% !important;
+	}
+}
+
 .solaceform-radio-warp span {
-	margin-right: 20px;
 	display: inline-block;
 }
 
-@media only screen and (max-width: 768px) {
+/* Tablet breakpoint - max-width: 1024px */
+@media only screen and (max-width: 1024px) {
 	.efb-field-width-tablet-100 {
 		width: 100%;
 	}
@@ -189,7 +236,8 @@
 	}
 }
 
-@media only screen and (max-width: 568px) {
+/* Mobile breakpoint - max-width: 767px */
+@media only screen and (max-width: 767px) {
 	.efb-field-width-mobile-100 {
 		width: 100%;
 	}

@@ -4,6 +4,11 @@ html.wp-toolbar:has(.solace_page_dashboard-step6) {
 
 body.solace_page_dashboard-step6 {
 
+    #submit-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
     #adminmenumain,
     #wpadminbar {
         display: none;

@@ -1,0 +1,21 @@
+.solace-extra-woocommerce-shop .woocommerce.columns-2 ul.products li.product {
+    width: 48.1%;
+}
+
+.solace-extra-woocommerce-shop .woocommerce.columns-3 ul.products li.product {
+    width: 30.8%;
+}
+
+.solace-extra-woocommerce-shop .woocommerce.columns-4 ul.products li.product {
+    width: 22.15%;
+}
+
+.solace-extra-woocommerce-shop .woocommerce.columns-5 ul.products li.product {
+    width: 16.96%;
+}
+
+@media only screen and (max-width: 768px) {    
+    .solace-extra-woocommerce-shop .woocommerce ul.products[class*=columns-] li.product {
+        width: 48%;
+    }
+}

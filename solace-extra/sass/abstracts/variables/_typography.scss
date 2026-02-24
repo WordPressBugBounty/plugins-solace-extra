@@ -1,0 +1,240 @@
+/*--------------------------------------------------------------
+# Font
+--------------------------------------------------------------*/
+
+$font__size-small: 0.75rem;         // 12px
+$font__size-x-small: 0.8125rem;     // 13px
+$font__size-xx-small: 0.875rem;     // 14px
+$font__size-medium: 1rem;           // 16px
+$font__size-xs-medium: 1.125rem;    // 18px
+$font__size-x-medium: 1.3125rem;    // 21px
+$font__size-xx-medium: 1.75rem;     // 28px
+$font__size-large: 2.375rem;        // 38px
+$font__size-x-large: 3.125rem;      // 50px
+$font__size-xx-large: 4.25rem;      // 68px
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 100;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Thin.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 100;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-ThinItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 200;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-ExtraLight.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 200;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-ExtraLightItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 300;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Light.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 300;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-LightItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Regular.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 400;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Italic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Medium.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 500;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-MediumItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 600;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-SemiBold.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 600;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-SemiBoldItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 700;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Bold.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 700;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-BoldItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 800;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-ExtraBold.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 800;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-ExtraBoldItalic.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: normal;
+    font-weight: 900;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-Black.ttf') format('truetype');
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans', sans-serif;
+    font-style: italic;
+    font-weight: 900;
+    src: local('DM Sans'), url('../fonts/DM_Sans/static/DMSans-BlackItalic.ttf') format('truetype');
+    font-display: swap;
+}
+ 
+:root {
+    --wp--preset--font-family: 'DM Sans', sans-serif;
+    --wp--preset--font-family-secondary: 'DM Sans', sans-serif;
+    --wp--preset--font-weight: 400;
+    --wp--preset--font-height: 24px;
+    --wp--preset--font-large: 50px;
+}
+
+%--margin-block-inline-heading {
+    margin-block-end: 0;
+    margin-block-start: 1.5rem;
+    margin-inline-end: 0;
+    margin-inline-start: 0;
+}
+
+%--font-heading-h1 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-xx-large;
+    line-height: $font__size-xx-large;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+ 
+%--font-heading-h2 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-x-large;
+    line-height: $font__size-x-large;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+
+%--font-heading-h3 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-large;
+    line-height: $font__size-large;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+
+%--font-heading-h4 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-xx-medium;
+    line-height: $font__size-xx-medium;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+
+%--font-heading-h5 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-x-medium;
+    line-height: $font__size-x-medium;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+
+%--font-heading-h6 {
+    font-family: var(--wp--preset--font-family);
+    font-weight: 700;
+    font-size: $font__size-medium;
+    line-height: $font__size-medium;
+    text-transform: capitalize;
+    word-break: break-word;
+    @extend %--margin-block-inline-heading;
+}
+
+%--font-code {
+    font-family: monospace;
+    font-weight: 700;
+    font-size: $font__size-medium;
+    line-height: 25.6px;
+}

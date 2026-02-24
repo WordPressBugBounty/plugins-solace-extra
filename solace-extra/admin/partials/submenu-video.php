@@ -1,12 +1,65 @@
 <?php defined( 'ABSPATH' ) || exit; ?>
-<?php $customizer_link = admin_url('customize.php'); ?>
+<?php $solace_extra_customizer_link = admin_url('customize.php'); ?>
+
+<?php
+// Function to get video URL from API with fallback
+function solace_extra_get_starter_video_url() {
+    $api_url = 'https://solacewp.com/api/wp-json/solace/v1/starter-video';
+    $default_url = 'https://www.youtube.com/watch?v=xXa8d3O-NK0';
+    
+    // Make API request
+    $response = wp_remote_get($api_url, array(
+        'timeout' => 10,
+        'sslverify' => false
+    ));
+    
+    // Check if request was successful
+    if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+        $body = wp_remote_retrieve_body($response);
+        $data = json_decode($body, true);
+        
+        // Check if we have valid data and starter_video_url exists
+        if ($data && isset($data['starter_video_url']) && !empty($data['starter_video_url'])) {
+            return $data['starter_video_url'];
+        }
+    }
+    
+    // Return default URL if API fails or data is empty
+    return $default_url;
+}
+
+// Function to convert YouTube URL to embed URL
+function solace_extra_convert_youtube_url_to_embed($url) {
+    // Handle different YouTube URL formats and extract video ID
+    $patterns = array(
+        '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/',
+        '/youtu\.be\/([a-zA-Z0-9_-]+)/',
+        '/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/'
+    );
+    
+    foreach ($patterns as $pattern) {
+        if (preg_match($pattern, $url, $matches)) {
+            $video_id = $matches[1];
+            return 'https://www.youtube.com/embed/' . $video_id;
+        }
+    }
+    
+    // If no pattern matches, return the original URL
+    return $url;
+}
+
+// Get video URL and convert to embed format
+$solace_extra_video_url = solace_extra_get_starter_video_url();
+$solace_extra_embed_url = solace_extra_convert_youtube_url_to_embed($solace_extra_video_url);
+?>
+
 <div class="wrap">
     <?php require_once plugin_dir_path( dirname( __FILE__ ) ) . 'partials/header.php'; ?>
     <section class="video">
         <div class="mycontainer">
             <div class="left">
                 <div class="iframe-container">
-                    <iframe width="674" height="377" src="https://www.youtube.com/embed/xXa8d3O-NK0" frameborder="0" allowfullscreen></iframe>
+                    <iframe width="674" height="377" src="<?php echo esc_url($solace_extra_embed_url); ?>" frameborder="0" allowfullscreen></iframe>
                 </div>
             </div>
             <div class="right">

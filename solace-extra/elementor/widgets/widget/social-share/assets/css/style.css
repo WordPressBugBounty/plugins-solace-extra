@@ -1,0 +1,70 @@
+.solace-social-share {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+    margin-bottom: 24px
+}
+
+.solace-social-share svg {
+    width: 25px;
+    height: 25px
+}
+
+.solace-social-share a {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    color: var(--sol-color-base-font);
+    font-weight: 600;
+    border: 1px solid var(--sol-color-base-font);
+    border-radius: 8px;
+    padding: 6px 12px;
+    min-width: 200px
+}
+
+.solace-social-share a p {
+    font-size: 15px;
+    margin: 0;
+    position: relative;
+    bottom: 1px
+}
+
+.solace-social-share #facebook svg {
+    fill: #4267b2
+}
+
+/* Notif clipboard */
+.notif-clipboard {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	padding: 10px 20px;
+	border-radius: 5px;
+	color: white;
+	font-size: 14px;
+	font-weight: 800;
+	box-shadow: 0 0 14px rgba(0, 0, 0, 0.05);
+	background-color: #28a745;
+}
+
+.notif-clipboard.animate {
+	opacity: 0;
+	transition: all 1s;
+	-webkit-animation-duration: 1s;
+	animation-duration: 1s;
+	-webkit-animation-fill-mode: both;
+	animation-fill-mode: both;
+}
+
+.notif-clipboard.animate.active {
+	opacity: 1;
+	transform: translateX(-50%) translateY(-50%);
+}
+
+.notif-clipboard.slide-in-down {
+	transform: translateY(-100%) translateX(-50%);
+}

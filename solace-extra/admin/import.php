@@ -11,6 +11,8 @@ defined( 'ABSPATH' ) || exit;
  * @subpackage Solace_Extra/admin
  */
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- WordPress importer uses core/legacy hook names for compatibility.
+
 /**
  * The admin-specific functionality of the plugin (import).
  *
@@ -19,6 +21,44 @@ defined( 'ABSPATH' ) || exit;
  * @author     Solace <solacewp@gmail.com>
  */
 require_once plugin_dir_path(__FILE__) . 'wp-background-processing.php';
+
+/** Display verbose errors */
+if ( ! defined( 'IMPORT_DEBUG' ) ) {
+	define( 'IMPORT_DEBUG', WP_DEBUG );
+}
+
+if ( ! function_exists( 'post_exists' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/post.php';
+}
+
+/** WordPress Import Administration API */
+require_once ABSPATH . 'wp-admin/includes/import.php';
+
+if ( ! class_exists( 'WP_Importer' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WordPress Importer API compatibility
+	$class_wp_importer = ABSPATH . 'wp-admin/includes/class-wp-importer.php';
+	if ( file_exists( $class_wp_importer ) ) {
+		require $class_wp_importer;
+	}
+}
+
+/** Functions missing in older WordPress versions. */
+require_once __DIR__ . '/export-import/compat.php';
+
+/** Solace_Extra_WXR_Parser class */
+require_once __DIR__ . '/export-import/parsers/class-wxr-parser.php';
+
+/** Solace_Extra_WXR_Parser_SimpleXML class */
+require_once __DIR__ . '/export-import/parsers/class-wxr-parser-simplexml.php';
+
+/** Solace_Extra_WXR_Parser_XML class */
+require_once __DIR__ . '/export-import/parsers/class-wxr-parser-xml.php';
+
+/** Solace_Extra_WXR_Parser_Regex class */
+require_once __DIR__ . '/export-import/parsers/class-wxr-parser-regex.php';
+
+/** Solace_Extra_WP_Import class */
+require_once __DIR__ . '/export-import/class-wp-import.php';
 
 class Solace_Import_Elementor_Process extends XWP_Background_Process {
     protected $action = 'import_posts_process';
@@ -33,7 +73,7 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
 
     protected function import_elementor_kit($demo_name) {
         // Set elementor settings
-        $demo = 'https://solacewp.com/' . $demo_name . '/wp-json/solace/v1/elementor';        
+        $demo = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $demo_name . '/wp-json/solace/v1/elementor';         
         $this->demo_name = $demo_name;
 
         // Remote get data
@@ -44,7 +84,7 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
         update_option( 'elementor_disable_typography_schemes', 'yes' );
         update_option( 'elementor_experiment-nested-elements', sanitize_key( $data->nested_elements ) );        
 
-        $zip_url = "https://solacewp.com/wp-content/uploads/demolist/" . $demo_name . "/" . $demo_name . ".zip";
+        $zip_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . "wp-content/uploads/demolist/" . $demo_name . "/" . $demo_name . ".zip";
         \Elementor\Plugin::$instance->uploads_manager->enable_unfiltered_files_upload();
         \Elementor\Plugin::$instance->uploads_manager->set_elementor_upload_state(true);
         $upload_dir = wp_upload_dir();
@@ -151,6 +191,22 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
                     update_post_meta($post_id, $imported_demo_name, true);
                 }
             }
+
+            // Check if the post type is 'solace-sitebuilder'
+            if ($post_object->post_type === 'solace-sitebuilder') {
+                // Get the post ID
+                $post_id = $post_object->ID;
+
+                // Ensure the post ID is available before updating the meta
+                if ($post_id) {
+                    // Get demo_name.
+                    $imported_demo_name = 'solace_extra_' . $this->demo_name;
+
+                    // Update the 'solace_import_site_builder' meta to true to mark the page as imported
+                    update_post_meta($post_id, 'solace_import_site_builder', true);
+                    update_post_meta($post_id, $imported_demo_name, true);
+                }
+            }            
         }
 
         // Return the unmodified data
@@ -284,7 +340,8 @@ class Thumbnail_Generator extends XWP_Background_Process {
                     $editor->resize(
                         get_option("{$size}_size_w"),
                         get_option("{$size}_size_h"),
-                        apply_filters("{$size}_crop", false) 
+                        // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.DynamicHooknameFound -- WordPress core image size crop filter
+                        apply_filters("{$size}_crop", false)
                     );
                     $editor->save();
                 }
@@ -374,6 +431,60 @@ class Solace_Extra_Import {
         return false;
     }
 
+
+
+	/**
+	 * Handles AJAX request for importing the site builder.
+	 *
+	 * This method verifies the nonce and checks if the current user has the 
+	 * 'manage_options' capability. If either check fails, it returns an 
+	 * appropriate JSON error response with a relevant HTTP status code.
+	 *
+	 * @return void
+	 */	
+	public function call_ajax_import_site_builder() {
+		// Verify nonce.
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( array( 'error' => 'Invalid nonce!' ), 403 ); // 403 Forbidden
+		}		
+
+		// Check current user capability.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => 'Unauthorized' ), 401 ); // 401 Unauthorized
+		}
+
+        // Get and sanitize the demo name from POST data
+        $get_demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
+
+        // If the demo name is empty after sanitization, reject the request
+        if ( empty( $get_demo_name ) ) {
+            wp_send_json_error( array( 'error' => 'Demo name is required.' ), 400 ); // Bad Request
+        }
+
+        // Construct the remote URL to the XML file
+        $demo_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . "wp-content/uploads/demolist/" . $get_demo_name . "/" . $get_demo_name . ".xml";
+
+        // Use wp_remote_head() to check if the remote file exists
+        $response = wp_remote_head( $demo_url );
+        if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
+            wp_send_json_error( array( 'error' => 'Demo XML not found.' ), 404 ); // Not Found
+        }
+
+        // Instantiate your custom importer and run the import using the remote URL
+        $importer = new Solace_Extra_WP_Import();
+        $file = $demo_url;
+        $importer->import( $file );
+
+		wp_send_json_success( 
+			array( 
+				'message' => 'Import completed successfully.',
+				'file' => $file,
+			) 
+		);
+
+		wp_die();
+	}    
+
     /**
      * Solace Ajax Import
      */
@@ -391,10 +502,13 @@ class Solace_Extra_Import {
             wp_send_json_error( array( 'error' => 'Unauthorized' ) );
         }
 
+        // Delete import page site builder.
+        $this->delete_imported_site_builder();
+
         // Get menus data from the API
         $get_demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
 
-        $demo = 'https://solacewp.com/' . $get_demo_name . "/wp-json/solace/v1/customizer-setting";        
+        $demo = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . "/wp-json/solace/v1/customizer-setting";        
 
         // Remote and local API URLs
         $url_customizer = $demo;
@@ -457,7 +571,7 @@ class Solace_Extra_Import {
             }
         }
 
-        $api_url = 'https://solacewp.com/' . $get_demo_name . '/wp-json/solace/v1/customizer-setting?timestamp=' . time();
+        $api_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . '/wp-json/solace/v1/customizer-setting?timestamp=' . time();
         $response = wp_remote_get($api_url);
 
         if (!is_wp_error($response)) {
@@ -471,8 +585,42 @@ class Solace_Extra_Import {
             }
         }
 
+        // Define the remote URL to the XML file.
+        $demo_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . "wp-content/uploads/demolist/" . $get_demo_name . "/" . $get_demo_name . ".xml";
+
+        // Make a GET request to download the file.
+        $response = wp_remote_get( $demo_url );
+
+        // Check if the request was successful and the response code is 200 (OK).
+        if ( ! is_wp_error( $response ) && wp_remote_retrieve_response_code( $response ) == 200 ) {
+
+            // Get the body/content of the response.
+            $body = wp_remote_retrieve_body( $response );
+    
+            // Get the upload directory path.
+            $upload_dir = wp_upload_dir();
+
+            // Set the local file path to save the downloaded XML.
+            $local_path = trailingslashit( $upload_dir['path'] ) . $get_demo_name . '.xml';
+
+            // Save the file to the server.
+            file_put_contents( $local_path, $body );
+
+            // Instantiate your custom importer and import from the local file.
+            $importer = new Solace_Extra_WP_Import();
+            $importer->import( $local_path );
+        }
+
+        if ( class_exists( 'Solace_Extra_Sitebuilder_Images' ) ) {
+            $sitebuilder_images_service = new Solace_Extra_Sitebuilder_Images();
+
+            $image_api_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . '/wp-json/solace/v1/sitebuilder-image-issues';
+
+            $sitebuilder_images_service->update_sitebuilder_images_from_api( $image_api_url );
+        }
+
         // Remote and local API URLs
-        $url_setting_options = 'https://solacewp.com/' . $get_demo_name . 'wp-json/solace/v1/setting-options';
+        $url_setting_options = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . '/wp-json/solace/v1/setting-options';
 
         // Make remote request using wp_remote_get
         $response_setting_options = wp_remote_get($url_setting_options);
@@ -563,7 +711,7 @@ class Solace_Extra_Import {
     
         $allowed_domains = ['solacewp.com', 'www.solacewp.com'];
         $parsed_url = wp_parse_url($remote_url);
-        if (!in_array($parsed_url['host'], $allowed_domains, true)) {
+        if (empty($parsed_url['host']) || !in_array($parsed_url['host'], $allowed_domains, true)) {
             esc_html_e('Domain not allowed.', 'solace-extra');
             return;
         }
@@ -634,7 +782,7 @@ class Solace_Extra_Import {
     
         $allowed_domains = ['solacewp.com', 'www.solacewp.com']; 
         $parsed_url = wp_parse_url($remote_url);
-        if (!in_array($parsed_url['host'], $allowed_domains, true)) {
+        if (empty($parsed_url['host']) || !in_array($parsed_url['host'], $allowed_domains, true)) {
             esc_html_e('Domain not allowed.', 'solace-extra');
             return;
         }
@@ -688,11 +836,6 @@ class Solace_Extra_Import {
         require_once ABSPATH . 'wp-admin/includes/image.php';
         $attachment_data = wp_generate_attachment_metadata($attachment_id, $file_path);
         wp_update_attachment_metadata($attachment_id, $attachment_data);
-    
-        $theme_mods = get_theme_mod('theme_mods_solace');
-        $logo_data = isset($theme_mods['logo-footer_logo']) && is_string($theme_mods['logo-footer_logo']) 
-            ? json_decode($theme_mods['logo-footer_logo'], true) 
-            : [];
     
         $logo_logo_data = json_encode(['light' => $attachment_id, 'dark' => $attachment_id, 'same' => true]);
     
@@ -756,7 +899,7 @@ class Solace_Extra_Import {
         // Get menus data from the API
         $get_demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
 
-        $demo = 'https://solacewp.com/' . $get_demo_name . "/wp-json/solace/v1/widgets";          
+        $demo = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . "/wp-json/solace/v1/widgets";          
 
         // Remote API URL
         $url_widget = $demo;
@@ -1203,6 +1346,55 @@ class Solace_Extra_Import {
     }
 
     /**
+     * Deletes pages imported during the Solace import process.
+     */
+    public function delete_imported_site_builder()
+    {
+        global $wpdb;
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- We need this to get all the terms and taxonomy. Traditional WP_Query would have been expensive here.        
+        $post_ids = $wpdb->get_col("SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key='solace_import_site_builder'");
+
+        // Remove pages
+        foreach ($post_ids as $id) {
+            $thumbnail_id = get_post_thumbnail_id($id);
+            wp_delete_attachment($thumbnail_id, true);
+            wp_delete_post($id, true);
+        }
+    } 
+
+    /**
+     * Delete all posts of the custom post type 'solace-sitebuilder'
+     * that have the meta key 'solace_wp_importer_site_builder'.
+     *
+     * This function uses WordPress functions instead of direct SQL queries
+     * to maintain compatibility with coding standards and caching.
+     *
+     * @return void
+     */
+    function delete_wp_importer_post_type_sitebuilder() {
+        // Query posts using get_posts() with meta_query
+        $posts = get_posts(array(
+            'post_type'      => 'solace-sitebuilder',
+            'posts_per_page' => -1, // Get all matching posts
+            'fields'         => 'ids', // Return only IDs
+            'post_status'    => 'any',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'meta_query'     => array(
+                array(
+                    'key'     => 'solace_wp_importer_site_builder',
+                    'compare' => 'EXISTS',
+                ),
+            ),
+        ));
+
+        // Delete each post permanently.
+        foreach ($posts as $post_id) {
+            wp_delete_post($post_id, true); // true = force delete (skip Trash).
+        }
+    }    
+
+    /**
      * Deletes all Elementor templates.
      *
      * This function retrieves all Elementor template IDs from the WordPress database
@@ -1244,6 +1436,7 @@ class Solace_Extra_Import {
             wp_die();
         }        
 
+        $this->delete_wp_importer_post_type_sitebuilder();
         $this->delete_imported_terms_category();
         $this->delete_imported_terms_post_tag();
         $this->delete_imported_attachments();
@@ -2087,7 +2280,7 @@ class Solace_Extra_Import {
         $demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_text_field( wp_unslash( $_POST['getDemo'] ) ) : '';
 
 		// Remote and local API URLs
-		$url = trailingslashit('https://solacewp.com/' . $demo_name) . 'wp-json/solace/v1/required-plugin';
+		$url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL . $demo_name ) . 'wp-json/solace/v1/required-plugin';
 
         // Make remote request using wp_remote_get
         $response = wp_remote_get($url);
@@ -2218,7 +2411,7 @@ class Solace_Extra_Import {
 
 
             foreach ($arrayPrevDemo as $get_demo) {
-                $demo = "https://solacewp.com/" . $get_demo . "/wp-json/solace/v1/menus";
+                $demo = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo . "/wp-json/solace/v1/menus";
                 $response = wp_remote_get($demo);
                 $menus_data = wp_remote_retrieve_body($response);
                 $menus = json_decode($menus_data);
@@ -2327,8 +2520,8 @@ class Solace_Extra_Import {
         // Get menus data from the API
         $get_demo_url = ! empty( $_POST['getDemo'] ) ? sanitize_title( wp_unslash( $_POST['getDemo'] ) ) : '';
         $demo_name = ! empty( $_POST['getDemo'] ) ? sanitize_title( 'solace_extra_' . wp_unslash( $_POST['getDemo'] ) ) : '';
-
-        $demo = 'https://solacewp.com/' . $get_demo_url . "/wp-json/solace/v1/menus";
+                      
+        $demo = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_url . "/wp-json/solace/v1/menus";
         $response = wp_remote_get($demo);
         $menus_data = wp_remote_retrieve_body($response);
         $menus = json_decode($menus_data);
@@ -2435,62 +2628,145 @@ class Solace_Extra_Import {
     // Function to process menu item based on its type
     public function processMenuItem($menu_item, $demo_name, $index_menu_item)
     {
-        $args = [];
+        $args       = array();
 
-        // Common properties for all types
+        // Common properties for all types (default assume original data).
         $common_args = array(
-            'menu-item-title'       => $menu_item->title,
-            'menu-item-object'      => $menu_item->object,
-            'menu-item-object-id'   => 0,
-            'menu-item-position'    => $menu_item->menu_order,
-            'menu-item-type'        => $menu_item->type,
-            'menu-item-url'         => $menu_item->url,
-            'menu-item-description' => $menu_item->description,
-            'menu-item-attr-title'  => $menu_item->attr_title,
-            'menu-item-target'      => $menu_item->target,
-            'menu-item-xfn'         => $menu_item->xfn,
-            'menu-item-status'      => $menu_item->post_status,
-            'menu-item-parent-id'   => 0,
+            'menu-item-title'        => $menu_item->title,
+            'menu-item-object'       => $menu_item->object,
+            'menu-item-object-id'    => 0,
+            'menu-item-position'     => $menu_item->menu_order,
+            'menu-item-type'         => $menu_item->type,
+            'menu-item-url'          => $menu_item->url,
+            'menu-item-description'  => $menu_item->description,
+            'menu-item-attr-title'   => $menu_item->attr_title,
+            'menu-item-target'       => $menu_item->target,
+            'menu-item-xfn'          => $menu_item->xfn,
+            'menu-item-status'       => $menu_item->post_status,
+            'menu-item-parent-id'    => 0,
             'menu-item-parent-title' => $menu_item->menu_item_parent_title,
             'menu-item-parent-type'  => $menu_item->menu_item_parent_type,
         );
 
+        // Helper: fallback to custom link when target object is not found.
+        $fallback_to_custom = function () use ( $menu_item, $common_args ) {
+            return array_merge(
+                $common_args,
+                array(
+                    'menu-item-type'      => 'custom',
+                    'menu-item-object'    => 'custom',
+                    'menu-item-object-id' => 0,
+                    'menu-item-url'       => $menu_item->url,
+                )
+            );
+        };
+
         if ($menu_item->type === 'taxonomy') {
-            // Process taxonomy type menu item
+            // Process taxonomy type menu item.
             $url = $menu_item->url;
             $path = wp_parse_url($url, PHP_URL_PATH);
             $slug = basename($path);
-            $term = get_term_by('slug', $slug, 'category');
+
+            // Use the original taxonomy from the menu item when possible.
+            $taxonomy = ! empty( $menu_item->object ) && taxonomy_exists( $menu_item->object )
+                ? $menu_item->object
+                : 'category';
+
+            $term = get_term_by('slug', $slug, $taxonomy);
             if ($term && is_object($term)) {
                 $args = array_merge($common_args, array(
-                    'menu-item-object-id' => $term->term_id, // ID Category
+                    'menu-item-object-id' => $term->term_id,
                 ));
+            } else {
+                // If the term does not exist locally, store as a custom link
+                // so the item is not left in "Pending" state.
+                $args = $fallback_to_custom();
             }
         } elseif ($menu_item->type === 'post_type') {
-            // Process taxonomy type menu item
+            // Process post_type menu item.
             $menu_item_url = $menu_item->url;
             $path = wp_parse_url($menu_item_url, PHP_URL_PATH);
             $slug = basename($path);
 
-            // Define arguments for querying a post based on the slug
-            $args = array(
+            // ==== SPECIAL CASE: SHOP MENU ITEM ====
+            $is_shop_title = ( stripos( $menu_item->title, 'shop' ) !== false );
+            $is_shop_slug  = ( strtolower( $slug ) === 'shop' );
+
+            if ( $is_shop_title && $is_shop_slug ) {
+                $local_shop_id = 0;
+
+                // 1) Coba cari page lokal dengan slug 'shop' terlebih dahulu.
+                if ( ! $local_shop_id ) {
+                    $shop_page = get_page_by_path( 'shop', OBJECT, 'page' );
+                    if ( $shop_page && ! is_wp_error( $shop_page ) && $shop_page->ID ) {
+                        // Pastikan memang slug-nya 'shop', bukan page lain seperti 'hello-world'.
+                        if ( isset( $shop_page->post_name ) && strtolower( $shop_page->post_name ) === 'shop' ) {
+                            $local_shop_id = (int) $shop_page->ID;
+                        }
+                    }
+                }
+
+                // 2) Jika belum ada, coba dari WooCommerce shop page setting
+                //    tapi validasi bahwa judul/slug memang berhubungan dengan "shop".
+                if ( ! $local_shop_id && function_exists( 'wc_get_page_id' ) ) {
+                    $candidate_id = absint( wc_get_page_id( 'shop' ) );
+                    if ( $candidate_id ) {
+                        $candidate_post = get_post( $candidate_id );
+                        if ( $candidate_post && ! is_wp_error( $candidate_post ) ) {
+                            $title_ok = ( stripos( $candidate_post->post_title, 'shop' ) !== false );
+                            $slug_ok  = ( isset( $candidate_post->post_name ) && strtolower( $candidate_post->post_name ) === 'shop' );
+                            if ( $title_ok || $slug_ok ) {
+                                $local_shop_id = $candidate_id;
+                            }
+                        }
+                    }
+                }
+
+                // 3) Kalau ada page lokal, pakai sebagai post_type page.
+                if ( $local_shop_id ) {
+                    $local_url = get_permalink( $local_shop_id );
+                    if ( ! $local_url || is_wp_error( $local_url ) ) {
+                        $local_url = $menu_item->url; // fallback ke URL dari JSON.
+                    }
+
+                    $shop_args = $common_args;
+                    $shop_args['menu-item-object']    = 'page';
+                    $shop_args['menu-item-type']      = 'post_type';
+                    $shop_args['menu-item-object-id'] = $local_shop_id;
+                    $shop_args['menu-item-url']       = $local_url;
+
+                    return $shop_args;
+                }
+
+                return $fallback_to_custom();
+            }
+            // ==== END SPECIAL CASE SHOP ====
+
+            // Determine the post type from menu item object
+            $post_type = ! empty( $menu_item->object ) && post_type_exists( $menu_item->object )
+                ? $menu_item->object
+                : 'post';
+
+            // Define arguments for querying a post based on the slug.
+            $query_args = array(
                 'name'           => $slug,
+                'post_type'      => $post_type,
                 'post_status'    => 'publish',
                 'posts_per_page' => -1,
             );
 
-            // Retrieve the post based on the arguments
-            $post = get_posts($args);
+            // Retrieve the post based on the arguments.
+            $post = get_posts($query_args);
 
-            // Check if a post with the specified slug exists
+            // Track resolved object ID.
+            $resolved_object_id = 0;
+
+            // Check if a post with the specified slug exists.
             if ($post && $post[0]->post_title) {
-                // If found, merge common arguments with additional information
-                $args = array_merge($common_args, array(
-                    'menu-item-object-id' => $post[0]->ID,
-                ));
+                $resolved_object_id = (int) $post[0]->ID;
             } else {
-                // Second approach if the first one doesn't yield results
-                // Check if a post with the menu item title exists
+                // Second approach if the first one doesn't yield results.
+                // Check if a post with the menu item title exists.
                 $post_exists = post_exists($menu_item->title);
 
                 // Parse the URL and get the path
@@ -2506,7 +2782,7 @@ class Solace_Extra_Import {
                 // Remove the prefix 'solace_extra_'
                 $get_demo_name = str_replace( 'solace_extra_', '', $demo_name );
 
-                // Set default variable $unique_posts.
+                // Set default variable $unique_posts (post ID or false).
                 $unique_posts = false;
 
                 if ( $get_demo_name === $clean_slug ) {
@@ -2566,28 +2842,88 @@ class Solace_Extra_Import {
                 }
 
                 if ($post_exists) {
-                    // If found, merge common arguments with additional information
-                    $args = array_merge($common_args, array(
-                        'menu-item-object-id' => $post_exists,
-                    ));
+                    $resolved_object_id = (int) $post_exists;
                 } else {
-                    $page = get_page_by_path($slug, OBJECT, 'page');
-                    $post = get_page_by_path($slug, OBJECT, 'post');
-                    $singular = get_page_by_path($slug, OBJECT, 'any');
-                    if ($page && $page->ID) {
-                        $args = array_merge($common_args, array(
-                            'menu-item-object-id' => $page->ID,
-                        ));
-                    } elseif ($post && $post->ID) {
-                        $args = array_merge($common_args, array(
-                            'menu-item-object-id' => $post->ID,
-                        ));
-                    } elseif ($singular && $singular->ID) {
-                        $args = array_merge($common_args, array(
-                            'menu-item-object-id' => $singular->ID,
-                        ));
+                    // Try to find by post type from menu item object first
+                    $found_by_type = false;
+                    if ( ! empty( $menu_item->object ) && post_type_exists( $menu_item->object ) ) {
+                        $post_by_type = get_page_by_path($slug, OBJECT, $menu_item->object);
+                        if ($post_by_type && $post_by_type->ID) {
+                            $resolved_object_id = (int) $post_by_type->ID;
+                            $found_by_type = true;
+                        }
+                    }
+                    
+                    // Fallback to common post types if not found by specific type
+                    if ( ! $found_by_type ) {
+                        $page = get_page_by_path($slug, OBJECT, 'page');
+                        $post = get_page_by_path($slug, OBJECT, 'post');
+                        $singular = get_page_by_path($slug, OBJECT, 'any');
+                        if ($page && $page->ID) {
+                            $resolved_object_id = (int) $page->ID;
+                        } elseif ($post && $post->ID) {
+                            $resolved_object_id = (int) $post->ID;
+                        } elseif ($singular && $singular->ID) {
+                            $resolved_object_id = (int) $singular->ID;
+                        }
                     }
                 }
+            }
+
+            // Extra handling for Shop page:
+            // In some cases the imported Shop page may have a different slug or title,
+            // so we try a more forgiving lookup when nothing has been resolved yet.
+            if ( ! $resolved_object_id && stripos( $menu_item->title, 'shop' ) !== false ) {
+                // 1) Use WooCommerce shop page if already configured.
+                $wc_shop_id = 0;
+                if ( function_exists( 'wc_get_page_id' ) ) {
+                    $wc_shop_id = absint( wc_get_page_id( 'shop' ) );
+                } else {
+                    $wc_shop_id = absint( get_option( 'woocommerce_shop_page_id', 0 ) );
+                }
+
+                if ( $wc_shop_id ) {
+                    $resolved_object_id = $wc_shop_id;
+                }
+            }
+
+            // If still not resolved and looks like "Shop", try to find it by path / title.
+            if ( ! $resolved_object_id && stripos( $menu_item->title, 'shop' ) !== false ) {
+                // 2) Try by canonical path "shop".
+                $shop_page = get_page_by_path( 'shop', OBJECT, 'page' );
+                if ( $shop_page && ! is_wp_error( $shop_page ) && $shop_page->ID ) {
+                    $resolved_object_id = (int) $shop_page->ID;
+                }
+            }
+
+            if ( ! $resolved_object_id && stripos( $menu_item->title, 'shop' ) !== false ) {
+                // 3) Fallback: search any published page that matches the title loosely.
+                $shop_candidates = get_posts(
+                    array(
+                        'post_type'      => 'page',
+                        'post_status'    => 'publish',
+                        's'              => $menu_item->title,
+                        'posts_per_page' => 1,
+                        'fields'         => 'ids',
+                    )
+                );
+                if ( ! empty( $shop_candidates ) ) {
+                    $resolved_object_id = (int) $shop_candidates[0];
+                }
+
+            }
+
+            if ( $resolved_object_id ) {
+                // Target content found secara umum (bukan kasus khusus Shop).
+                $args = array_merge(
+                    $common_args,
+                    array(
+                        'menu-item-object-id' => $resolved_object_id,
+                    )
+                );
+            } else {
+                // Nothing resolved -> turn into custom link to avoid "Pending" state.
+                $args = $fallback_to_custom();
             }
         } else {
             // Process other types of menu item
