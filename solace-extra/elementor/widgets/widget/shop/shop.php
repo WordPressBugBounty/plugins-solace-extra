@@ -327,12 +327,13 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				'label' => __( 'Element', 'solace-extra' ),
 				'type' => Controls_Manager::SELECT,
 				'options' => [
-					'Title'      => __( 'Title', 'solace-extra' ),
-					'Category'   => __( 'Category', 'solace-extra' ),
-					'Price'      => __( 'Price', 'solace-extra' ),
-					'Add To Cart'=> __( 'Add To Cart', 'solace-extra' ),
+					'Title'       => __( 'Title', 'solace-extra' ),
+					'Category'    => __( 'Category', 'solace-extra' ),
+					'Tags'        => __( 'Tags', 'solace-extra' ),
+					'Price'       => __( 'Price', 'solace-extra' ),
+					'Add To Cart' => __( 'Add To Cart', 'solace-extra' ),
 				],
-				'default' => 'title',
+				'default' => 'Title',
 			]
 		);
 
@@ -345,6 +346,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				'default' => [
 					[ 'element' => 'Title' ],
 					[ 'element' => 'Category' ],
+					[ 'element' => 'Tags' ],
 					[ 'element' => 'Price' ],
 					[ 'element' => 'Add To Cart' ],
 				],
@@ -836,6 +838,122 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 
 		$this->end_controls_section();
 
+		$this->start_controls_section(
+            'section_product_tags',
+            [
+                'label' => esc_html__('Product Tags', 'solace-extra'),
+                'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        // Typography
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name'     => 'product_tags_typography',
+                'selector' => '{{WRAPPER}} .sol-product .product-info .product-tags a',
+            ]
+        );
+
+        // Font Color
+        $this->add_control(
+            'product_tags_color',
+            [
+                'label'     => esc_html__('Font Color', 'solace-extra'),
+                'type'      => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags a' => 'color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'product_tags_bg_color',
+            [
+                'label'     => esc_html__('Background Color', 'solace-extra'),
+                'type'      => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags a' => 'background-color: {{VALUE}};',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'product_tags_content_spacing',
+            [
+                'label' => __( 'Spacing', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'size_units' => [ 'px', '%'],
+                'range' => [
+                    'px' => [ 'min' => 0, 'max' => 100 ],
+                ],
+                'default' => [
+                    'size' => 16,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags' => 'gap: {{SIZE}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Padding
+        $this->add_responsive_control(
+            'product_tags_padding',
+            [
+                'label'      => esc_html__('Padding', 'solace-extra'),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors'  => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags a' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Margin
+        $this->add_responsive_control(
+            'product_tags_margin',
+            [
+                'label'      => esc_html__('Margin', 'solace-extra'),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%', 'em'],
+                'selectors'  => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags a' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        // Border
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'product_tags_border',
+                'selector' => '{{WRAPPER}} .sol-product .product-info .product-tags a',
+            ]
+        );
+
+        // Border Radius
+        $this->add_responsive_control(
+            'product_tags_border_radius',
+            [
+                'label'      => esc_html__('Border Radius', 'solace-extra'),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'default'    => [
+                    'top'    => 12,
+                    'right'  => 12,
+                    'bottom' => 12,
+                    'left'   => 12,
+                    'unit'   => 'px',
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .sol-product .product-info .product-tags a' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
 
 		// ======= Section Price =======
 		$this->start_controls_section(
@@ -1251,7 +1369,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 					'size' => 4,
 				],
 				'selectors' => [
-					'{{WRAPPER}} .solace-extra-pagination .page-numbers' => 'margin-left: {{SIZE}}{{UNIT}}; margin-right: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .solace-extra-pagination .page-numbers:not(:first-child)' => 'margin-left: {{SIZE}}{{UNIT}}; margin-right: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
@@ -1441,6 +1559,13 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				border-radius: 5px;
 			}
 
+			.solace-extra-woocommerce-shop li.sol-product .product-info .product-tags {
+				display: flex;
+			}
+			.solace-extra-woocommerce-shop li.sol-product .product-info .product-tags a {
+				margin: 10px 0px;
+			}
+
 			/* Default Desktop */
 			.solace-extra-woocommerce-shop.columns-desktop-2 ul.products {
 			grid-template-columns: repeat(2, 1fr);
@@ -1499,14 +1624,24 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				clear: both;
 			}
 
+			.solace-extra-pagination .page-numbers:not(:first-child) {
+				margin-top: 0;
+				margin-right: 4px;
+				margin-left: 4px;
+			}
 			.solace-extra-pagination .page-numbers {
+				margin-right: 4px;
 				display: inline-block;
-				padding: 8px 16px;
-				margin: 0 4px;
+				padding: 8px 16px;	
 				background: #f4f4f4;
 				color: #333;
 				text-decoration: none;
 				border-radius: 4px;
+				line-height: 1;
+				padding-top: 12px;
+				min-width: 42px;
+				text-align: center;
+				height: 38px;
 			}
 
 			.solace-extra-pagination .page-numbers.current {
@@ -1535,387 +1670,335 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 		
 		return $options;
 	}
-	
-	protected function render() {
-		if (!class_exists('WooCommerce')) {
-			echo esc_html__('WooCommerce is not activated.', 'solace-extra');
-			return;
-		}
-		$widget_id = $this->get_id();
-		$settings = $this->get_settings_for_display();
 
-		$hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
+	protected function render() {
+        if (!class_exists('WooCommerce')) {
+            echo esc_html__('WooCommerce is not activated.', 'solace-extra');
+            return;
+        }
+
+        $widget_id = $this->get_id();
+        $settings = $this->get_settings_for_display();
+
+        $hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
         $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
 
-		$this->get_style();
-		$columns_desktop = !empty($settings['shop_columns']) ? $settings['shop_columns'] : '3';
-		$columns_tablet  = !empty($settings['shop_columns_tablet']) ? $settings['shop_columns_tablet'] : $columns_desktop;
-		$columns_mobile  = !empty($settings['shop_columns_mobile']) ? $settings['shop_columns_mobile'] : $columns_tablet;
+        $this->get_style();
+        $columns_desktop = !empty($settings['shop_columns']) ? $settings['shop_columns'] : '3';
+        $columns_tablet  = !empty($settings['shop_columns_tablet']) ? $settings['shop_columns_tablet'] : $columns_desktop;
+        $columns_mobile  = !empty($settings['shop_columns_mobile']) ? $settings['shop_columns_mobile'] : $columns_tablet;
 
-		$layout = !empty($settings['shop_layout']) ? $settings['shop_layout'] : 'layout-1';
-		$query_source = !empty($settings['query_source']) ? $settings['query_source'] : 'latest';
-		$query_orderby = !empty($settings['query_orderby']) ? $settings['query_orderby'] : 'date';
-		$query_order = !empty($settings['query_order']) ? $settings['query_order'] : 'DESC';
-		$query_author = !empty($settings['query_author']) ? $settings['query_author'] : '';
+        $layout = !empty($settings['shop_layout']) ? $settings['shop_layout'] : 'layout-1';
+        $query_source = !empty($settings['query_source']) ? $settings['query_source'] : 'latest';
+        $query_orderby = !empty($settings['query_orderby']) ? $settings['query_orderby'] : 'date';
+        $query_order = !empty($settings['query_order']) ? $settings['query_order'] : 'DESC';
+        $query_author = !empty($settings['query_author']) ? $settings['query_author'] : '';
 
-		// Include/Exclude Tabs
-		$include_categories = !empty($settings['include_categories']) ? $settings['include_categories'] : [];
-		$include_tags       = !empty($settings['include_tags']) ? $settings['include_tags'] : [];
-		$include_brands     = !empty($settings['include_brands']) ? $settings['include_brands'] : [];
+        $include_categories = !empty($settings['include_categories']) ? $settings['include_categories'] : [];
+        $include_tags       = !empty($settings['include_tags']) ? $settings['include_tags'] : [];
+        $include_brands     = !empty($settings['include_brands']) ? $settings['include_brands'] : [];
 
-		$exclude_categories = !empty($settings['exclude_categories']) ? $settings['exclude_categories'] : [];
-		$exclude_tags       = !empty($settings['exclude_tags']) ? $settings['exclude_tags'] : [];
-		$exclude_brands     = !empty($settings['exclude_brands']) ? $settings['exclude_brands'] : [];
+        $exclude_categories = !empty($settings['exclude_categories']) ? $settings['exclude_categories'] : [];
+        $exclude_tags       = !empty($settings['exclude_tags']) ? $settings['exclude_tags'] : [];
+        $exclude_brands     = !empty($settings['exclude_brands']) ? $settings['exclude_brands'] : [];
 
-		$columns_classes = sprintf(
-			'columns-desktop-%s columns-tablet-%s columns-mobile-%s',
-			esc_attr($columns_desktop),
-			esc_attr($columns_tablet),
-			esc_attr($columns_mobile)
-		);
+        $columns_classes = sprintf(
+            'columns-desktop-%s columns-tablet-%s columns-mobile-%s',
+            esc_attr($columns_desktop),
+            esc_attr($columns_tablet),
+            esc_attr($columns_mobile)
+        );
 
-		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() && empty( $include_categories ) ) {
-			$template_id = get_the_ID();
+        if ( is_product_category() || is_product_tag() || is_tax('product_brand') ) {
 
-			$preview_settings = get_post_meta( $template_id, '_elementor_preview_settings_category_shop', true );
+			$queried_object = get_queried_object();
 
-			if ( isset( $preview_settings['preview_category'] ) && $preview_settings['preview_category'] ) {
-				$include_categories = [ absint( $preview_settings['preview_category'] ) ];
+			if ( $queried_object && isset( $queried_object->term_id ) ) {
+
+				if ( $queried_object->taxonomy === 'product_cat' ) {
+					$include_categories = [ absint( $queried_object->term_id ) ];
+				}
+
+				if ( $queried_object->taxonomy === 'product_tag' ) {
+					$include_tags = [ absint( $queried_object->term_id ) ];
+				}
+
+				if ( $queried_object->taxonomy === 'product_brand' ) {
+					$include_brands = [ absint( $queried_object->term_id ) ];
+				}
 			}
 		}
 
-		echo '<div class="solace-extra-woocommerce-shop ' . esc_attr($layout) . ' ' . esc_attr($columns_classes) . ' shop-widget-' . esc_attr($widget_id) . '">';
+        if ( \Elementor\Plugin::$instance->editor->is_edit_mode() && empty( $include_categories ) ) {
+            $template_id = get_the_ID();
+            $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings_category_shop', true );
+            if ( isset( $preview_settings['preview_category'] ) && $preview_settings['preview_category'] ) {
+                $include_categories = [ absint( $preview_settings['preview_category'] ) ];
+            }
+        }
 
-		$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : ( ( get_query_var( 'page' ) ) ? get_query_var( 'page' ) : 1 );
+        echo '<div class="solace-extra-woocommerce-shop ' . esc_attr($layout) . ' ' . esc_attr($columns_classes) . ' shop-widget-' . esc_attr($widget_id) . '">';
+        
+        $paged_var = get_query_var('paged');
+        $page_var = get_query_var('page');
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Frontend pagination uses public query arg.
+        $get_paged = isset( $_GET['paged'] ) ? absint( wp_unslash( $_GET['paged'] ) ) : 0;
 
-		$posts_per_page = !empty($settings['posts_per_page']) ? intval($settings['posts_per_page']) : 6;
+        if ( $paged_var ) {
+            $paged = $paged_var;
+        } elseif ( $page_var ) {
+            $paged = $page_var;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Frontend pagination uses public query arg.
+        } elseif ( isset( $_GET['paged'] ) ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Frontend pagination uses public query arg.
+            $paged = absint( wp_unslash( $_GET['paged'] ) );
+        } else {
+            $paged = 1;
+        }
+		$paged = max( 1, $paged );
 
-		$args = [
+        $posts_per_page = !empty($settings['posts_per_page']) ? intval($settings['posts_per_page']) : 6;
+
+        $args = [
             'post_type'      => 'product',
             'post_status'    => 'publish',
             'posts_per_page' => $posts_per_page,
             'paged'          => $paged, 
             'orderby'        => $query_orderby,
             'order'          => $query_order,
-            'suppress_filters' => true,
+            'suppress_filters' => false,
         ];
 
-		if ($query_author) {
-			$args['author'] = intval($query_author);
-		}
+        if ($query_author) {
+            $args['author'] = intval($query_author);
+        }
 
-		// Tax Query for Include/Exclude Tabs
-		$tax_query = [];
+        $tax_query = [];
+        if (!empty($include_categories)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => $include_categories,
+                'operator' => 'IN',
+            ];
+        }
 
-		if (!empty($include_categories)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_cat',
-				'field'    => 'term_id',
-				'terms'    => $include_categories,
-				'operator' => 'IN',
-			];
-		}
+        if (!empty($include_tags)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_tag',
+                'field'    => 'term_id',
+                'terms'    => $include_tags,
+                'operator' => 'IN',
+            ];
+        }
 
-		if (!empty($include_tags)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_tag',
-				'field'    => 'term_id',
-				'terms'    => $include_tags,
-				'operator' => 'IN',
-			];
-		}
+        if (!empty($include_brands)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_brand',
+                'field'    => 'term_id',
+                'terms'    => $include_brands,
+                'operator' => 'IN',
+            ];
+        }
 
-		if (!empty($include_brands)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_brand',
-				'field'    => 'term_id',
-				'terms'    => $include_brands,
-				'operator' => 'IN',
-			];
-		}
+        if (!empty($exclude_categories)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => $exclude_categories,
+                'operator' => 'NOT IN',
+            ];
+        }
 
-		if (!empty($exclude_categories)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_cat',
-				'field'    => 'term_id',
-				'terms'    => $exclude_categories,
-				'operator' => 'NOT IN',
-			];
-		}
+        if (!empty($exclude_tags)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_tag',
+                'field'    => 'term_id',
+                'terms'    => $exclude_tags,
+                'operator' => 'NOT IN',
+            ];
+        }
 
-		if (!empty($exclude_tags)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_tag',
-				'field'    => 'term_id',
-				'terms'    => $exclude_tags,
-				'operator' => 'NOT IN',
-			];
-		}
+        if (!empty($exclude_brands)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_brand',
+                'field'    => 'term_id',
+                'terms'    => $exclude_brands,
+                'operator' => 'NOT IN',
+            ];
+        }
 
-		if (!empty($exclude_brands)) {
-			$tax_query[] = [
-				'taxonomy' => 'product_brand',
-				'field'    => 'term_id',
-				'terms'    => $exclude_brands,
-				'operator' => 'NOT IN',
-			];
-		}
+        if (!empty($tax_query)) {
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Widget filtering by taxonomy requires tax_query.
+            $args['tax_query'] = $tax_query;
+        }
 
-		if (!empty($tax_query)) {
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-			$args['tax_query'] = $tax_query;
-		}
+        switch ($query_source) {
+            case 'sale':
+                $args['meta_query'][] = [
+                    'key'     => '_sale_price',
+                    'value'   => 0,
+                    'compare' => '>',
+                    'type'    => 'NUMERIC',
+                ];
+                break;
+            case 'featured':
+                $args['tax_query'][] = [
+                    'taxonomy' => 'product_visibility',
+                    'field'    => 'name',
+                    'terms'    => 'featured',
+                    'operator' => 'IN',
+                ];
+                break;
+            case 'related':
+                global $product;
+                if ($product) {
+                    $related_ids = wc_get_related_products($product->get_id(), 4);
+                    $args['post__in'] = $related_ids;
+                }
+                break;
+            case 'upsells':
+                global $product;
+                if ($product) {
+                    $upsells = $product->get_upsell_ids();
+                    $args['post__in'] = $upsells;
+                }
+                break;
+            case 'cross_sells':
+                $cross_sells = [];
+                if (WC()->cart) {
+                    foreach (WC()->cart->get_cart() as $cart_item) {
+                        $cart_product = wc_get_product($cart_item['product_id']);
+                        if ($cart_product) {
+                            $cross_sells = array_merge($cross_sells, $cart_product->get_cross_sell_ids());
+                        }
+                    }
+                }
+                $args['post__in'] = $cross_sells;
+                break;
+            default:
+                break;
+        }
 
-		// Modify args based on query_source
-		switch ($query_source) {
-			case 'sale':
-				$args['meta_query'][] = [
-					'key'     => '_sale_price',
-					'value'   => 0,
-					'compare' => '>',
-					'type'    => 'NUMERIC',
-				];
-				break;
+        $query = new WP_Query($args);
 
-			case 'featured':
-				$args['tax_query'][] = [
-					'taxonomy' => 'product_visibility',
-					'field'    => 'name',
-					'terms'    => 'featured',
-					'operator' => 'IN',
-				];
-				break;
+        if ($query->have_posts()) {
+            echo '<div class="woocommerce">';
+            echo '<div class="data-post">';
+            echo '<ul class="products">';
 
-			case 'related':
-				global $product;
-				if ($product) {
-					$related_ids = wc_get_related_products($product->get_id(), 4);
-					$args['post__in'] = $related_ids;
-				}
-				break;
+            while ($query->have_posts()) {
+                $query->the_post();
+                $solace_extra_product = wc_get_product(get_the_ID());
+                if (!$solace_extra_product) continue;
 
-			case 'upsells':
-				global $product;
-				if ($product) {
-					$upsells = $product->get_upsell_ids();
-					$args['post__in'] = $upsells;
-				}
-				break;
-
-			case 'cross_sells':
-				$cross_sells = [];
-				if (WC()->cart) {
-					foreach (WC()->cart->get_cart() as $cart_item) {
-						$cart_product = wc_get_product($cart_item['product_id']);
-						if ($cart_product) {
-							$cross_sells = array_merge($cross_sells, $cart_product->get_cross_sell_ids());
-						}
-					}
-				}
-				$args['post__in'] = $cross_sells;
-				break;
-
-			default:
-				break;
-		}
-		remove_all_filters( 'pre_get_posts', 10 );
-
-		$query = new WP_Query($args);
-
-		if ($query->have_posts()) {
-			echo '<div class="woocommerce">';
-			echo '<div class="data-post">';
-			echo '<ul class="products">';
-
-			while ($query->have_posts()) {
-				$query->the_post();
-				$solace_extra_product = wc_get_product(get_the_ID());
-
-				if (!$solace_extra_product) continue;
-
-				if ($layout === 'layout-1' || $layout === 'layout-2' || $layout === 'layout-3') {
-					if ($layout === 'layout-2') {
-						echo '<style>.elementor-element-' . esc_attr($widget_id) . ' .product-info {
-							display: flex;
-							text-align: center;
-							flex-direction: column;
-							justify-content: center;
-							align-items: center;
-						}</style>';
-					}elseif ($layout === 'layout-3') {
-						echo '<style>.elementor-element-' . esc_attr($widget_id) . ' .product-info {
-							display: flex;
-							text-align: right;
-							flex-direction: column;
-							justify-content: right;
-							align-items: end;
-						}</style>';
-					}
-					echo '<li class="sol-product">';
-					echo '<div class="product-wrapper" style="position: relative;">';
-					if ($layout === 'layout-4') {
-						echo '<a href="' . esc_url(get_permalink()) . '" class="product-full-link" style="position: absolute; inset: 0; z-index: 1;"></a>';
-					}else {
-						echo '<a href="' . esc_url(get_permalink()) . '" class="product-full-link rico-lay-else" style="position: absolute; "></a>';
-					}
-					if ($solace_extra_product->is_on_sale()) {
-						echo '<span class="onsale">' . esc_html__('Sale!', 'solace-extra') . '</span>';
-					}
-					echo '<div class="product-image">
-						<a href="' . esc_url( get_permalink() ) . '">
-							' . wp_kses_post( woocommerce_get_product_thumbnail() ) . '
-						</a>
-					</div>';
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo '<div class="product-info">';
-
-					foreach ( $settings['product_elements_order'] as $item ) {
-
+                if ($layout === 'layout-1' || $layout === 'layout-2' || $layout === 'layout-3') {
+                    if ($layout === 'layout-2') {
+                        echo '<style>.elementor-element-' . esc_attr($widget_id) . ' .product-info { display: flex; text-align: center; flex-direction: column; justify-content: center; align-items: center; }</style>';
+                    }elseif ($layout === 'layout-3') {
+                        echo '<style>.elementor-element-' . esc_attr($widget_id) . ' .product-info { display: flex; text-align: right; flex-direction: column; justify-content: right; align-items: end; }</style>';
+                    }
+                    echo '<li class="sol-product">';
+                    echo '<div class="product-wrapper" style="position: relative;">';
+                    $full_link_class = ($layout === 'layout-4') ? 'product-full-link' : 'product-full-link rico-lay-else';
+                    $full_link_style = ($layout === 'layout-4') ? 'position: absolute; inset: 0; z-index: 1;' : 'position: absolute; ';
+                    echo '<a href="' . esc_url(get_permalink()) . '" class="' . esc_attr($full_link_class) . '" style="' . esc_attr($full_link_style) . '"></a>';
+                    
+                    if ($solace_extra_product->is_on_sale()) {
+                        echo '<span class="onsale">' . esc_html__('Sale!', 'solace-extra') . '</span>';
+                    }
+                    echo '<div class="product-image"><a href="' . esc_url( get_permalink() ) . '">' . wp_kses_post( woocommerce_get_product_thumbnail() ) . '</a></div>';
+                    echo '<div class="product-info">';
+                    foreach ( $settings['product_elements_order'] as $item ) {
 						switch ( $item['element'] ) {
-
 							case 'Title':
-								echo '<h4 class="woocommerce-loop-product__title">
-									<a href="' . esc_url( get_permalink() ) . '">
-										' . esc_html( get_the_title() ) . '
-									</a>
-								</h4>';
+								echo '<h4 class="woocommerce-loop-product__title"><a href="' . esc_url( get_permalink() ) . '">' . esc_html( get_the_title() ) . '</a></h4>';
 								break;
 
 							case 'Category':
-								$categories = wc_get_product_category_list(
-									$solace_extra_product->get_id(),
-									' ',
-									'<span class="product-categories">',
-									'</span>'
-								);
-								if ( $categories ) {
-									echo wp_kses_post( $categories );
-								}
+								$categories = wc_get_product_category_list($solace_extra_product->get_id(), ' ', '<span class="product-categories">', '</span>');
+								if ( $categories ) echo wp_kses_post( $categories );
+								break;
+
+							case 'Tags':
+								$tags = wc_get_product_tag_list($solace_extra_product->get_id(), ' ', '<span class="product-tags">', '</span>');
+								if ( $tags ) echo wp_kses_post( $tags );
 								break;
 
 							case 'Price':
 								echo '<span class="price">' . wp_kses_post( $solace_extra_product->get_price_html() ) . '</span>';
 								break;
 
-						
 							case 'Add To Cart':
 								$button_url  = $solace_extra_product->add_to_cart_url();
 								$button_text = $solace_extra_product->add_to_cart_text();
 								$is_ajaxable = $solace_extra_product->is_purchasable() && $solace_extra_product->is_in_stock() && $solace_extra_product->supports( 'ajax_add_to_cart' );
 								$ajax_class  = $is_ajaxable ? 'ajax_add_to_cart' : '';
 
-								echo '<a 
-									href="' . esc_url( $button_url ) . '" 
-									data-product_id="' . esc_attr( $solace_extra_product->get_id() ) . '" 
-									data-quantity="1" 
-									class="elementor-button solace-extra-button add_to_cart_button ' . esc_attr( $ajax_class ) . ' ' . esc_attr( $hover_class ) . '" 
-									aria-label="' . esc_attr( $solace_extra_product->add_to_cart_description() ) . '" 
-									rel="nofollow">
-										' . esc_html( $button_text ) . '
-								</a>';
+								echo '<a href="' . esc_url( $button_url ) . '" data-product_id="' . esc_attr( $solace_extra_product->get_id() ) . '" data-quantity="1" class="elementor-button solace-extra-button add_to_cart_button ' . esc_attr($ajax_class) . ' ' . esc_attr($hover_class) . '" aria-label="' . esc_attr( $solace_extra_product->add_to_cart_description() ) . '" rel="nofollow">' . esc_html( $button_text ) . '</a>';
 								break;
 						}
 					}
-
-					echo '</div>';
-					echo '</div></li>';
-
-				} elseif ($layout === 'layout-4') {
-					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo '<li class="sol-product">';
-					echo '<div class="product-wrapper" style="position: relative;">';
-					echo '<a href="' . esc_url(get_permalink()) . '" class="product-full-link" style="position: absolute; inset: 0; z-index: 1;"></a>';
-
-					if ($solace_extra_product->is_on_sale()) {
-						echo '<span class="onsale">' . esc_html__('Sale!', 'solace-extra') . '</span>';
-					}
-
-					echo '<div class="product-image">';
-					echo wp_kses_post( woocommerce_get_product_thumbnail() );
-					echo '</div>';
-
-					// // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-					echo '<div class="product-info">';
-
-					foreach ( $settings['product_elements_order'] as $item ) {
-
+                    echo '</div></div></li>';
+                } elseif ($layout === 'layout-4') {
+                    echo '<li class="sol-product"><div class="product-wrapper" style="position: relative;"><a href="' . esc_url(get_permalink()) . '" class="product-full-link" style="position: absolute; inset: 0; z-index: 1;"></a>';
+                    if ($solace_extra_product->is_on_sale()) echo '<span class="onsale">' . esc_html__('Sale!', 'solace-extra') . '</span>';
+                    echo '<div class="product-image">' . wp_kses_post( woocommerce_get_product_thumbnail() ) . '</div>';
+                    echo '<div class="product-info">';
+                    foreach ( $settings['product_elements_order'] as $item ) {
 						switch ( $item['element'] ) {
 
-							case 'title':
-								echo '<h4 class="woocommerce-loop-product__title">
-									<a href="' . esc_url( get_permalink() ) . '">
-										' . esc_html( get_the_title() ) . '
-									</a>
-								</h4>';
+							case 'Title':
+								echo '<h4 class="woocommerce-loop-product__title"><a href="' . esc_url( get_permalink() ) . '">' . esc_html( get_the_title() ) . '</a></h4>';
 								break;
 
-							case 'category':
-								$categories = wc_get_product_category_list(
-									$solace_extra_product->get_id(),
-									' ',
-									'<span class="product-categories">',
-									'</span>'
-								);
-								if ( $categories ) {
-									echo wp_kses_post( $categories );
-								}
+							case 'Category':
+								$categories = wc_get_product_category_list($solace_extra_product->get_id(), ' ', '<span class="product-categories">', '</span>');
+								if ( $categories ) echo wp_kses_post( $categories );
 								break;
 
-							case 'price':
+							case 'Tags':
+								$tags = wc_get_product_tag_list($solace_extra_product->get_id(), ' ', '<span class="product-tags">', '</span>');
+								if ( $tags ) echo wp_kses_post( $tags );
+								break;
+
+							case 'Price':
 								echo '<span class="price">' . wp_kses_post( $solace_extra_product->get_price_html() ) . '</span>';
 								break;
 
-							case 'add_to_cart':
-								echo '<a 
-									href="' . esc_url( $solace_extra_product->add_to_cart_url() ) . '" 
-									data-product_id="' . esc_attr( $solace_extra_product->get_id() ) . '" 
-									data-quantity="1" 
-									class="elementor-button solace-extra-button add_to_cart_button ajax_add_to_cart ' . esc_attr( $hover_class ) . '" 
-									aria-label="' . esc_attr( $solace_extra_product->add_to_cart_description() ) . '" 
-									rel="nofollow">
-										' . esc_html__( 'Add to cart', 'solace-extra' ) . '
-								</a>';
+							case 'Add To Cart':
+								echo '<a href="' . esc_url( $solace_extra_product->add_to_cart_url() ) . '" data-product_id="' . esc_attr( $solace_extra_product->get_id() ) . '" data-quantity="1" class="elementor-button solace-extra-button add_to_cart_button ajax_add_to_cart ' . esc_attr( $hover_class ) . '" aria-label="' . esc_attr( $solace_extra_product->add_to_cart_description() ) . '" rel="nofollow">' . esc_html__( 'Add to cart', 'solace-extra' ) . '</a>';
 								break;
+
 						}
 					}
-
-					echo '</div>';
-
-					echo '</div>'; // .product-wrapper
-					echo '</li>';
-				}
-			}
-
-			echo '</ul>';
-			echo '</div>'; // .data-post
-			
+                    echo '</div></div></li>';
+                }
+            }
+            echo '</ul></div>';
+            
             $total_pages = $query->max_num_pages;
-
             if ( 'yes' === $settings['show_pagination'] && $total_pages > 1 ) {
                 $current_page = max( 1, $paged );
-
                 $align_class = ! empty( $settings['pagination_alignment'] ) ? ' align-' . $settings['pagination_alignment'] : '';
-
-				echo '<div class="solace-extra-pagination' . esc_attr( $align_class ) . '">';
+                echo '<div class="solace-extra-pagination' . esc_attr( $align_class ) . '">';
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-				echo paginate_links( array(
-					'base'      => absint( $current_page ) > 1 ? str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ) : str_replace( '#', '%#%', esc_url( add_query_arg( 'paged', '#', get_pagenum_link( 1 ) ) ) ),
-					'format'    => '?paged=%#%',
-					'current'   => $current_page,
-					'total'     => $total_pages,
-					'prev_text' => '<i class="fas fa-chevron-left"></i>',
-					'next_text' => '<i class="fas fa-chevron-right"></i>',
-					'type'      => 'plain',
-				) );
-				echo '</div>';
+                echo paginate_links( array(
+                    'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+                    'format'    => '?paged=%#%',
+                    'current'   => $current_page,
+                    'total'     => $total_pages,
+                    'prev_text' => '<i class="fas fa-chevron-left"></i>',
+                    'next_text' => '<i class="fas fa-chevron-right"></i>',
+                    'type'      => 'plain',
+                ) );
+                echo '</div>';
             }
-
-            echo '</div>'; // .woocommerce
-			wp_reset_postdata();
-		}
-
-    	echo '</div>'; // .solace-extra-woocommerce-shop
-		
-	}
+            echo '</div>';
+            wp_reset_postdata();
+        } else {
+        }
+        echo '</div>';
+    }
 
 }

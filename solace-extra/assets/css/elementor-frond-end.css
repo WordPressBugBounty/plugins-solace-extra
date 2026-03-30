@@ -5,6 +5,11 @@ a.solace-extra-button {
   border-radius: 0;
 }
 
+body .thumb-45 img {
+  width: 45px;
+  height: 45px;
+  max-width: 45px;
+}
 @media only screen and (min-width: 767px) and (max-width: 1024px) {
   body .solaceform-form .solaceform-form-button-wrap button.tablet-full-width {
     width: 100%;

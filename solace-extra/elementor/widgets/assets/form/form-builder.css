@@ -39,8 +39,41 @@
 }
 
 .solaceform-form {
-	margin: -5px;
+	/* margin: -5px; */
+	justify-content: space-between;
 }
+/* .solaceform-form input,
+.solaceform-form textarea,
+.solaceform-form select {
+    margin-bottom: 20px;
+}
+
+.solaceform-form input[type="url"],
+.solaceform-form input[type="tel"],
+.solaceform-form input[type="radio"],
+.solaceform-form input[type="checkbox"],
+.solaceform-form input[type="number"],
+.solaceform-form input[type="date"],
+.solaceform-form input[type="time"],
+.solaceform-form input[type="file"],
+.solaceform-form input[type="password"] {
+    margin-bottom: 20px;
+} */
+
+.solaceform-form label {
+	display: inline-block;
+	margin-bottom: 5px;
+}
+
+.solaceform-form button {
+	padding: 12px 24px;
+}
+
+.solaceform-button-column.inline {
+    display: flex;
+    align-items: end;
+}
+
 
 .solaceform-form-button {
 	display: inline-block;
@@ -90,9 +123,6 @@
 	color: #fff;
 }
 
-.solaceform-form label {
-	display: inline-block;
-}
 
 .solaceform-form input[type='text'],
 .solaceform-form input[type='email'],

@@ -1,6 +1,3 @@
-.elementor-widget-solace-extra-nav-menu {
-  z-index: 999;
-}
 .elementor-widget-solace-extra-nav-menu ul li {
   position: relative;
 }
@@ -27,7 +24,7 @@
 }
 .elementor-widget-solace-extra-nav-menu ul li.menu-item-has-children ul.sub-menu.active {
   display: block;
-  position: relative;
+  position: absolute;
   top: 0;
   left: 0;
   z-index: 2;
@@ -67,31 +64,6 @@
   width: 100%;
   display: block;
 }
-.elementor-widget-solace-extra-nav-menu .solace-elementor-menu-toggle.elementor-active {
-  position: fixed !important;
-  right: auto !important;
-  z-index: 9999 !important;
-}
-.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown {
-  position: fixed !important;
-  inset: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  padding-top: 110px;
-  z-index: 999 !important;
-  border: none !important;
-  border-radius: 0 !important;
-}
-.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown.solace-dropdown-open {
-  margin: 0 !important;
-  overflow: auto !important;
-}
-.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown.solace-dropdown-open ul {
-  border: none !important;
-}
-.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown.solace-dropdown-open a:focus {
-  box-shadow: none !important;
-}
 
 .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu .solace-elementor-nav-menu--dropdown {
   width: 102vw;
@@ -107,24 +79,6 @@
   width: auto;
 }
 
-@media only screen and (min-width: 1024px) {
-  .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal ul li.menu-item-has-children ul.sub-menu {
-    position: absolute !important;
-    top: 100% !important;
-    left: 0 !important;
-    z-index: 99999 !important;
-  }
-  .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical ul li.menu-item-has-children ul.sub-menu {
-    position: absolute !important;
-    top: 0 !important;
-    z-index: 99999 !important;
-  }
-}
-@media only screen and (max-width: 998px) {
-  .elementor-element.elementor-nav-menu--toggle.elementor-widget.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown {
-    margin: 0 !important;
-  }
-}
 @media only screen and (max-width: 768px) {
   .elementor-editor-active .elementor-element-edit-mode.e-con--row .elementor-nav-menu--stretch.elementor-widget-solace-extra-nav-menu .solace-elementor-nav-menu--dropdown {
     left: calc(-12.3 * var(--padding-inline-end));

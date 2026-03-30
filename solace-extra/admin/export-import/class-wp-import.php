@@ -48,6 +48,13 @@ class Solace_Extra_WP_Import extends WP_Importer {
 	public $featured_images   = array();
 
 	/**
+	 * Cache for Elementor media URL -> attachment ID lookups.
+	 *
+	 * @var array<string,int>
+	 */
+	private $elementor_media_cache = array();
+
+	/**
 	 * Registered callback function for the WordPress Importer
 	 *
 	 * Manages the three separate stages of the WXR import process
@@ -106,6 +113,7 @@ class Solace_Extra_WP_Import extends WP_Importer {
 		$this->backfill_parents();
 		$this->backfill_attachment_urls();
 		$this->remap_featured_images();
+		$this->remap_elementor_attachment_ids();
 
 		$this->import_end();
 	}
@@ -1359,6 +1367,187 @@ class Solace_Extra_WP_Import extends WP_Importer {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Remap attachment IDs inside _elementor_data for imported solace-sitebuilder posts.
+	 * Fixes icon/widget references (e.g. custom SVG icons) that point to old attachment IDs.
+	 */
+	public function remap_elementor_attachment_ids() {
+		$sitebuilder_post_ids = array();
+		foreach ( $this->processed_posts as $old_id => $new_id ) {
+			$post_type = get_post_type( $new_id );
+			if ( 'solace-sitebuilder' === $post_type ) {
+				$sitebuilder_post_ids[ $new_id ] = true;
+			}
+		}
+
+		foreach ( array_keys( $sitebuilder_post_ids ) as $post_id ) {
+			$elementor_data = get_post_meta( $post_id, '_elementor_data', true );
+			if ( empty( $elementor_data ) || ! is_string( $elementor_data ) ) {
+				continue;
+			}
+
+			$data = json_decode( $elementor_data, true );
+			if ( ! is_array( $data ) || json_last_error() !== JSON_ERROR_NONE ) {
+				continue;
+			}
+
+			$remapped = $this->remap_elementor_data_recursive( $data, $this->processed_posts );
+			if ( $remapped !== $data ) {
+				update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $remapped ) ) );
+			}
+		}
+	}
+
+	/**
+	 * Recursively remap old attachment/post IDs to new IDs in Elementor data.
+	 * Updates "id" and "url" (attachment URL) when the ID was imported.
+	 *
+	 * In addition to direct ID remapping, this also tries to resolve media
+	 * references which only store a URL (common for custom SVG toggle icons)
+	 * by looking up or downloading the missing attachment.
+	 *
+	 * @param array $data           Elementor data (array or nested structure).
+	 * @param array $processed_posts Map of old_id => new_id from import.
+	 * @return array Modified data.
+	 */
+	private function remap_elementor_data_recursive( $data, $processed_posts ) {
+		if ( ! is_array( $data ) ) {
+			return $data;
+		}
+
+		foreach ( $data as $k => $v ) {
+			$data[ $k ] = $this->remap_elementor_data_recursive( $v, $processed_posts );
+		}
+
+		// 1) Primary path: remap numeric attachment IDs that were imported.
+		if ( isset( $data['id'] ) && is_numeric( $data['id'] ) ) {
+			$old_id = (int) $data['id'];
+			if ( isset( $processed_posts[ $old_id ] ) ) {
+				$data['id'] = $processed_posts[ $old_id ];
+				if ( isset( $data['url'] ) && ! empty( $data['id'] ) ) {
+					$new_url = wp_get_attachment_url( (int) $data['id'] );
+					if ( $new_url ) {
+						$data['url'] = $new_url;
+					}
+				}
+
+				// ID successfully remapped, nothing more to do for this node.
+				return $data;
+			}
+		}
+
+		// 2) Fallback path: when the ID did not come through the import (common
+		//    for older demo SVGs/icons), try to resolve by URL.
+		if ( isset( $data['url'] ) && is_string( $data['url'] ) && '' !== $data['url'] ) {
+			$resolved_id = $this->resolve_elementor_media_by_url( $data['url'] );
+
+			// If we managed to resolve or download the asset, update both id & url.
+			if ( $resolved_id ) {
+				$data['id'] = $resolved_id;
+				$new_url    = wp_get_attachment_url( $resolved_id );
+				if ( $new_url ) {
+					$data['url'] = $new_url;
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Resolve an Elementor media URL (e.g. toggle_icon_normal SVG) to a local
+	 * attachment ID. If the file is not yet present and attachments are allowed
+	 * to be fetched, this will attempt a one-off download from the original site.
+	 *
+	 * This specifically fixes cases where the WXR did not include the SVG/media
+	 * as an attachment post, but the Elementor JSON still references its URL.
+	 *
+	 * @param string $url Original media URL stored in Elementor settings.
+	 * @return int Attachment ID if resolved or downloaded, 0 otherwise.
+	 */
+	private function resolve_elementor_media_by_url( $url ) {
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return 0;
+		}
+
+		$parsed = wp_parse_url( $url );
+		if ( empty( $parsed['scheme'] ) || empty( $parsed['host'] ) ) {
+			return 0;
+		}
+
+		// Normalise URL by stripping query string for lookup purposes.
+		$normalized_url = $parsed['scheme'] . '://' . $parsed['host'];
+		if ( ! empty( $parsed['port'] ) ) {
+			$normalized_url .= ':' . $parsed['port'];
+		}
+		$normalized_url .= isset( $parsed['path'] ) ? $parsed['path'] : '';
+
+		// Use cache to avoid repeating work.
+		if ( isset( $this->elementor_media_cache[ $normalized_url ] ) ) {
+			return $this->elementor_media_cache[ $normalized_url ];
+		}
+
+		$attachment_id = 0;
+
+		// 2.a) If this URL was already remapped by the core importer, use that.
+		if ( isset( $this->url_remap[ $normalized_url ] ) ) {
+			$remapped_url  = $this->url_remap[ $normalized_url ];
+			$attachment_id = attachment_url_to_postid( $remapped_url );
+			if ( $attachment_id ) {
+				$this->elementor_media_cache[ $normalized_url ] = $attachment_id;
+				return $attachment_id;
+			}
+		}
+
+		// 2.b) Try to find an existing attachment that already uses this URL.
+		$existing_id = attachment_url_to_postid( $normalized_url );
+		if ( $existing_id ) {
+			$this->elementor_media_cache[ $normalized_url ] = $existing_id;
+			return $existing_id;
+		}
+
+		// 2.c) As a last resort, and only if attachment fetching is enabled and
+		//      the URL points to the original export site, attempt to download
+		//      the file and create a local attachment.
+		if ( ! $this->fetch_attachments ) {
+			$this->elementor_media_cache[ $normalized_url ] = 0;
+			return 0;
+		}
+
+		$base = wp_parse_url( $this->base_url );
+		if ( empty( $base['host'] ) || strcasecmp( $base['host'], $parsed['host'] ) !== 0 ) {
+			// Different host – don't attempt to sideload arbitrary remote files.
+			$this->elementor_media_cache[ $normalized_url ] = 0;
+			return 0;
+		}
+
+		// Prepare a minimal attachment post array for process_attachment().
+		$filename   = isset( $parsed['path'] ) ? basename( $parsed['path'] ) : '';
+		$post_title = $filename ? preg_replace( '/\.[^.]+$/', '', $filename ) : 'imported-media';
+
+		$post = array(
+			'post_title'     => $post_title,
+			'post_content'   => '',
+			'post_status'    => 'inherit',
+			'post_mime_type' => '',
+			'post_parent'    => 0,
+			// Use current time so wp_upload_dir() chooses a sensible subdirectory.
+			'upload_date'    => current_time( 'mysql' ),
+		);
+
+		$result = $this->process_attachment( $post, $normalized_url );
+		if ( is_wp_error( $result ) ) {
+			$this->elementor_media_cache[ $normalized_url ] = 0;
+			return 0;
+		}
+
+		$attachment_id = (int) $result;
+		$this->elementor_media_cache[ $normalized_url ] = $attachment_id;
+
+		return $attachment_id;
 	}
 
 	/**

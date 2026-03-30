@@ -34,6 +34,7 @@
                             <select name="filter_license" id="filter_license">
                                 <option value="all"><?php esc_html_e( 'All', 'solace-extra' ); ?></option>
                                 <option value="free"><?php esc_html_e( 'Free', 'solace-extra' ); ?></option>
+                                <option value="pro"><?php esc_html_e( 'Pro', 'solace-extra' ); ?></option>
                             </select>
                         </div>
                         </form>

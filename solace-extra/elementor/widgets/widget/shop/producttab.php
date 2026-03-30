@@ -586,7 +586,7 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
         $this->start_controls_tab(
             'review_content_color_tab',
             [
-                'label' => __( 'Content Color', 'solace-extra' ),
+                'label' => __( 'Content', 'solace-extra' ),
             ]
         );
 
@@ -615,14 +615,14 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
         $this->start_controls_tab(
             'review_heading_color_tab',
             [
-                'label' => __( 'Heading Color', 'solace-extra' ),
+                'label' => __( 'Heading', 'solace-extra' ),
             ]
         );
 
         $this->add_control(
             'review_h3_color',
             [
-                'label' => __( 'H3 Color', 'solace-extra' ),
+                'label' => __( 'Text Color', 'solace-extra' ),
                 'type' => \Elementor\Controls_Manager::COLOR,
                 'selectors' => [
                     '{{WRAPPER}} #tab-reviews h3' => 'color: {{VALUE}}',
@@ -634,8 +634,36 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
             \Elementor\Group_Control_Typography::get_type(),
             [
                 'name' => 'review_h3_typography',
-                'label' => __( 'H3 Typography', 'solace-extra' ),
+                'label' => __( 'Typography', 'solace-extra' ),
                 'selector' => '{{WRAPPER}} #tab-reviews h3',
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->start_controls_tab(
+            'review_label_tab',
+            [
+                'label' => __( 'Label', 'solace-extra' ),
+            ]
+        );
+
+        $this->add_control(
+            'review_label_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel label' => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'review_label_typography',
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel label',
             ]
         );
 
@@ -643,6 +671,166 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
 
         $this->end_controls_tabs();
 
+        $this->start_controls_tabs( 'review_fields_tabs' );
+
+        $this->start_controls_tab(
+            'review_field_tab',
+            [
+                'label' => __( 'Normal', 'solace-extra' ),
+            ]
+        );
+        
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Typography::get_type(),
+            [
+                'name' => 'review_field_typography',
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment',
+            ]
+        );
+
+        $this->add_control(
+            'review_field_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment' => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'review_field_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment' => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'review_field_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment',
+            ]
+        );
+
+        $this->add_control(
+            'review_field_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'review_field_box_shadow',
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment',
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->start_controls_tab(
+            'review_field_focus_tab',
+            [
+                'label' => __( 'Focus', 'solace-extra' ),
+            ]
+        );
+        
+
+        $this->add_control(
+            'review_field_focus_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment:focus' => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'review_field_focus_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment:focus' => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'review_field_focus_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment:focus',
+            ]
+        );
+
+        $this->add_control(
+            'review_field_focus_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment:focus' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'review_field_focus_box_shadow',
+                'selector' => '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment:focus',
+            ]
+        );
+
+        $this->add_control(
+            'review_field_transition',
+            [
+                'label' => __( 'Transition Duration (ms)', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 3000,
+                        'step' => 100,
+                    ],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .solace-woocommerce-tabs-panel textarea#comment' => 'transition: all {{SIZE}}ms ease-in-out;',
+                ],
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->end_controls_tabs();
+
+        $this->add_control(
+            'review_field_separator',
+            [
+                'type' => \Elementor\Controls_Manager::DIVIDER,
+            ]
+        );
 
         $this->add_group_control(
             Group_Control_Border::get_type(),
@@ -993,6 +1181,116 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
             </style>';
     }
 
+    private function get_myaccount_field_selectors( $widget_id, $is_focus = false ) {
+        // error_log('masuk: get_myaccount_field_selectors');
+        $prefix = '.elementor-element-' . esc_attr( $widget_id ) . ' .solace-woocommerce-tabs-panel';
+        
+        $selectors = [
+            $prefix . ' textarea#comment',
+            
+        ];
+
+        if ( $is_focus ) {
+            $selectors = array_map( function( $selector ) {
+                return $selector . ':focus';
+            }, $selectors );
+
+            $selectors[] = $prefix . ' textarea';
+        }
+
+        return implode( ',', $selectors );
+    }
+
+    private function generate_typography_style( $settings, $prefix ) {
+        $css = '';
+        $family = $settings[ $prefix . 'typography_font_family' ] ?? '';
+        if ( $family ) $css .= "font-family: \"{$family}\", Sans-serif;";
+
+        $size = $settings[ $prefix . 'typography_font_size' ] ?? '';
+        if ( is_array( $size ) && ! empty( $size['size'] ) ) $css .= "font-size: {$size['size']}{$size['unit']};";
+
+        $weight = $settings[ $prefix . 'typography_font_weight' ] ?? '';
+        if ( $weight ) $css .= "font-weight: {$weight};";
+
+        $lh = $settings[ $prefix . 'typography_line_height' ] ?? '';
+        if ( is_array( $lh ) && ! empty( $lh['size'] ) ) $css .= "line-height: {$lh['size']}{$lh['unit']};";
+
+        return $css;
+    }
+
+    private function generate_field_style( $settings, $state = 'normal' ) {
+        $css = '';
+        $prefix = ( $state === 'focus' ) ? 'form_field_focus_' : 'form_field_';
+
+        // Color
+        $text_color = $settings[ $prefix . 'text_color' ] ?? '';
+        $bg_color   = $settings[ $prefix . 'background_color' ] ?? '';
+        if ( $text_color ) $css .= "color: {$text_color};";
+        if ( $bg_color )   $css .= "background-color: {$bg_color};";
+
+        if ( $state === 'normal' ) $css .= $this->generate_typography_style( $settings, 'form_field_' );
+
+        // Border
+        $border_type = $settings[ $prefix . 'border_border' ] ?? '';
+        if ( $border_type ) {
+            $css .= "border-style: {$border_type};";
+            $border_width = $settings[ $prefix . 'border_width' ] ?? '';
+            if ( is_array( $border_width ) && ! empty( $border_width['top'] ) ) {
+                $unit = $border_width['unit'] ?? 'px';
+                $css .= "border-width: {$border_width['top']}{$unit} {$border_width['right']}{$unit} {$border_width['bottom']}{$unit} {$border_width['left']}{$unit};";
+            }
+            $border_color = $settings[ $prefix . 'border_color' ] ?? '';
+            if ( $border_color ) $css .= "border-color: {$border_color};";
+        }
+
+        // Radius & Padding
+        foreach ( ['border_radius' => 'border-radius', 'padding' => 'padding'] as $key => $prop ) {
+            $val = $settings[ $prefix . $key ] ?? '';
+            if ( is_array( $val ) && ! empty( $val['top'] ) ) {
+                $unit = $val['unit'] ?? 'px';
+                $css .= "{$prop}: {$val['top']}{$unit} {$val['right']}{$unit} {$val['bottom']}{$unit} {$val['left']}{$unit};";
+            }
+        }
+
+        // Shadow
+        $shadow = $settings[ $prefix . 'box_shadow_box_shadow' ] ?? '';
+        if ( is_array( $shadow ) && ! empty( $shadow['color'] ) ) {
+            $ins = ( isset( $shadow['outline'] ) && $shadow['outline'] === 'inset' ) ? 'inset' : '';
+            $css .= "box-shadow: {$shadow['horizontal']}px {$shadow['vertical']}px {$shadow['blur']}px {$shadow['spread']}px {$shadow['color']} {$ins};";
+        }
+
+        // Transition (Focus)
+        if ( $state === 'focus' ) {
+            $transition = $settings['form_field_focus_transition_duration'] ?? '';
+            if ( is_array( $transition ) && ! empty( $transition['size'] ) ) {
+                $css .= "transition: all {$transition['size']}{$transition['unit']} ease-in-out;";
+            }
+        }
+
+        return $css;
+    }
+
+    private function generate_label_style( $settings ) {
+        $css = '';
+        
+        $label_color = $settings['form_label_color'] ?? '';
+        if ( $label_color ) {
+            $css .= "color: {$label_color};";
+        }
+
+        $css .= $this->generate_typography_style( $settings, 'form_label_' );
+
+        return $css;
+    }
+
+    private function get_label_selectors( $widget_id ) {
+        $prefix = '.elementor-element-' . esc_attr( $widget_id );
+        
+        return "
+            $prefix .solace-sitebuilder-singleproduct label
+        ";
+    }
+
 
     protected function render() {
 
@@ -1001,6 +1299,70 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
         $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
 		$product = solace_get_preview_product();
         $this->solace_custom_additional_info_empty_style();
+        $kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+
+		if ( ! $kit_id ) {
+            // error_log('DEBUG: Kit ID tidak ditemukan');
+            // return;
+        }
+
+        if ( $kit_id ) {
+            $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+        }
+
+        $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+        if ( ! is_array( $kit_settings ) ) {
+            // error_log('DEBUG: Kit Settings bukan array atau kosong');
+            // return;
+        }
+
+        static $style_printed = [];
+        $widget_id = $this->get_id();
+        if ( isset( $style_printed[ $widget_id ] ) ) {
+            // error_log('DEBUG: Style untuk widget ' . $widget_id . ' sudah pernah diprint sebelumnya');
+            // return;
+        }
+
+        // error_log('DEBUG: Mengecek normal_styles...');
+        $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
+        
+        // error_log('DEBUG: Mengecek focus_styles...');
+        $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
+        
+        // error_log('DEBUG: Mengecek label_styles...');
+        $label_styles  = $this->generate_label_style( $kit_settings );
+        
+        // error_log('DEBUG: Hasil Normal Style: ' . $normal_styles);
+        // error_log('DEBUG: Hasil Label Style: ' . $label_styles);
+
+        if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
+            // error_log('DEBUG: Semua styles kosong, membatalkan render <style>');
+            // return;
+        }
+
+        // error_log('DEBUG: Mencetak <style> ke frontend untuk widget: ' . $widget_id);
+
+        echo '<style>';
+        if ( ! empty( $label_styles ) ) {
+            $label_selectors = $this->get_label_selectors( $widget_id );
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $label_selectors . ' { ' . $label_styles . ' }';
+            // error_log('DEBUG: Label selectors printed: ' . $label_selectors);
+        }
+        if ( ! empty( $normal_styles ) ) {
+            $field_selectors = $this->get_myaccount_field_selectors( $widget_id, false );
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $field_selectors . ' { ' . $normal_styles . ' }';
+            // error_log('DEBUG: Field selectors printed: ' . $field_selectors);
+        }
+        if ( ! empty( $focus_styles ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $this->get_myaccount_field_selectors( $widget_id, true ) . ' { ' . $focus_styles . ' }';
+        }
+        echo '</style>';
+
+
+        $style_printed[ $widget_id ] = true;
 		
         $checkempty = solace_check_empty_product( $product );
 		if ( $checkempty ) {

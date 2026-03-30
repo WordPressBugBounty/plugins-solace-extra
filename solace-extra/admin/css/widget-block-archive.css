@@ -129,8 +129,8 @@
   font-display: swap;
 }
 :root {
-  --wp--preset--font-family: 'DM Sans', sans-serif;
-  --wp--preset--font-family-secondary: 'DM Sans', sans-serif;
+  --wp--preset--font-family: "DM Sans", sans-serif;
+  --wp--preset--font-family-secondary: "DM Sans", sans-serif;
   --wp--preset--font-weight: 400;
   --wp--preset--font-height: 24px;
   --wp--preset--font-large: 50px;

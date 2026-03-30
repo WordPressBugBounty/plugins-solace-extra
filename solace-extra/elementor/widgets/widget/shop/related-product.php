@@ -908,7 +908,7 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
 
     public function solace_related_products_empty() {
         echo '<section class="related products woocommerce">
-            <h2>Related Productsx</h2>
+            <h2>Related Products</h2>
             <ul class="products columns-4">
                 <li class="product type-product post-5914 status-publish first instock">
                     <div class="nv-card-content-wrapper">
@@ -949,7 +949,7 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
                     <div class="nv-card-content-wrapper">
                         <div class="sp-product-image">
                             <div class="img-wrap">
-                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Productse" alt="Placeholder" style="background:#555; border-radius:8px;">
+                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Products" alt="Placeholder" style="background:#555; border-radius:8px;">
                             </div>
                         </div>
                         <h5 class="woocommerce-loop-product__title">No Products</h5>

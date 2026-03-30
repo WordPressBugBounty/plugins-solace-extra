@@ -1400,7 +1400,6 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                     'post_type' => 'post',
                     'posts_per_page' => $posts_per_page,
                     'paged' => $paged,
-                    'suppress_filters' => true,
                 ];
 
                 if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) {

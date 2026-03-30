@@ -14,7 +14,7 @@
  * Plugin Name:       Solace Extra
  * Plugin URI:        https://solacewp.com/
  * Description:       Additional features for Solace Theme
- * Version:           1.5.0
+ * Version:           1.5.1
  * Requires PHP:      7.4
  * Author:            Solace
  * Author URI:        https://solacewp.com/
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SOLACE_EXTRA_VERSION', '1.5.0' );
+define( 'SOLACE_EXTRA_VERSION', '1.5.1' );
 define( 'SOLACE_EXTRA_DIR', plugin_dir_url( __FILE__ ) );
 define( 'SOLACE_EXTRA_DIR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SOLACE_EXTRA_ASSETS_URL', plugin_dir_url( __FILE__ ) . 'assets/' );
@@ -176,6 +176,7 @@ if (class_exists('Elementor\Plugin')) {
         require_once( __DIR__ . '/elementor/widgets/widget/shop/producttab.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/shop/separator.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/archive-posts/archive-posts.php' );
+        // require_once( __DIR__ . '/elementor/widgets/widget/form-builder/form-builder.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-author/post-author.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-categories/post-categories.php' );
         // require_once( __DIR__ . '/elementor/widgets/widget/post-date/post-date.php' );
@@ -215,6 +216,7 @@ if (class_exists('Elementor\Plugin')) {
         $widgets_manager->register( new \Solace_Extra_WooCommerce_Separator() );
 
         $widgets_manager->register( new \Solace_Extra_Post_Archive() );
+        // $widgets_manager->register( new \Solace_Form_Builder() );
         $widgets_manager->register( new \Solace_Extra_Post_Author() );
         $widgets_manager->register( new \Solace_Extra_Post_Categories() );
         // $widgets_manager->register( new \Solace_Extra_Post_Date() );
@@ -712,6 +714,16 @@ function solace_custom_ajax_add_to_cart() {
 add_action( 'admin_menu', 'solace_register_theme_submenu_dashboard_upgrade_support',999 );
 
 function solace_register_theme_submenu_dashboard_upgrade_support() {
+    if ( ! function_exists( 'solace_pro_card' ) ) {
+        add_submenu_page(
+            'solace',
+            __( 'Upgrade', 'solace-extra' ),
+            __( 'Upgrade', 'solace-extra' ),
+            'manage_options',
+            'solace-upgrade-link',
+            '__return_null'
+        );
+    }
 
     $saved_key = get_option( 'solace_license_key', '' );
     $license_info = false;
@@ -741,6 +753,14 @@ add_action('admin_footer', function() {
     ?>
     <script type="text/javascript">
         jQuery(document).ready(function($){
+            $('a[href="admin.php?page=solace-upgrade-link"]').closest('li').addClass('upgrade-menu-item');
+            $('a[href="admin.php?page=solace-upgrade-link"]')
+                .attr('href', '<?php echo esc_js( esc_url( SOLACE_UPGRADE_URL ) ); ?>')
+                .attr('target','_blank');
+        });
+    </script>
+    <script type="text/javascript">
+        jQuery(document).ready(function($){
             $('a[href="admin.php?page=solace-support-link"]').closest('li').addClass('support-menu-item');
             $('a[href="admin.php?page=solace-support-link"]')
                 .attr('href', '<?php echo esc_js( esc_url( SOLACE_SUPPORT_URL ) ); ?>')
@@ -750,7 +770,7 @@ add_action('admin_footer', function() {
     <?php
 });
 
-// add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'solace_plugin_action_links' );
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'solace_plugin_action_links' );
 
 function solace_plugin_action_links( $links ) {
     $saved_key = get_option( 'solace_license_key' );

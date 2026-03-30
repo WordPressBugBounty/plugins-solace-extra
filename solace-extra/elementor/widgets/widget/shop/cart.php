@@ -1528,7 +1528,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', 'em', '%' ],
                 'selectors' => [
-                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon,  {{WRAPPER}} .solace-extra-box-woocommerce-cart .table-box .box-coupon' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
                 'condition' => [ 'show_coupon_code' => 'yes' ],
             ]
@@ -1542,7 +1542,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', 'em', '%' ],
                 'selectors' => [
-                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart .table-box .box-coupon' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
                 'condition' => [ 'show_coupon_code' => 'yes' ],
             ]
@@ -1553,7 +1553,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
             \Elementor\Group_Control_Border::get_type(),
             [
                 'name' => 'coupon_box_border',
-                'selector' => '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart.layout-2 .box-coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart.layout-3 .box-coupon',
+                'selector' => '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart .table-box .box-coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart.layout-2 .box-coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart.layout-3 .box-coupon',
                 'condition' => [ 'show_coupon_code' => 'yes' ],
             ]
         );
@@ -1566,7 +1566,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%' ],
                 'selectors' => [
-                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .solace-extra-box-woocommerce-cart .cart-collaterals .coupon, {{WRAPPER}} .solace-extra-box-woocommerce-cart .table-box .box-coupon' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
                 'condition' => [ 'show_coupon_code' => 'yes' ],
             ]

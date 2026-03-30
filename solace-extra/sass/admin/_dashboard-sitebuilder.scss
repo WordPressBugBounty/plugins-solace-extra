@@ -237,14 +237,8 @@ body.solace_page_dashboard-sitebuilder {
                 display: flex;
                 gap: 20px;
                 flex-wrap: wrap;
-
                 a {
                     text-decoration: none;
-                    
-                    &.lock {
-                        display: none;
-                    }
-
                     &:active {
                         box-sizing: unset;
                     } 

@@ -6,17 +6,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'elementor/documents/register_controls', function( $document ) {
     $post_id = $document->get_main_id();
     $template_post_type = get_post_type( $post_id );
-    // error_log('template_post_type:'.$template_post_type);
 
     $document_type_name = $document::get_type();
     $template_type = get_post_meta( $post_id, '_solace_template', true );
-    // error_log('template_type:'.$template_type);
 
     $settings = $document->get_settings();
     $target_post_type = isset( $settings['post_type'] ) ? $settings['post_type'] : 'not set';
 
     if ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_blogarchive_status' ) {
-        // error_log('rico-_solace_blogarchive_status');
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -56,7 +53,6 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 
         $document->end_controls_section();
     } elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_blogsinglepost_status' ) {
-        // error_log('rico-_solace_blogsinglepost_status');
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -87,7 +83,6 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 
         $document->end_controls_section();
     } elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_singleproduct_status' ) {
-        // error_log('rico-_solace_singleproduct_status');
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -118,7 +113,6 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 
         $document->end_controls_section();
     }elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_shopproduct_status' ) {
-        // error_log('rico-_solace_shopproduct_status');
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -206,46 +200,195 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 } );
 
 
+// add_action('wp_ajax_solace_save_custom_preview_id', function() {
+//     if ( ! current_user_can('edit_posts') ) {
+//         wp_send_json_error('Unauthorized');
+//     }
+
+//     // phpcs:ignore WordPress.Security.NonceVerification.Missing
+//     $product_id         = isset($_POST['product_id']) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
+
+//     // phpcs:ignore WordPress.Security.NonceVerification.Missing
+//     $previewproduct_id  = isset($_POST['previewproduct_id']) ? absint( wp_unslash( $_POST['previewproduct_id'] ) ) : 0;
+
+//     // phpcs:ignore WordPress.Security.NonceVerification.Missing
+//     $post_id            = isset($_POST['post_id']) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+
+//     // phpcs:ignore WordPress.Security.NonceVerification.Missing
+//     $previewpostId      = isset($_POST['previewpostId']) ? absint( wp_unslash( $_POST['previewpostId'] ) ) : 0;
+
+//     if ( ! $product_id || ! $post_id ) {
+//         wp_send_json_error('Invalid data');
+//     }
+
+//     // error_log('product_id:'.$product_id);
+//     // error_log('previewproduct_id:'.$previewproduct_id);
+
+//     // error_log('post_id:'.$post_id);
+//     // error_log('previewpostId:'.$previewpostId);
+
+//     delete_post_meta($product_id, '_elementor_preview_settings');
+//     delete_post_meta($post_id, '_elementor_preview_settings_post');
+
+//     update_post_meta($product_id, '_elementor_preview_settings', [
+//         'preview_id' => $previewproduct_id,
+//     ]);
+
+//     update_post_meta($post_id, '_elementor_preview_settings_post', [
+//         'preview_id' => $previewpostId,
+//     ]);
+
+
+//     wp_send_json_success('Preview ID saved.');
+// });
+
+// add_filter('pre_option_posts_per_page', function($value) {
+//     $is_applicable = (!is_admin() && (is_product_category() || is_shop() || is_product_tag()));
+    
+//     if ($is_applicable) {
+//         error_log('--- OPTION DEBUG ---');
+//         error_log('URL: ' . $_SERVER['REQUEST_URI']);
+//         error_log('Filter pre_option_posts_per_page triggered: Returning 6');
+//         return 6; 
+//     }
+    
+//     return $value;
+// });
+
+add_filter('redirect_canonical', function($redirect_url) {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        return $redirect_url;
+    }
+
+    if ( is_shop() || is_product_category() || is_product_tag() ) {
+        return false;
+    }
+
+    return $redirect_url;
+}, 10, 1);
+
+// add_action('pre_get_posts', function($query) {
+//     if (!is_admin() && $query->is_main_query() && (is_product_category() || is_shop() || is_product_tag())) {
+//         $query->set('posts_per_page', 1);
+//     }
+// }, 1);
+
+// add_action('template_redirect', function() {
+//     if (is_product_category() || is_shop() || is_product_tag()) {
+//         global $wp_query;
+
+//         $paged = get_query_var('paged') ? get_query_var('paged') : get_query_var('page');
+        
+//         if ($wp_query->is_404 && $paged > 1) {
+            
+//             $document = \Elementor\Plugin::$instance->documents->get_doc_for_frontend( get_queried_object_id() );
+            
+//             $has_widget = false;
+            
+//             if ( $document ) {
+//                 $elementor_data = get_post_meta( $document->get_main_id(), '_elementor_data', true );
+//                 if ( ! empty( $elementor_data ) && strpos( $elementor_data, 'solace-extra-woocommerce-shop' ) !== false ) {
+//                     $has_widget = true;
+//                 }
+//             }
+
+//             if ( ! $has_widget ) {
+//                 return;
+//             }
+
+//             status_header(200);
+//             $wp_query->is_404 = false;
+//             $wp_query->is_archive = true;
+//             $wp_query->is_tax = ( is_product_category() || is_product_tag() );
+            
+//             error_log('Solace Extra: 404 Bypassed for widget: solace-extra-woocommerce-shop');
+//         }
+//     }
+// }, 5); 
+
+add_action('pre_get_posts', function($query) {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        return;
+    }
+    if (!is_admin() && $query->is_main_query() && (is_product_category() || is_shop() || is_product_tag())) {
+        $paged = max(1, get_query_var('paged'), get_query_var('page'));
+        if ($paged > 1) {
+            $query->set('posts_per_page', 1);            
+            $query->set('no_found_rows', false); 
+        }
+    }
+}, 1);
+
+// add_action( 'wp', function() {
+//     if ( ! is_admin() && (is_product_category() || is_shop()) && get_query_var('paged') > 1 ) {
+//         global $wp_query;
+        
+//         if ( $wp_query->is_404 ) {
+//             status_header( 200 );
+//             $wp_query->is_404 = false;
+//             $wp_query->is_archive = true; 
+//         }
+//     }
+// }, 1 );
+
+// add_filter( 'redirect_canonical', function( $redirect_url ) {
+//     if ( is_product_category() || is_shop() ) {
+//         return false; 
+//     }
+//     return $redirect_url;
+// }, 10 );
+
+// function solace_custom_blog_posts_per_pagex( $value ) {
+//     if ( ! is_admin() && ( is_product_category() || is_shop() || is_product_tag() ) ) {
+        
+//         $paged = max(1, get_query_var('paged'), get_query_var('page'));
+        
+//         if ($paged > 1) {
+//             return 1; 
+//         }
+//     }
+
+//     return $value;
+// }
+// add_filter( 'option_posts_per_page', 'solace_custom_blog_posts_per_pagex' );
+
 add_action('wp_ajax_solace_save_custom_preview_id', function() {
+
     if ( ! current_user_can('edit_posts') ) {
         wp_send_json_error('Unauthorized');
     }
 
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $product_id         = isset($_POST['product_id']) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
+    $template_product_id = isset($_POST['product_id']) ? absint( wp_unslash($_POST['product_id']) ) : 0;
 
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $previewproduct_id  = isset($_POST['previewproduct_id']) ? absint( wp_unslash( $_POST['previewproduct_id'] ) ) : 0;
-
+    $preview_product_id = isset($_POST['previewproduct_id']) ? absint( wp_unslash($_POST['previewproduct_id']) ): 0;
+    
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $post_id            = isset($_POST['post_id']) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
-
+    $template_post_id = isset($_POST['post_id']) ? absint( wp_unslash($_POST['post_id']) ) : 0;
+    
     // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    $previewpostId      = isset($_POST['previewpostId']) ? absint( wp_unslash( $_POST['previewpostId'] ) ) : 0;
+    $preview_post_id = isset($_POST['previewpostId']) ? absint( wp_unslash($_POST['previewpostId']) ) : 0;
 
-    if ( ! $product_id || ! $post_id ) {
-        wp_send_json_error('Invalid data');
+    if ( $template_product_id && $preview_product_id ) {
+
+        delete_post_meta($template_product_id, '_elementor_preview_settings');
+
+        update_post_meta($template_product_id, '_elementor_preview_settings', [
+            'preview_id' => $preview_product_id,
+        ]);
     }
 
-    // error_log('product_id:'.$product_id);
-    // error_log('previewproduct_id:'.$previewproduct_id);
+    if ( $template_post_id && $preview_post_id ) {
 
-    // error_log('post_id:'.$post_id);
-    // error_log('previewpostId:'.$previewpostId);
+        delete_post_meta($template_post_id, '_elementor_preview_settings_post');
 
-    delete_post_meta($product_id, '_elementor_preview_settings');
-    delete_post_meta($post_id, '_elementor_preview_settings_post');
+        update_post_meta($template_post_id, '_elementor_preview_settings_post', [
+            'preview_id' => $preview_post_id,
+        ]);
+    }
 
-    update_post_meta($product_id, '_elementor_preview_settings', [
-        'preview_id' => $previewproduct_id,
-    ]);
-
-    update_post_meta($post_id, '_elementor_preview_settings_post', [
-        'preview_id' => $previewpostId,
-    ]);
-
-
-    wp_send_json_success('Preview ID saved.');
+    wp_send_json_success('Preview saved');
 });
 
 add_action('wp_ajax_solace_save_blogarchive_preview_category', function() {
@@ -400,44 +543,73 @@ if ( ! function_exists( 'solace_check_empty_post' ) ) {
 	}
 }
 
+// if ( ! function_exists( 'solace_get_preview_product' ) ) {
+//     function solace_get_preview_product() {
+//         if ( function_exists( 'is_product' ) && is_product() ) {
+//             global $product;
+//             if ( $product && is_a( $product, 'WC_Product' ) ) {
+//                 return $product;
+//             }
+//             return wc_get_product( get_the_ID() );
+//         }
+
+//         $template_id = get_the_ID();
+//         $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings', true );
+
+//         if ( ! empty( $preview_settings['preview_id'] ) ) {
+//             $product_id = absint( $preview_settings['preview_id'] );
+//         } else {
+//             $products = wc_get_products( [
+//                 'limit'   => 1,
+//                 'status'  => 'publish',
+//                 'orderby' => 'rand',
+//             ] );
+
+//             if ( ! empty( $products ) ) {
+//                 $product_id = $products[0]->get_id();
+
+//                 update_post_meta( $template_id, '_elementor_preview_settings', [
+//                     'preview_type' => 'product',
+//                     'preview_id'   => $product_id,
+//                 ] );
+//             } else {
+//                 return false;
+//             }
+//         }
+
+//         return wc_get_product( $product_id );
+//     }
+// }
+
 if ( ! function_exists( 'solace_get_preview_product' ) ) {
+
     function solace_get_preview_product() {
+
         if ( function_exists( 'is_product' ) && is_product() ) {
+
             global $product;
+
             if ( $product && is_a( $product, 'WC_Product' ) ) {
                 return $product;
             }
+
             return wc_get_product( get_the_ID() );
         }
 
         $template_id = get_the_ID();
+
         $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings', true );
 
         if ( ! empty( $preview_settings['preview_id'] ) ) {
+
             $product_id = absint( $preview_settings['preview_id'] );
-        } else {
-            $products = wc_get_products( [
-                'limit'   => 1,
-                'status'  => 'publish',
-                'orderby' => 'rand',
-            ] );
 
-            if ( ! empty( $products ) ) {
-                $product_id = $products[0]->get_id();
-
-                update_post_meta( $template_id, '_elementor_preview_settings', [
-                    'preview_type' => 'product',
-                    'preview_id'   => $product_id,
-                ] );
-            } else {
-                return false;
-            }
+            return wc_get_product( $product_id );
         }
 
-        return wc_get_product( $product_id );
+        return false;
     }
 }
-
 
 
 // NORMAL

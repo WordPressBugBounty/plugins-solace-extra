@@ -8,6 +8,13 @@ a.solace-extra-button {
 
 body {
 
+    // General
+    .thumb-45 img {
+        width: 45px;
+        height: 45px;
+        max-width: 45px;
+    }
+
     // Solaceform.
     .solaceform-form {
         .solaceform-form-button-wrap {

@@ -1451,7 +1451,18 @@ class Solace_Extra_Admin {
 		// Limit error reporting to fatal errors (E_ERROR) and parse errors (E_PARSE)
 		// error_reporting( E_ERROR | E_PARSE );
 	}
-
+	
+	/**
+	 * Allow SVG upload in WordPress media library.
+	 *
+	 * @param array $mimes Existing allowed mime types.
+	 * @return array
+	 */
+	public function allow_svg_upload( $mimes ) {
+		$mimes['svg'] = 'image/svg+xml';
+		return $mimes;
+	}
+	
 	/**
 	 * Handle AJAX request to rename a post title.
 	 *

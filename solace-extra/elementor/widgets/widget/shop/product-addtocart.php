@@ -281,6 +281,10 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 
 		$this->end_controls_section();
 
+		$field_selector = '{{WRAPPER}} .solace-add-to-cart input,{{WRAPPER}} .cart input';
+		$field_selector_focus = '{{WRAPPER}} .solace-add-to-cart input:focus, {{WRAPPER}} .cart input:focus';
+        
+
 		$this->start_controls_section(
 			'section_quantity_style',
 			[
@@ -289,28 +293,36 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 			]
 		);
 
-		$this->add_control(
-			'quantity_text_color',
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
 			[
-				'label' => esc_html__( 'Text Color', 'solace-extra' ),
-				'type' => Controls_Manager::COLOR,
-				'selectors' => [
-					'{{WRAPPER}} .solace-add-to-cart .quantity input' => 'color: {{VALUE}};',
-				],
+				'name' => 'quantity_typography',
+				'selector' => $field_selector,
 			]
 		);
 
-		$this->add_group_control(
-			Group_Control_Background::get_type(),
-			[
-				'name' => 'quantity_background',
-				'label' => esc_html__( 'Background', 'solace-extra' ),
-				'types' => [ 'classic', 'gradient' ],
-				// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
-				'exclude' => [ 'image' ],
-				'selector' => '{{WRAPPER}} .solace-add-to-cart .quantity input',
-			]
-		);		
+		// $this->add_control(
+		// 	'quantity_text_color',
+		// 	[
+		// 		'label' => esc_html__( 'Text Color', 'solace-extra' ),
+		// 		'type' => Controls_Manager::COLOR,
+		// 		'selectors' => [
+		// 			'{{WRAPPER}} .solace-add-to-cart .quantity input' => 'color: {{VALUE}};',
+		// 		],
+		// 	]
+		// );
+
+		// $this->add_group_control(
+		// 	Group_Control_Background::get_type(),
+		// 	[
+		// 		'name' => 'quantity_background',
+		// 		'label' => esc_html__( 'Background', 'solace-extra' ),
+		// 		'types' => [ 'classic', 'gradient' ],
+		// 		// phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude
+		// 		'exclude' => [ 'image' ],
+		// 		'selector' => '{{WRAPPER}} .solace-add-to-cart .quantity input',
+		// 	]
+		// );		
 
 		$this->add_responsive_control(
 			'quantity_width',
@@ -324,6 +336,7 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 				],
 				'selectors' => [
 					'{{WRAPPER}} .solace-add-to-cart .quantity input' => 'width: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .cart .quantity input' => 'width: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
@@ -341,6 +354,202 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 				'selectors' => [
 					'{{WRAPPER}} .solace-add-to-cart.simple form' => 'gap: {{SIZE}}{{UNIT}};',
 					'{{WRAPPER}} .solace-add-to-cart .woocommerce-variation-add-to-cart' => 'gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .cart' => 'gap: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->start_controls_tabs( 'solace_fields_tabs' );
+
+        $this->start_controls_tab(
+            'solace_field_tab',
+            [
+                'label' => __( 'Normal', 'solace-extra' ),
+            ]
+        );
+
+		
+
+        // $this->add_group_control(
+        //     \Elementor\Group_Control_Typography::get_type(),
+        //     [
+        //         'name' => 'solace_field_typography',
+        //         'selector' => $field_selector,
+        //     ]
+        // );
+
+        $this->add_control(
+            'solace_field_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'solace_field_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => $field_selector,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                   $field_selector => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'solace_field_box_shadow',
+                'selector' => $field_selector,
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->start_controls_tab(
+            'solace_field_focus_tab',
+            [
+                'label' => __( 'Focus', 'solace-extra' ),
+            ]
+        );
+        
+
+        $this->add_control(
+            'solace_field_focus_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector_focus => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_focus_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector_focus => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'solace_field_focus_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => $field_selector_focus,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_focus_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                    $field_selector_focus => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'solace_field_focus_box_shadow',
+                'selector' => $field_selector_focus,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_transition',
+            [
+                'label' => __( 'Transition Duration (ms)', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 3000,
+                        'step' => 100,
+                    ],
+                ],
+                'selectors' => [
+                   $field_selector_focus => 'transition: all {{SIZE}}ms ease-in-out;',
+                ],
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->end_controls_tabs();
+
+		$this->add_control(
+            'field_separator',
+            [
+                'type' => \Elementor\Controls_Manager::DIVIDER,
+            ]
+        );
+
+		$this->add_responsive_control(
+			'field_padding',
+			[
+				'label' => __( 'Padding', 'solace-extra' ),
+				'type' => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', 'em', '%' ],
+				'selectors' => [
+					$field_selector => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+		
+
+		$this->add_responsive_control(
+			'field_margin',
+			[
+				'label' => __( 'Margin', 'solace-extra' ),
+				'type' => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', 'em', '%' ],
+				'default' => [
+                    'top' => '0',
+                    'right' => '0',
+                    'bottom' => '0',
+                    'left' => '0',
+                    'unit' => 'px',
+                    'isLinked' => false, 
+                ],
+				'selectors' => [
+					$field_selector => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				],
 			]
 		);
@@ -474,7 +683,92 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 		</style>';
 	}
 
-	
+	private function get_field_selectors( $widget_id, $is_focus = false ) {
+        // error_log('masuk: get_field_selectors');
+		$prefix = '.elementor-element-' . esc_attr( $widget_id ) . ' .cart';        
+
+        $selectors = [
+			$prefix . ' input',
+			$prefix . ' .quantity input', 
+		];
+
+        if ( $is_focus ) {
+            $selectors = array_map( function( $selector ) {
+                return $selector . ':focus';
+            }, $selectors );
+        }
+
+        return implode( ',', $selectors );
+    }
+
+    private function generate_typography_style( $settings, $prefix ) {
+        $css = '';
+        $family = $settings[ $prefix . 'typography_font_family' ] ?? '';
+        if ( $family ) $css .= "font-family: \"{$family}\", Sans-serif;";
+
+        $size = $settings[ $prefix . 'typography_font_size' ] ?? '';
+        if ( is_array( $size ) && ! empty( $size['size'] ) ) $css .= "font-size: {$size['size']}{$size['unit']};";
+
+        $weight = $settings[ $prefix . 'typography_font_weight' ] ?? '';
+        if ( $weight ) $css .= "font-weight: {$weight};";
+
+        $lh = $settings[ $prefix . 'typography_line_height' ] ?? '';
+        if ( is_array( $lh ) && ! empty( $lh['size'] ) ) $css .= "line-height: {$lh['size']}{$lh['unit']};";
+
+        return $css;
+    }
+
+    private function generate_field_style( $settings, $state = 'normal' ) {
+        $css = '';
+        $prefix = ( $state === 'focus' ) ? 'form_field_focus_' : 'form_field_';
+
+        // Color
+        $text_color = $settings[ $prefix . 'text_color' ] ?? '';
+        $bg_color   = $settings[ $prefix . 'background_color' ] ?? '';
+        if ( $text_color ) $css .= "color: {$text_color};";
+        if ( $bg_color )   $css .= "background-color: {$bg_color};";
+
+        if ( $state === 'normal' ) $css .= $this->generate_typography_style( $settings, 'form_field_' );
+
+        // Border
+        $border_type = $settings[ $prefix . 'border_border' ] ?? '';
+        if ( $border_type ) {
+            $css .= "border-style: {$border_type};";
+            $border_width = $settings[ $prefix . 'border_width' ] ?? '';
+            if ( is_array( $border_width ) && ! empty( $border_width['top'] ) ) {
+                $unit = $border_width['unit'] ?? 'px';
+                $css .= "border-width: {$border_width['top']}{$unit} {$border_width['right']}{$unit} {$border_width['bottom']}{$unit} {$border_width['left']}{$unit};";
+            }
+            $border_color = $settings[ $prefix . 'border_color' ] ?? '';
+            if ( $border_color ) $css .= "border-color: {$border_color};";
+        }
+
+        // Radius & Padding
+        foreach ( ['border_radius' => 'border-radius', 'padding' => 'padding'] as $key => $prop ) {
+            $val = $settings[ $prefix . $key ] ?? '';
+            if ( is_array( $val ) && ! empty( $val['top'] ) ) {
+                $unit = $val['unit'] ?? 'px';
+                $css .= "{$prop}: {$val['top']}{$unit} {$val['right']}{$unit} {$val['bottom']}{$unit} {$val['left']}{$unit};";
+            }
+        }
+
+        // Shadow
+        $shadow = $settings[ $prefix . 'box_shadow_box_shadow' ] ?? '';
+        if ( is_array( $shadow ) && ! empty( $shadow['color'] ) ) {
+            $ins = ( isset( $shadow['outline'] ) && $shadow['outline'] === 'inset' ) ? 'inset' : '';
+            $css .= "box-shadow: {$shadow['horizontal']}px {$shadow['vertical']}px {$shadow['blur']}px {$shadow['spread']}px {$shadow['color']} {$ins};";
+        }
+
+        // Transition (Focus)
+        if ( $state === 'focus' ) {
+            $transition = $settings['form_field_focus_transition_duration'] ?? '';
+            if ( is_array( $transition ) && ! empty( $transition['size'] ) ) {
+                $css .= "transition: all {$transition['size']}{$transition['unit']} ease-in-out;";
+            }
+        }
+
+        return $css;
+    }
 
 
 	protected function render() {
@@ -484,6 +778,64 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 		$this->solace_product_addtocart_style();
 
 		$settings = $this->get_settings_for_display();
+
+		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+
+		if ( ! $kit_id ) {
+            // error_log('DEBUG: Kit ID tidak ditemukan');
+            // return;
+        }
+
+        if ( $kit_id ) {
+            $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+        }
+
+        $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+        if ( ! is_array( $kit_settings ) ) {
+            // error_log('DEBUG: Kit Settings bukan array atau kosong');
+            // return;
+        }
+
+        static $style_printed = [];
+        $widget_id = $this->get_id();
+        if ( isset( $style_printed[ $widget_id ] ) ) {
+            // error_log('DEBUG: Style untuk widget ' . $widget_id . ' sudah pernah diprint sebelumnya');
+            // return;
+        }
+
+        // error_log('DEBUG: Mengecek normal_styles...');
+        $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
+        
+        // error_log('DEBUG: Mengecek focus_styles...');
+        $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
+        
+        // error_log('DEBUG: Hasil Normal Style: ' . $normal_styles);
+
+        if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
+            // error_log('DEBUG: Semua styles kosong, membatalkan render <style>');
+            // return;
+        }
+
+        // error_log('DEBUG: Mencetak <style> ke frontend untuk widget: ' . $widget_id);
+
+        echo '<style>';
+
+        if ( ! empty( $normal_styles ) ) {
+            $field_selectors = $this->get_field_selectors( $widget_id, false );
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $field_selectors . ' { ' . $normal_styles . ' }';
+            // error_log('DEBUG: Field selectors printed: ' . $field_selectors);
+        }
+        if ( ! empty( $focus_styles ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $this->get_field_selectors( $widget_id, true ) . ' { ' . $focus_styles . ' }';
+        }
+        echo '</style>';
+
+
+        $style_printed[ $widget_id ] = true;
+
+
 		$product  = function_exists( 'solace_get_preview_product' ) ? solace_get_preview_product() : wc_get_product();
 		// Set global $product to avoid undefined variable warnings in WooCommerce functions (WooCommerce template convention).
 		// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound

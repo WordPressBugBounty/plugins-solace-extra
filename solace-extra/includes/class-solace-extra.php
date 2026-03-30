@@ -253,6 +253,9 @@ class Solace_Extra {
 		$this->loader->add_filter( 'woocommerce_shortcode_sale_products_query', $plugin_admin, 'detect_products_shortcode_start', 10, 3 );
 		$this->loader->add_filter( 'do_shortcode_tag', $plugin_admin, 'wrap_products_shortcode', 10, 2 );
 		$this->loader->add_filter( 'woocommerce_loop_add_to_cart_link', $plugin_admin, 'modify_add_to_cart_button_class', 10, 2 );
+
+		// Allow SVG upload in Media Library
+		$this->loader->add_filter( 'upload_mimes', $plugin_admin, 'allow_svg_upload' );
 	}
 
 	/**

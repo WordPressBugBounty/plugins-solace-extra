@@ -298,7 +298,20 @@ class SolaceFormBuilder extends SolaceFormBase {
 				'selectors' => [
 					$selector => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				],
-				'separator' => 'before',
+				// 'separator' => 'before',
+			]
+		);
+
+		$this->add_responsive_control(
+			'button_margin',
+			[
+				'label'      => esc_html__( 'Margin', 'solace-extra' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%', 'em' ],
+				'selectors'  => [
+					'{{WRAPPER}} .submit-button' =>
+						'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
 			]
 		);
 	}	
@@ -632,24 +645,27 @@ class SolaceFormBuilder extends SolaceFormBase {
 			)
 		);
 
+
 		$repeater->add_responsive_control(
 			'field_width',
 			array(
-				'label'      => __( 'Column Width', 'solace-extra' ),
-				'type'       => Controls_Manager::SELECT,
-				'default'    => '100',
-				'options'    => array(
-					'20'  => __( '20%', 'solace-extra' ),
-					'25'  => __( '25%', 'solace-extra' ),
-					'33'  => __( '33%', 'solace-extra' ),
-					'40'  => __( '40%', 'solace-extra' ),
-					'50'  => __( '50%', 'solace-extra' ),
-					'60'  => __( '60%', 'solace-extra' ),
-					'66'  => __( '66%', 'solace-extra' ),
-					'75'  => __( '75%', 'solace-extra' ),
-					'80'  => __( '80%', 'solace-extra' ),
-					'100' => __( '100%', 'solace-extra' ),
-				),
+				'label'      => __( 'Width (%)', 'solace-extra' ),
+				'type'       => \Elementor\Controls_Manager::SLIDER,
+				'size_units' => [ '%' ],
+				'range'      => [
+					'%' => [
+						'min'  => 10,
+						'max'  => 100,
+						'step' => 1,
+					],
+				],
+				'default'    => [
+					'unit' => '%',
+					'size' => 100,
+				],
+				'selectors'  => [
+					'{{WRAPPER}} {{CURRENT_ITEM}}' => 'width: {{SIZE}}%;', 
+				],
 				'conditions' => array(
 					'terms' => array(
 						array(
@@ -877,32 +893,7 @@ class SolaceFormBuilder extends SolaceFormBase {
 			)
 		);
 
-		// $this->add_control(
-		// 	'button_text_align',
-		// 	array(
-		// 		'label'     => __( 'Alignment', 'solace-extra' ),
-		// 		'type'      => Controls_Manager::CHOOSE,
-		// 		'options'   => array(
-		// 			'left'   => array(
-		// 				'title' => __( 'Left', 'solace-extra' ),
-		// 				'icon'  => 'fa fa-align-left',
-		// 			),
-		// 			'center' => array(
-		// 				'title' => __( 'Center', 'solace-extra' ),
-		// 				'icon'  => 'fa fa-align-center',
-		// 			),
-		// 			'right'  => array(
-		// 				'title' => __( 'Right', 'solace-extra' ),
-		// 				'icon'  => 'fa fa-align-right',
-		// 			),
-		// 		),
-		// 		'default'   => 'center',
-		// 		'toggle'    => true,
-		// 		'selectors' => array(
-		// 			'{{WRAPPER}} .solaceform-form-button-wrap' => 'text-align: {{VALUE}}',
-		// 		),
-		// 	)
-		// );
+	
 
 		$this->add_control(
 			'button_text',
@@ -948,9 +939,9 @@ class SolaceFormBuilder extends SolaceFormBase {
 		$this->add_responsive_control(
 			'button_column_width',
 			array(
-				'label'      => __( 'Column Width', 'solace-extra' ),
+				'label'      => __( 'Button Width (%)', 'solace-extra' ),
 				'type'       => Controls_Manager::SELECT,
-				'default'    => '33',
+				'default'    => '40',
 				'options'    => array(
 					'20'   => __( '20%', 'solace-extra' ),
 					'25'   => __( '25%', 'solace-extra' ),
@@ -963,39 +954,42 @@ class SolaceFormBuilder extends SolaceFormBase {
 					'80'   => __( '80%', 'solace-extra' ),
 					'100'  => __( '100%', 'solace-extra' ),
 				),
+				'selectors'  => [
+					'{{WRAPPER}} .solaceform-button-column.inline' =>
+						'width: {{VALUE}}%;',
+					'{{WRAPPER}} .solaceform-button-column.newline .submit-button' =>
+						'width: {{VALUE}}%;',
+				],
 			)
 		);		
 
 		$this->add_responsive_control(
-			'button_align',
+			'button_position',
 			[
-				'label' => esc_html__( 'Position', 'solace-extra' ),
-				'type' => Controls_Manager::CHOOSE,
+				'label'   => esc_html__( 'Button Position', 'solace-extra' ),
+				'type'    => \Elementor\Controls_Manager::CHOOSE,
 				'options' => [
-					'left'    => [
-						'title' => esc_html__( 'Left', 'solace-extra' ),
-						'icon' => 'eicon-h-align-left',
+					'none' => [
+						'title' => esc_html__( 'Inline', 'solace-extra' ),
+						'icon'  => 'eicon-nowrap',
+					],
+					'flex-start' => [
+						'title' => esc_html__( 'New Line: Left', 'solace-extra' ),
+						'icon'  => 'eicon-h-align-left',
 					],
 					'center' => [
-						'title' => esc_html__( 'Center', 'solace-extra' ),
-						'icon' => 'eicon-h-align-center',
+						'title' => esc_html__( 'New Line: Center', 'solace-extra' ),
+						'icon'  => 'eicon-h-align-center',
 					],
-					'right' => [
-						'title' => esc_html__( 'Right', 'solace-extra' ),
-						'icon' => 'eicon-h-align-right',
-					],
-					'stretch' => [
-						'title' => esc_html__( 'Stretch', 'solace-extra' ),
-						'icon' => 'eicon-h-align-stretch',
+					'flex-end' => [
+						'title' => esc_html__( 'New Line: Right', 'solace-extra' ),
+						'icon'  => 'eicon-h-align-right',
 					],
 				],
-				'default'   => 'left',
-				'selectors' => array(
-					'{{WRAPPER}} .solaceform-form-button-wrap .box-button' => 'text-align: {{VALUE}};',
-				),
-				'render_type' => 'template',
+				'default' => 'none',
 			]
-		);		
+		);
+
 
 		$this->add_control(
 			'button_id',
@@ -1036,37 +1030,6 @@ class SolaceFormBuilder extends SolaceFormBase {
 
 		$this->end_controls_section();
 
-		// $this->start_controls_section(
-		// 	'section_redirect',
-		// 	array(
-		// 		'label' => __( 'Redirect', 'solace-extra' ),
-		// 	)
-		// );
-
-		// $this->add_control(
-		// 	'redirect',
-		// 	array(
-		// 		'label'        => __( 'Redirect to another URL', 'solace-extra' ),
-		// 		'type'         => Controls_Manager::SWITCHER,
-		// 		'label_on'     => __( 'Yes', 'solace-extra' ),
-		// 		'label_off'    => __( 'No', 'solace-extra' ),
-		// 		'return_value' => 'yes',
-		// 	)
-		// );
-
-		// $this->add_control(
-		// 	'redirect_url',
-		// 	array(
-		// 		'label'       => __( 'Redirect To', 'solace-extra' ),
-		// 		'type'        => Controls_Manager::TEXT,
-		// 		'placeholder' => __( 'https://your-link.com', 'solace-extra' ),
-		// 		'condition'   => array(
-		// 			'redirect' => 'yes',
-		// 		),
-		// 	)
-		// );
-
-		// $this->end_controls_section();
 
 		$this->start_controls_section(
 			'section_email',
@@ -1130,7 +1093,7 @@ class SolaceFormBuilder extends SolaceFormBase {
 				'label'     => esc_html__( 'Color', 'solace-extra' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'selectors' => [
-					'{{WRAPPER}} .solaceform-fields label' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .solaceform-form label' => 'color: {{VALUE}};',
 				],
 			]
 		);
@@ -1140,7 +1103,7 @@ class SolaceFormBuilder extends SolaceFormBase {
 			[
 				'name'     => 'label_typography',
 				'label'    => esc_html__( 'Typography', 'solace-extra' ),
-				'selector' => '{{WRAPPER}} .solaceform-fields label',
+				'selector' => '{{WRAPPER}} .solaceform-form label',
 			]
 		);
 
@@ -1150,8 +1113,16 @@ class SolaceFormBuilder extends SolaceFormBase {
 				'label' => esc_html__( 'Margin', 'solace-extra' ),
 				'type' => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => [ 'px', 'em', '%', 'rem' ],
+				'default' => [
+                    'top' => '0',
+                    'right' => '0',
+                    'bottom' => '5',
+                    'left' => '0',
+                    'unit' => 'px',
+                    'isLinked' => false, 
+                ],
 				'selectors' => [
-					'{{WRAPPER}} .solaceform-fields label' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					'{{WRAPPER}} .solaceform-form label' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				],
 				// 'separator' => 'before',
 			]
@@ -1167,7 +1138,8 @@ class SolaceFormBuilder extends SolaceFormBase {
 			)
 		);
 		
-		$field_selector = '{{WRAPPER}} .solaceform-style-field, {{WRAPPER}} .solace-rico';
+		$field_selector = '{{WRAPPER}} .solaceform-style-field';
+		$field_selector_focus = '{{WRAPPER}} .solaceform-style-field:focus';
 		
 		$this->add_group_control(
 			\Elementor\Group_Control_Typography::get_type(),
@@ -1176,19 +1148,161 @@ class SolaceFormBuilder extends SolaceFormBase {
 				'selector' => $field_selector,
 			]
 		);
-		
+
+		$this->start_controls_tabs( 'solace_fields_tabs' );
+
+        $this->start_controls_tab(
+            'solace_field_tab',
+            [
+                'label' => __( 'Normal', 'solace-extra' ),
+            ]
+        );
+        
+
+
+        $this->add_control(
+            'solace_field_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'solace_field_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => $field_selector,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                   $field_selector => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'solace_field_box_shadow',
+                'selector' => $field_selector,
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->start_controls_tab(
+            'solace_field_focus_tab',
+            [
+                'label' => __( 'Focus', 'solace-extra' ),
+            ]
+        );
+        
+
+        $this->add_control(
+            'solace_field_focus_color',
+            [
+                'label' => __( 'Text Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector_focus => 'color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_focus_bg_color',
+            [
+                'label' => __( 'Background Color', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::COLOR,
+                'selectors' => [
+                    $field_selector_focus => 'background-color: {{VALUE}}',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'solace_field_focus_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => $field_selector_focus,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_focus_border_radius',
+            [
+                'label'      => __( 'Border Radius', 'solace-extra' ),
+                'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%', 'em' ],
+                'selectors'  => [
+                    $field_selector_focus => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            \Elementor\Group_Control_Box_Shadow::get_type(),
+            [
+                'name'     => 'solace_field_focus_box_shadow',
+                'selector' => $field_selector_focus,
+            ]
+        );
+
+        $this->add_control(
+            'solace_field_transition',
+            [
+                'label' => __( 'Transition Duration (ms)', 'solace-extra' ),
+                'type' => \Elementor\Controls_Manager::SLIDER,
+                'range' => [
+                    'px' => [
+                        'min' => 0,
+                        'max' => 3000,
+                        'step' => 100,
+                    ],
+                ],
+                'selectors' => [
+                   $field_selector_focus => 'transition: all {{SIZE}}ms ease-in-out;',
+                ],
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->end_controls_tabs();
+
 		$this->add_control(
-			'field_color',
-			[
-				'label' => __( 'Color', 'solace-extra' ),
-				'type' => \Elementor\Controls_Manager::COLOR,
-				'default' => '#000000', 
-				'selectors' => [
-					$field_selector => 'color: {{VALUE}} !important;',
-				],
-			]
-		);
-		
+            'field_separator',
+            [
+                'type' => \Elementor\Controls_Manager::DIVIDER,
+            ]
+        );
+
 		$this->add_responsive_control(
 			'field_padding',
 			[
@@ -1202,33 +1316,23 @@ class SolaceFormBuilder extends SolaceFormBase {
 		);
 		
 
-
 		$this->add_responsive_control(
 			'field_margin',
 			[
 				'label' => __( 'Margin', 'solace-extra' ),
 				'type' => \Elementor\Controls_Manager::DIMENSIONS,
 				'size_units' => [ 'px', 'em', '%' ],
+				'default' => [
+                    'top' => '0',
+                    'right' => '0',
+                    'bottom' => '20',
+                    'left' => '0',
+                    'unit' => 'px',
+                    'isLinked' => false, 
+                ],
 				'selectors' => [
-					'{{WRAPPER}} .solaceform-fields' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+					$field_selector => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				],
-			]
-		);
-
-		$this->add_group_control(
-			\Elementor\Group_Control_Border::get_type(),
-			[
-				'name' => 'field_border',
-				'selector' => $field_selector,
-			]
-		);
-		
-		$this->add_group_control(
-			\Elementor\Group_Control_Background::get_type(),
-			[
-				'name' => 'field_background',
-				'types' => [ 'classic', 'gradient', 'video' ],
-				'selector' => $field_selector,
 			]
 		);
 		
@@ -1247,171 +1351,12 @@ class SolaceFormBuilder extends SolaceFormBase {
 
 		$this->end_controls_section();
 	}
-
-	/**
-	 * Render the widget output on the frontend.
-	 *
-	 * @since 1.0.0
-	 *
-	 * @access protected
-	 */
-	protected function render2() {
-		$settings = $this->get_settings_for_display();
-		$fields   = $settings['fields'];
-
 		
-		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
-
-		if ( $kit_id ) {
-
-			$kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
-
-			if ( is_array( $kit_settings ) ) {
-
-				$text_color = $kit_settings['form_field_text_color'] ?? '';
-				$bg_color   = $kit_settings['form_field_background_color'] ?? '';
-
-				if ( ! $text_color && ! $bg_color ) {
-					return;
-				}
-
-				static $style_printed = [];
-
-				$widget_id = $this->get_id();
-
-				if ( isset( $style_printed[ $widget_id ] ) ) {
-					return;
-				}
-
-				echo '<style>';
-				echo '.elementor-element-' . esc_attr( $widget_id ) . ' select.solaceform-style-field {';
-
-				if ( $text_color ) {
-					echo 'color:' . esc_attr( $text_color ) . ';';
-				}
-
-				if ( $bg_color ) {
-					echo 'background-color:' . esc_attr( $bg_color ) . ';';
-				}
-
-				echo '}';
-				echo '</style>';
-
-				$style_printed[ $widget_id ] = true;
-			}
-		}
-		?>
-
-		<form class="solaceform-form" method="post" data-post_id="<?php echo esc_attr( get_the_ID() ); ?>" data-el_id="<?php echo esc_attr( $this->get_id() ); ?>" enctype="multipart/form-data">
-		<?php
-		if ( $fields ) {
-			foreach ( $fields as $field ) {
-
-				$width  = isset( $field['field_width'] ) ? $field['field_width'] : '';
-				$width_tablet  = isset( $field['field_width_tablet'] ) ? $field['field_width_tablet'] : '';
-				$width_mobile  = isset( $field['field_width_mobile'] ) ? $field['field_width_mobile'] : '';
-
-				$params = array(
-					'type'           => $field['field_type'] ? strtolower( $field['field_type'] ) : '',
-					'field_acceptance' => $field['field_acceptance'] ? strtolower( $field['field_acceptance'] ) : '',
-					'field_checked_by_default' => $field['field_checked_by_default'] ? strtolower( $field['field_checked_by_default'] ) : '',
-					'label'          => $field['field_label'] ? $field['field_label'] : '',
-					'placeholder'    => $field['field_placeholder'] ? $field['field_placeholder'] : '',
-					'value'          => $field['field_default_value'] ? $field['field_default_value'] : '',
-					'name'           => $field['field_name'] ? $field['field_name'] : '',
-					'width'          => isset( $field['field_width'] ) ? $field['field_width'] : '',
-					'width_tablet'   => isset( $field['field_width_tablet'] ) ? $field['field_width_tablet'] : '',
-					'width_mobile' => isset( $field['field_width_mobile'] ) ? $field['field_width_mobile'] : '',
-					'required'       => $field['field_required'] ? $field['field_required'] : '',
-					'id'             => $field['field_id'] ? $field['field_id'] : '',
-					'class'          => $field['field_class'] ? $field['field_class'] : '',
-					'rows'           => $field['rows'] ? $field['rows'] : '',
-					'options'        => $field['field_options'] ? $field['field_options'] : '',
-					'inline_list'     => $field['field_inline_list'] ? $field['field_inline_list'] : '',
-					'multiple_files' => $field['multiple_files'] ? $field['multiple_files'] : '',
-					'file_types'     => $field['file_types'] ? $field['file_types'] : '',
-					'html'           => $field['field_html'] ? $field['field_html'] : '',
-					'is_label'       => $settings['show_label'] ? true : false,
-					'is_mark'        => $settings['show_required_mark'] ? true : false,
-				);
-
-				echo '<div class="solaceform-fields elementor-repeater-item-' . esc_attr( $field['_id'] ) . ' efb-field-width-' . esc_attr( $width ) . ' efb-field-width-tablet-' . esc_attr( $width_tablet) . ' efb-field-width-mobile-' . esc_attr( $width_mobile) .'">';
-
-
-
-				switch ( $field['field_type'] ) {
-					case 'Text':
-					case 'URL':
-					case 'Tel':
-					case 'Number':
-					case 'Date':
-					case 'Time':
-					case 'File':
-					case 'Password':
-					case 'Email': {
-						$this->input( $params );
-						break;
-					}
-
-					case 'Textarea': {
-						$this->textarea( $params );
-						break;
-					}
-
-					case 'Select':
-					case 'Checkbox':
-					case 'Radio': {
-						$this->multi( $params );
-						break;
-					}
-
-					case 'Acceptance': {
-						$this->acceptance( $params );
-						break;
-					}
-
-					case 'HTML': {
-						$this->html( $params['html'], $params['label'], $params['is_label'] );
-						break;
-					}
-
-					case 'Hidden': {
-						$this->hidden( $params['value'], $params['name'], $params['id'], );
-						break;
-					}
-
-					case 'reCAPTCHA': {
-						$this->reCAPTCHA( $field['site_key'] );
-
-						break;
-					}
-
-					default:
-						break;
-				}
-
-				echo '</div>';
-			}
-		}
-
-		$this->button(
-			$settings,
-			$settings['button_text'],
-			$settings['button_icon'],
-			$settings['button_icon_position'],
-			$settings['button_id'],
-			$settings['button_column_width']
-		);
-		?>
-
-		</form>
-		<?php
-	}
-
 	private function get_form_builder_field_selectors( $widget_id, $is_focus = false ) {
 		$prefix = '.elementor-element-' . esc_attr( $widget_id );
 		
 		$selectors = [
+			$prefix . ' .solaceform-style-field',
 			$prefix . ' input.solaceform-style-field',
 			$prefix . ' textarea.solaceform-style-field',
 			$prefix . ' select.solaceform-style-field',
@@ -1509,145 +1454,156 @@ class SolaceFormBuilder extends SolaceFormBase {
 		return $css;
 	}
 
+	private function generate_label_style( $settings ) {
+        $css = '';
+        
+        $label_color = $settings['form_label_color'] ?? '';
+        if ( $label_color ) {
+            $css .= "color: {$label_color};";
+        }
+
+        $css .= $this->generate_typography_style( $settings, 'form_label_' );
+
+        return $css;
+    }
+
+    private function get_label_selectors( $widget_id ) {
+        $prefix = '.elementor-element-' . esc_attr( $widget_id );
+        
+        return "
+            $prefix .solaceform-form label
+        ";
+    }
+
 
 	protected function render() {
-		$settings = $this->get_settings_for_display();
-		$fields   = $settings['fields'];
-
-		
-		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
-
-		if ( ! $kit_id ) return;
-
-		$kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
-		if ( ! is_array( $kit_settings ) ) return;
-
-		static $style_printed = [];
-		$widget_id = $this->get_id();
-		if ( isset( $style_printed[ $widget_id ] ) ) return;
-
-		$normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
-		$focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
-
-		if ( empty( $normal_styles ) && empty( $focus_styles ) ) return;
-
-		echo '<style>';
-		if ( ! empty( $normal_styles ) ) {
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo $this->get_form_builder_field_selectors( $widget_id, false ) . " { {$normal_styles} }";
-		}
-		if ( ! empty( $focus_styles ) ) {
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-			echo $this->get_form_builder_field_selectors( $widget_id, true ) . " { {$focus_styles} }";
-		}
-		echo '</style>';
-
-		$style_printed[ $widget_id ] = true;
+		$settings  = $this->get_settings_for_display();
+		$is_inline = ( $settings['button_position'] === 'none' );
 		?>
 
-		<form class="solaceform-form" method="post" data-post_id="<?php echo esc_attr( get_the_ID() ); ?>" data-el_id="<?php echo esc_attr( $this->get_id() ); ?>" enctype="multipart/form-data">
-		<?php
-		if ( $fields ) {
-			foreach ( $fields as $field ) {
-
-				$width  = isset( $field['field_width'] ) ? $field['field_width'] : '';
-				$width_tablet  = isset( $field['field_width_tablet'] ) ? $field['field_width_tablet'] : '';
-				$width_mobile  = isset( $field['field_width_mobile'] ) ? $field['field_width_mobile'] : '';
-
-				$params = array(
-					'type'           => $field['field_type'] ? strtolower( $field['field_type'] ) : '',
-					'field_acceptance' => $field['field_acceptance'] ? strtolower( $field['field_acceptance'] ) : '',
-					'field_checked_by_default' => $field['field_checked_by_default'] ? strtolower( $field['field_checked_by_default'] ) : '',
-					'label'          => $field['field_label'] ? $field['field_label'] : '',
-					'placeholder'    => $field['field_placeholder'] ? $field['field_placeholder'] : '',
-					'value'          => $field['field_default_value'] ? $field['field_default_value'] : '',
-					'name'           => $field['field_name'] ? $field['field_name'] : '',
-					'width'          => isset( $field['field_width'] ) ? $field['field_width'] : '',
-					'width_tablet'   => isset( $field['field_width_tablet'] ) ? $field['field_width_tablet'] : '',
-					'width_mobile' => isset( $field['field_width_mobile'] ) ? $field['field_width_mobile'] : '',
-					'required'       => $field['field_required'] ? $field['field_required'] : '',
-					'id'             => $field['field_id'] ? $field['field_id'] : '',
-					'class'          => $field['field_class'] ? $field['field_class'] : '',
-					'rows'           => $field['rows'] ? $field['rows'] : '',
-					'options'        => $field['field_options'] ? $field['field_options'] : '',
-					'inline_list'     => $field['field_inline_list'] ? $field['field_inline_list'] : '',
-					'multiple_files' => $field['multiple_files'] ? $field['multiple_files'] : '',
-					'file_types'     => $field['file_types'] ? $field['file_types'] : '',
-					'html'           => $field['field_html'] ? $field['field_html'] : '',
-					'is_label'       => $settings['show_label'] ? true : false,
-					'is_mark'        => $settings['show_required_mark'] ? true : false,
+		<form class="solaceform-container solaceform-form" method="post" data-post_id="<?php echo esc_attr( get_the_ID() ); ?>" data-el_id="<?php echo esc_attr( $this->get_id() ); ?>" enctype="multipart/form-data">
+			<?php foreach ( $settings['fields'] as $i => $item ) :
+				$key = $this->get_repeater_setting_key( 'field_label', 'fields', $i );
+				$this->add_render_attribute(
+					$key,
+					'class',
+					[
+						'solaceform-field-column',
+						'elementor-repeater-item-' . $item['_id'],
+					]
 				);
 
-				echo '<div class="solaceform-fields elementor-repeater-item-' . esc_attr( $field['_id'] ) . ' efb-field-width-' . esc_attr( $width ) . ' efb-field-width-tablet-' . esc_attr( $width_tablet) . ' efb-field-width-mobile-' . esc_attr( $width_mobile) .'">';
-
-
-
-				switch ( $field['field_type'] ) {
-					case 'Text':
-					case 'URL':
-					case 'Tel':
-					case 'Number':
-					case 'Date':
-					case 'Time':
-					case 'File':
-					case 'Password':
-					case 'Email': {
-						$this->input( $params );
-						break;
+				$params = array(
+					'type'                     => $item['field_type'] ? strtolower( $item['field_type'] ) : '',
+					'field_acceptance'         => $item['field_acceptance'] ? strtolower( $item['field_acceptance'] ) : '',
+					'field_checked_by_default' => $item['field_checked_by_default'] ? strtolower( $item['field_checked_by_default'] ) : '',
+					'label'                    => $item['field_label'] ? $item['field_label'] : '',
+					'placeholder'              => $item['field_placeholder'] ? $item['field_placeholder'] : '',
+					'value'                    => $item['field_default_value'] ? $item['field_default_value'] : '',
+					'name'                     => $item['field_name'] ? $item['field_name'] : '',
+					'required'                 => $item['field_required'] ? $item['field_required'] : '',
+					'id'                       => $item['field_id'] ? $item['field_id'] : '',
+					'class'                    => 'solaceform-input ' . ($item['field_class'] ? $item['field_class'] : ''),
+					'rows'                     => $item['rows'] ? $item['rows'] : '',
+					'options'                  => $item['field_options'] ? $item['field_options'] : '',
+					'inline_list'              => $item['field_inline_list'] ? $item['field_inline_list'] : '',
+					'multiple_files'           => $item['multiple_files'] ? $item['multiple_files'] : '',
+					'file_types'               => $item['file_types'] ? $item['file_types'] : '',
+					'html'                     => $item['field_html'] ? $item['field_html'] : '',
+					'is_label'                 => $settings['show_label'] ? true : false,
+					'is_mark'                  => $settings['show_required_mark'] ? true : false,
+				);
+			?>
+				<div <?php
+				// Elementor generates a pre-escaped attribute string for rendering.
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $this->get_render_attribute_string( $key );
+				?>>
+					<?php
+					switch ( $item['field_type'] ) {
+						case 'Text':
+						case 'URL':
+						case 'Tel':
+						case 'Number':
+						case 'Date':
+						case 'Time':
+						case 'File':
+						case 'Password':
+						case 'Email':
+							$this->input( $params );
+							break;
+						case 'Textarea':
+							$this->textarea( $params );
+							break;
+						case 'Select':
+						case 'Checkbox':
+						case 'Radio':
+							$this->multi( $params );
+							break;
+						case 'Acceptance':
+							$this->acceptance( $params );
+							break;
+						case 'HTML':
+							$this->html( $params['html'], $params['label'], $params['is_label'] );
+							break;
+						case 'Hidden':
+							$this->hidden( $params['value'], $params['name'], $params['id'] );
+							break;
+						case 'reCAPTCHA':
+							$this->reCAPTCHA( $item['site_key'] );
+							break;
 					}
+					?>
+				</div>
+			<?php endforeach; ?>
 
-					case 'Textarea': {
-						$this->textarea( $params );
-						break;
-					}
+			<div
+				class="solaceform-button-column <?php echo $is_inline ? 'inline' : 'newline'; ?>"
+				style="<?php echo $is_inline ? '' : 'width:100%;display:flex;justify-content:' . esc_attr( $settings['button_position'] ) . ';'; ?>">
+				<button type="submit" class="elementor-button submit-button solaceform-form-button" id="<?php echo esc_attr($settings['button_id']); ?>">
+					<span class="elementor-button-content-wrapper">
+						
+						<?php if ( ! empty( $settings['button_icon']['value'] ) && 'left' === $settings['button_icon_position'] ) : ?>
+							<span class="elementor-button-icon elementor-align-icon-left">
+								<?php \Elementor\Icons_Manager::render_icon( $settings['button_icon'], [ 'aria-hidden' => 'true' ] ); ?>
+							</span>
+						<?php endif; ?>
 
-					case 'Select':
-					case 'Checkbox':
-					case 'Radio': {
-						$this->multi( $params );
-						break;
-					}
+						<span class="elementor-button-text">
+							<?php echo esc_html( $settings['button_text'] ); ?>
+						</span>
 
-					case 'Acceptance': {
-						$this->acceptance( $params );
-						break;
-					}
+						<?php if ( ! empty( $settings['button_icon']['value'] ) && 'right' === $settings['button_icon_position'] ) : ?>
+							<span class="elementor-button-icon elementor-align-icon-right">
+								<?php \Elementor\Icons_Manager::render_icon( $settings['button_icon'], [ 'aria-hidden' => 'true' ] ); ?>
+							</span>
+						<?php endif; ?>
 
-					case 'HTML': {
-						$this->html( $params['html'], $params['label'], $params['is_label'] );
-						break;
-					}
-
-					case 'Hidden': {
-						$this->hidden( $params['value'], $params['name'], $params['id'], );
-						break;
-					}
-
-					case 'reCAPTCHA': {
-						$this->reCAPTCHA( $field['site_key'] );
-
-						break;
-					}
-
-					default:
-						break;
-				}
-
-				echo '</div>';
-			}
-		}
-
-		$this->button(
-			$settings,
-			$settings['button_text'],
-			$settings['button_icon'],
-			$settings['button_icon_position'],
-			$settings['button_id'],
-			$settings['button_column_width']
-		);
-		?>
-
+					</span>
+				</button>
+			</div>
 		</form>
+
+		<style>
+			.solaceform-container {
+				display: flex;
+				flex-wrap: wrap;
+				width: 100%;
+			}
+
+			.solaceform-field-column,
+			.solaceform-button-column,
+			.solaceform-input,
+			.submit-button {
+				box-sizing: border-box;
+			}
+
+			.solaceform-input,
+			.submit-button {
+				width: 100%;
+				white-space: nowrap;
+			}
+		</style>
 		<?php
 	}
 }

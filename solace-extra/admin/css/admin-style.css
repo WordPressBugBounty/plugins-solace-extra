@@ -950,6 +950,11 @@ html.wp-toolbar:has(.solace_page_dashboard-sitebuilder) {
   padding-top: 0;
 }
 
+body.solace_page_dashboard-sitebuilder {
+  /* Coming soon container styling */
+  /* Heading styling */
+  /* Paragraph styling */
+}
 body.solace_page_dashboard-sitebuilder .swal2-title {
   color: rgba(0, 0, 0, 0.65);
   font-weight: 600;
@@ -1001,18 +1006,12 @@ body.solace_page_dashboard-sitebuilder .swal2-confirm {
 body.solace_page_dashboard-sitebuilder .swal2-confirm-orange {
   background: #ff9400;
 }
-body.solace_page_dashboard-sitebuilder {
-  /* Coming soon container styling */
-}
 body.solace_page_dashboard-sitebuilder .coming-soon-container {
   text-align: center;
   background-color: #fff;
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-body.solace_page_dashboard-sitebuilder {
-  /* Heading styling */
 }
 body.solace_page_dashboard-sitebuilder .coming-soon-container h1 {
   font-size: 3em;
@@ -1024,9 +1023,6 @@ body.solace_page_dashboard-sitebuilder .container {
   justify-content: center; /* Center horizontally */
   align-items: center; /* Center vertically */
   height: 100vh;
-}
-body.solace_page_dashboard-sitebuilder {
-  /* Paragraph styling */
 }
 body.solace_page_dashboard-sitebuilder .coming-soon-container p {
   font-size: 1.2em;
@@ -1051,15 +1047,15 @@ body.solace_page_dashboard-sitebuilder #update-nag,
 body.solace_page_dashboard-sitebuilder .update-nag {
   display: none;
 }
+body.solace_page_dashboard-sitebuilder .wrap {
+  background-color: #001644;
+  /* Iframe preview */
+}
 body.solace_page_dashboard-sitebuilder .wrap > nav .mycontainer {
   padding: 0;
 }
 body.solace_page_dashboard-sitebuilder .wrap > nav {
   margin-bottom: 0;
-}
-body.solace_page_dashboard-sitebuilder .wrap {
-  background-color: #001644;
-  /* Iframe preview */
 }
 body.solace_page_dashboard-sitebuilder .wrap .template-demo {
   display: flex;
@@ -1172,9 +1168,6 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid {
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a {
   text-decoration: none;
-}
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a.lock {
-  display: none;
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .card-grid a:active {
   box-sizing: unset;
@@ -1626,6 +1619,7 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
   position: relative;
   width: 100%;
   text-align: center;
+  /* Close button styling */
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content span.addnew-title {
   font-weight: 700;
@@ -1730,9 +1724,6 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #save-conditions:hover,
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content #solace-save-404:hover {
   background-color: #ea8903;
-}
-body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content {
-  /* Close button styling */
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-popup-content .close-popup {
   position: absolute;
@@ -2360,17 +2351,17 @@ body.solace_page_dashboard-step5.js #adminmenu .toplevel_page_solace .wp-submenu
 body.solace_page_dashboard-step5 > #wpwrap > #wpcontent {
   margin-top: -22px;
 }
-body.solace_page_dashboard-step5 .wrap-step5 pre {
-  display: none;
-}
-body.solace_page_dashboard-step5 .wrap-step5:not(.preview) {
-  font-family: "Poppins", sans-serif;
-}
 body.solace_page_dashboard-step5 .wrap-step5 {
   background: #f1f1f1;
   padding: 0;
   margin: 0;
   height: 100vh;
+}
+body.solace_page_dashboard-step5 .wrap-step5 pre {
+  display: none;
+}
+body.solace_page_dashboard-step5 .wrap-step5:not(.preview) {
+  font-family: "Poppins", sans-serif;
 }
 body.solace_page_dashboard-step5 .wrap-step5 > nav {
   background: #000F44;
@@ -2493,19 +2484,17 @@ body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer {
   width: 100%;
   height: 88vh !important;
   overflow: hidden !important;
+  --e-transform-scale: 0.6;
+  background-color: var(--e-global-color-9d6aead);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 328px auto;
 }
 body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer iframe {
   width: 100%;
   height: 100%;
   border: 1px solid #ddd;
   border-top: 0;
-}
-body.solace_page_dashboard-step5 .simple-plugin-columns .iframeContainer {
-  --e-transform-scale: 0.6;
-  background-color: var(--e-global-color-9d6aead);
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: 328px auto;
 }
 @media (max-width: 1412px) {
   body.solace_page_dashboard-step5 .simple-plugin-columns {
@@ -2637,13 +2626,11 @@ body.solace_page_dashboard-step5 .fontlist {
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 20px;
+  /* CSS Untuk Tooltip */
 }
 body.solace_page_dashboard-step5 .fontlist .font.active {
   outline: 4px solid #ff8c02;
   border-radius: 10px;
-}
-body.solace_page_dashboard-step5 .fontlist {
-  /* CSS Untuk Tooltip */
 }
 body.solace_page_dashboard-step5 .fontlist .tooltip {
   text-decoration: none;
@@ -4853,7 +4840,6 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-main main .mycontainer .demo .box-content .top-content span.label.pro {
   background: #ff8f00;
   color: #fff;
-  display: none;
 }
 body.solace_page_dashboard-starter-templates .wrap section.start-templates .content-main main .mycontainer .demo .box-content .bottom-content p {
   font-family: Poppins;

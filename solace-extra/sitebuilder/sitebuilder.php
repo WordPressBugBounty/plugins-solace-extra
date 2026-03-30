@@ -759,8 +759,10 @@ function solace_display_custom_header() {
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
                             if (!empty($meta_content)) {
+                                echo '<div class="delayed-content">';
                                 $elementor_instance = Elementor\Plugin::instance();
                                 echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
+                                echo '</div>';
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content product-all">';
@@ -1496,55 +1498,99 @@ function solace_set_taxonomy_based_on_part($post_id) {
 }
 add_action('save_post', 'solace_set_taxonomy_based_on_part');
 
-function solace_update_sitebuilder_status() {
-    // Verifikasi nonce
-    if (isset($_GET['security']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['security'])), 'template_preview_nonce')) {
-        wp_send_json_error('Nonce verification failed.');
-    }
+// function solace_update_sitebuilder_status2() {
+//     // Verifikasi nonce
+//     if (isset($_GET['security']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['security'])), 'template_preview_nonce')) {
+//         wp_send_json_error('Nonce verification failed.');
+//     }
 
-    // Check if the required parameters are present.
-    if (!isset($_POST['post_id']) || !isset($_POST['status']) || !isset($_POST['part'])) {
+//     // Check if the required parameters are present.
+//     if (!isset($_POST['post_id']) || !isset($_POST['status']) || !isset($_POST['part'])) {
+//         wp_send_json_error('Invalid data sent.');
+//     }
+
+//     $post_id = intval($_POST['post_id']);
+//     $part = sanitize_text_field(wp_unslash($_POST['part']) );
+//     $status = sanitize_text_field(wp_unslash($_POST['status']) );
+
+//     // Updated status sitebuilder part.
+//     if ( $part ) {
+
+//         // Set up the arguments for the custom query.
+//         $args = array(
+//             'post_type'      => 'solace-sitebuilder',
+//             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+//             'meta_key'       => '_solace_'.$part .'_status',
+//             'posts_per_page' => -1,
+//         );
+
+//         // Create a new custom query.
+//         $query = new WP_Query( $args );
+
+//         // Check if there are any posts found.
+//         if ( $query->have_posts() ) {
+//             while ( $query->have_posts() ) {
+//                 $query->the_post();
+
+//                 // Updated the value of the custom meta key.
+//                 update_post_meta( get_the_ID(), '_solace_'.$part.'_status', false );
+//             }
+//         }
+
+//         // Reset post data after custom query to avoid interfering with other queries.
+//         wp_reset_postdata();    
+
+//     }
+
+//     // Update the post meta.
+//     if (update_post_meta($post_id, '_solace_'.$part.'_status', $status)) {
+//         wp_send_json_success('Status updated.');
+//     } else {
+//         wp_send_json_error('Failed to update status.');
+//     }
+// }
+
+function solace_update_sitebuilder_status() {
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    if ( !isset($_POST['post_id']) || !isset($_POST['status']) || !isset($_POST['part']) ) {
         wp_send_json_error('Invalid data sent.');
     }
 
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing    
     $post_id = intval($_POST['post_id']);
-    $part = sanitize_text_field(wp_unslash($_POST['part']) );
-    $status = sanitize_text_field(wp_unslash($_POST['status']) );
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    $part    = sanitize_text_field(wp_unslash($_POST['part']));
+    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    $status  = sanitize_text_field(wp_unslash($_POST['status']));
 
-    // Updated status sitebuilder part.
-    if ( $part ) {
+    if ( $part && $part !== 'header' && $part !== 'footer' ) {
 
-        // Set up the arguments for the custom query.
         $args = array(
             'post_type'      => 'solace-sitebuilder',
-            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-            'meta_key'       => '_solace_'.$part .'_status',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Required to find active template for selected part.
+            'meta_key'       => '_solace_' . $part . '_status',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Required to target currently enabled template.
+            'meta_value'     => '1',
             'posts_per_page' => -1,
+            // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in -- Current post must be excluded when toggling a single active template.
+            'post__not_in'   => array($post_id), 
         );
 
-        // Create a new custom query.
         $query = new WP_Query( $args );
 
-        // Check if there are any posts found.
         if ( $query->have_posts() ) {
             while ( $query->have_posts() ) {
                 $query->the_post();
-
-                // Updated the value of the custom meta key.
-                update_post_meta( get_the_ID(), '_solace_'.$part.'_status', false );
+                update_post_meta( get_the_ID(), '_solace_' . $part . '_status', '0' );
             }
         }
-
-        // Reset post data after custom query to avoid interfering with other queries.
         wp_reset_postdata();    
-
     }
 
-    // Update the post meta.
-    if (update_post_meta($post_id, '_solace_'.$part.'_status', $status)) {
+    if ( update_post_meta($post_id, '_solace_' . $part . '_status', $status) ) {
         wp_send_json_success('Status updated.');
     } else {
-        wp_send_json_error('Failed to update status.');
+        wp_send_json_success('Status unchanged or updated.');
     }
 }
 add_action('wp_ajax_solace_update_sitebuilder_status', 'solace_update_sitebuilder_status');
@@ -1553,8 +1599,9 @@ add_action('wp_ajax_solace_update_sitebuilder_status', 'solace_update_sitebuilde
 
 function solace_update_sitebuilder_all_status() {
     // Verifikasi nonce
-    if (isset($_GET['security']) && wp_verify_nonce(sanitize_key(wp_unslash($_GET['security'])), 'template_preview_nonce')) {
-        wp_send_json_error('Nonce verification failed.');
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Bulk action is secured via AJAX nonce below.
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
+        wp_send_json_error( 'Nonce verification failed.' );
     }
 
     // Check if the required parameters are present.
@@ -2669,8 +2716,11 @@ function solace_custom_body_class( $classes ) {
 function solace_render_custom_styles() {
     ?>
     <style type="text/css">
-        body.solace_elementor_header_footer .container,
-        body.solace_elementor_canvas .container {
+        /* body.solace_elementor_header_footer .container,
+        body.solace_elementor_canvas .container { 
+        */
+        body.solace_elementor_header_footer .container:not(.header .container):not(.site-footer .container),
+        body.solace_elementor_canvas .container:not(.header .container):not(.site-footer .container) {
             max-width: none !important;
             width: 100% !important;
             padding-left: 0 !important;

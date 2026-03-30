@@ -472,6 +472,7 @@ class Solace_Extra_Import {
 
         // Instantiate your custom importer and run the import using the remote URL
         $importer = new Solace_Extra_WP_Import();
+        $importer->fetch_attachments = true;
         $file = $demo_url;
         $importer->import( $file );
 
@@ -608,15 +609,8 @@ class Solace_Extra_Import {
 
             // Instantiate your custom importer and import from the local file.
             $importer = new Solace_Extra_WP_Import();
+            $importer->fetch_attachments = true;
             $importer->import( $local_path );
-        }
-
-        if ( class_exists( 'Solace_Extra_Sitebuilder_Images' ) ) {
-            $sitebuilder_images_service = new Solace_Extra_Sitebuilder_Images();
-
-            $image_api_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $get_demo_name . '/wp-json/solace/v1/sitebuilder-image-issues';
-
-            $sitebuilder_images_service->update_sitebuilder_images_from_api( $image_api_url );
         }
 
         // Remote and local API URLs

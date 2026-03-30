@@ -104,10 +104,12 @@
                         } else {
                             echo '<span class="title">' . esc_html__( 'GO PRO', 'solace-extra' ) . '</span>';
                             echo '<span class="desc">' . esc_html__( 'Full access to premium features.', 'solace-extra' ) . '</span>';
+                            echo '<a href="'. esc_url( SOLACE_UPGRADE_URL ) . '" target="_blank" rel="noopener noreferrer" class="upgrade-link">' . esc_html__( 'Upgrade', 'solace-extra' ) . '</a>';
                         }
                     } else {
                         echo '<span class="title">' . esc_html__( 'GO PRO', 'solace-extra' ) . '</span>';
                         echo '<span class="desc">' . esc_html__( 'Full access to premium features.', 'solace-extra' ) . '</span>';
+                        echo '<a href="'. esc_url( SOLACE_UPGRADE_URL ) . '" target="_blank" rel="noopener noreferrer" class="upgrade-link">' . esc_html__( 'Upgrade', 'solace-extra' ) . '</a>';
                     }
                     ?>
                 </div>

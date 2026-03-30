@@ -6,25 +6,65 @@
         excludeLabel: 'Exclude'
     };
 
-    $('.status-switch').on('change', function() {
+    // $('.status-switch').on('change', function() {
 
-        const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct'];
+    //     const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct'];
 
-        parts.forEach(part => {
-            $('.status-switch[data-part="' + part + '"]')
-                .not(this)
-                .prop('checked', false);
-        });
+    //     parts.forEach(part => {
+    //         $('.status-switch[data-part="' + part + '"]')
+    //             .not(this)
+    //             .prop('checked', false);
+    //     });
             
+    //     var postId = $(this).data('post-id');
+    //     var part = $(this).data('part').toString();
+    //     var status = $(this).is(':checked') ? 1 : 0;
+
+    //     $.ajax({
+    //         url: solaceSitebuilderParams.ajaxurl,
+    //         type: 'POST',
+    //         data: {
+    //             // action: 'solace_update_header_status',
+    //             action: 'solace_update_sitebuilder_status',
+    //             post_id: postId,
+    //             status: status,
+    //             part: part,
+    //             nonce: solaceSitebuilderParams.nonce,
+    //             security: solaceSitebuilderParams.nonce,
+    //         },
+    //         success: function(response) {
+    //             if(response.success) {
+    //                 location.reload();  // Refresh the page after successful update
+    //             } else {
+    //                 alert('Failed to update status.');
+    //             }
+    //         }
+    //     });
+    // });
+
+    $('.status-switch').on('change', function() {
         var postId = $(this).data('post-id');
         var part = $(this).data('part').toString();
         var status = $(this).is(':checked') ? 1 : 0;
+
+        if (part !== 'header' && part !== 'footer') {
+            
+            const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct'];
+
+            parts.forEach(p => {
+                if (p === part) {
+                    $('.status-switch[data-part="' + p + '"]')
+                        .not(this)
+                        .prop('checked', false);
+                }
+            });
+        } else {
+        }
 
         $.ajax({
             url: solaceSitebuilderParams.ajaxurl,
             type: 'POST',
             data: {
-                // action: 'solace_update_header_status',
                 action: 'solace_update_sitebuilder_status',
                 post_id: postId,
                 status: status,
@@ -33,11 +73,15 @@
                 security: solaceSitebuilderParams.nonce,
             },
             success: function(response) {
+                console.log('Respon Server:', response);
                 if(response.success) {
-                    location.reload();  // Refresh the page after successful update
+                    location.reload(); 
                 } else {
-                    alert('Failed to update status.');
+                    alert('Failed to update status: ' + response.data);
                 }
+            },
+            error: function(xhr, status, error) {
+                alert('An error occurred during the AJAX request.');
             }
         });
     });

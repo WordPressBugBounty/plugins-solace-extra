@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 6.9
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,16 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.5.1 - 27 March 2026 =
+* feat: add a product-tag element to the Shop widget.
+* fix: improve Shop pagination alignment, behavior, and category product queries.
+* fix: resolve double padding/margin in the Product Add to Cart widget.
+* fix: ensure Elementor SVG toggle icons are imported
+* fix: improve Site Builder templates (multiple header/footer parts, header fade-in, and product template preview).
+* fix: resolve Cart coupon box rendering and fix a typo in Related Products.
+* fix: apply global form field settings and refine Form Builder field and spacing (normal field type, icon button, and field gap).
+* refactor: remove library code.
 
 = 1.5.0 - 24 February 2026 =
 * Feat: Added pagination and products-per-page options to the Shop widget.

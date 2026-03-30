@@ -479,17 +479,14 @@ p:'$solace_extra_font1';
                     }
                     ?>
                     <?php if ( $solace_extra_selected_demo_is_pro && ! $solace_extra_is_license_valid ) : ?>
-                        <?php 
-                        $url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
-                        wp_redirect( $url, 301 ); 
-                        exit;
-                        ?>
+                        <button id="solace-extra-upgrade" style="opacity: 1; cursor: pointer;" class="button button-primary" style="margin-left:10px;">
+                            <?php esc_html_e( 'Upgrade to Pro', 'solace-extra' ); ?>
+                        </button>
                     <?php else : ?>
                         <button id="solace-extra-continue" disabled>
                             <?php esc_html_e( 'Continue', 'solace-extra' ); ?>
                         </button>
-                    <?php endif; ?>                    
-
+                    <?php endif; ?>
                 </div>
                 <?php if ( ! ( $solace_extra_selected_demo_is_pro && ! $solace_extra_is_license_valid ) ) : ?>
                     <div class="container-license">
