@@ -239,16 +239,28 @@ class Solace_Extra_Product_Rating extends Widget_Base {
 		}
 		$font_family = "";
 		
-		// Force enqueue Google Font on frontend
-		if ( ! empty( $settings['product_rating_typography_typography'] ) &&'custom' !== $settings['product_rating_typography_font_family'] ) {
+		if ( ! empty( $settings['product_rating_typography_typography'] ) && 
+			! empty( $settings['product_rating_typography_font_family'] ) &&
+			'custom' !== $settings['product_rating_typography_font_family'] ) {
+			
 			$font_family = $settings['product_rating_typography_font_family'];
-			$font_weight = ! empty( $settings['product_rating_typography']['font_weight'] ) ? $settings['product_rating_typography']['font_weight'] : '400';
+			$font_weight = ! empty( $settings['product_rating_typography']['font_weight'] ) 
+						? $settings['product_rating_typography']['font_weight'] 
+						: '400';
 
-			$family_param = str_replace( ' ', '+', $font_family );
+			if ( ! preg_match( '/^[a-zA-Z0-9\s\-]+$/', $font_family ) ) {
+				return;
+			}
+
+			$family_param   = str_replace( ' ', '+', $font_family );
 			$google_fonts_url = 'https://fonts.googleapis.com/css2?family=' . $family_param . ':wght@' . $font_weight . '&display=swap';
 
-			wp_enqueue_style( 'product-rating-elementor-font-' . sanitize_title( $font_family ), $google_fonts_url, [], SOLACE_EXTRA_VERSION );
-			
+			wp_enqueue_style( 
+				'product-rating-elementor-font-' . sanitize_title( $font_family ), 
+				$google_fonts_url, 
+				[], 
+				SOLACE_EXTRA_VERSION 
+			);
 		}
 	
 		echo '<div class="solace-product-rating">';

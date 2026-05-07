@@ -268,6 +268,9 @@ class Solace_Extra_Post_Date_Time extends Widget_Base {
     protected function render() {
         $settings = $this->get_settings_for_display();
 
+        // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet, PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Font Awesome from CDN (widget icons).
+        echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+
         $post_id = solace_get_preview_post();
         $post_object = get_post( $post_id );
 

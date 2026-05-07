@@ -117,7 +117,7 @@ class Solace_Extra_Product_Gallery extends Widget_Base {
 			Group_Control_Border::get_type(),
 			array(
 				'name'      => 'image_border',
-				'selector'  => '{{WRAPPER}} .solace-product-gallery-main',
+				'selector'  => '{{WRAPPER}} .solace-product-gallery-main img',
 			)
 		);
 
@@ -128,7 +128,7 @@ class Solace_Extra_Product_Gallery extends Widget_Base {
 				'type'       => Controls_Manager::DIMENSIONS,
 				'size_units' => array( 'px', '%' ),
 				'selectors'  => array(
-					'{{WRAPPER}} .solace-product-gallery-main' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}',
+					'{{WRAPPER}} .solace-product-gallery-main img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}}',
 					
 				),
 			)

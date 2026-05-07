@@ -105,13 +105,28 @@
 	function getCurrentPage() {
 		var cookieKey = getPaginationCookieKey();
 		var page = getCookie(cookieKey);
-		return page ? parseInt(page, 10) : 1; // Default page 1
+		var n = page ? parseInt(page, 10) : 1;
+		return isFinite(n) && n > 0 ? n : 1;
 	}
 
 	// Set current page to cookie
 	function setCurrentPage(page) {
 		var cookieKey = getPaginationCookieKey();
-		setCookie(cookieKey, page, 1); // 1 day
+		var n = parseInt(page, 10);
+		if (!isFinite(n) || n < 1) {
+			n = 1;
+		}
+		setCookie(cookieKey, n, 1); // 1 day
+	}
+
+	// Total span may exist once or many times after load-more appends; never use .text() on the whole set.
+	function readTotalFilteredCount($container) {
+		var $span = $container.find('.total-filtered-count').first();
+		if (!$span.length) {
+			return 0;
+		}
+		var n = parseInt($span.text(), 10);
+		return isFinite(n) ? n : 0;
 	}
 
 	// Check if load more button should be shown
@@ -121,7 +136,7 @@
 		}
 		var currentItems = currentPage * postsPerPage;
 		var remaining = totalCount - currentItems;
-		return remaining >= postsPerPage; // Only show if remaining >= posts_per_page
+		return remaining > 0;
 	}
 
 	// Common success handler for updating demo container
@@ -135,9 +150,7 @@
 		$container.append(data);
 		$container.css('display', 'flex');
 
-		// Get total filtered count from hidden span
-		var $totalCountSpan = $container.find('.total-filtered-count');
-		var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+		var totalFiltered = readTotalFilteredCount($container);
 
 		// Get current page (should be 1 after filter/search/checkbox change)
 		var currentPage = getCurrentPage();
@@ -237,9 +250,7 @@
 				$container.append(data);
 				$container.css('display', 'flex');
 
-				// Get total filtered count
-				var $totalCountSpan = $container.find('.total-filtered-count');
-				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var totalFiltered = readTotalFilteredCount($container);
 				var currentPage = getCurrentPage();
 				var postsPerPage = 9;
 
@@ -300,9 +311,7 @@
 				$container.append(data);
 				$container.css('display', 'flex');
 
-				// Get total filtered count
-				var $totalCountSpan = $container.find('.total-filtered-count');
-				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var totalFiltered = readTotalFilteredCount($container);
 				var currentPage = getCurrentPage();
 				var postsPerPage = 9;
 
@@ -366,9 +375,7 @@
 				$container.append(data);
 				$container.css('display', 'flex');
 
-				// Get total filtered count
-				var $totalCountSpan = $container.find('.total-filtered-count');
-				var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+				var totalFiltered = readTotalFilteredCount($container);
 				var currentPage = getCurrentPage();
 				var postsPerPage = 9;
 
@@ -438,28 +445,36 @@
 
 				// Append if there is content
 				if (payload.length > 0) {
-					$container.append(payload);
-					
-					// Get new page number from response
-					var $newPageSpan = $container.find('.current-page');
-					var newPage = $newPageSpan.length ? parseInt($newPageSpan.text(), 10) : (currentPage + 1);
-					
-					// Get total filtered count
-					var $totalCountSpan = $container.find('.total-filtered-count');
-					var totalFiltered = $totalCountSpan.length ? parseInt($totalCountSpan.text(), 10) : 0;
+					var $chunk = $('<div>').append($.parseHTML(payload, document, true));
+					var addedDemos = $chunk.find('.demo').length;
 
-					// Update button attribute with new page
-					$button.attr('data-page', newPage);
-
-					// Update cookie with new page
-					setCurrentPage(newPage);
-
-					// Check if load more should still be shown
-					if (totalFiltered > 0) {
-						var shouldShow = shouldShowLoadMore(newPage, totalFiltered, postsPerPage);
-						$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
-					} else {
+					// PHP only updates the cookie when it actually rendered new demos; avoid advancing
+					// the cookie when the response is empty meta only.
+					if (addedDemos < 1) {
 						$loadMoreContainer.css('display', 'none');
+					} else {
+						$container.append($chunk.contents());
+
+						// Match PHP: next page is current + 1 (never parse concatenated .current-page text).
+						var newPage = currentPage + 1;
+
+						$container.find('.current-page').remove();
+						var $totals = $container.find('.total-filtered-count');
+						if ($totals.length > 1) {
+							$totals.not(':first').remove();
+						}
+
+						var totalFiltered = readTotalFilteredCount($container);
+
+						$button.attr('data-page', newPage);
+						setCurrentPage(newPage);
+
+						if (totalFiltered > 0) {
+							var shouldShow = shouldShowLoadMore(newPage, totalFiltered, postsPerPage);
+							$loadMoreContainer.css('display', shouldShow ? 'flex' : 'none');
+						} else {
+							$loadMoreContainer.css('display', 'none');
+						}
 					}
 				} else {
 					// No more data, hide button

@@ -100,8 +100,53 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 	 */
 	protected function register_controls() {
 
-		$default_logo_id = get_theme_mod( 'custom_logo', get_option('solace_uploaded_image_id') );
-		$default_logo_url = $default_logo_id ? wp_get_attachment_image_url( $default_logo_id, 'full' ) : \Elementor\Utils::get_placeholder_image_src();		
+		$default_logo_id = 0;
+		$default_logo_url = '';
+
+		// 1) Prefer explicit logo URL from customizer.
+		$logourl_theme_mod = get_theme_mod( 'logourl' );
+		if ( is_string( $logourl_theme_mod ) && '' !== $logourl_theme_mod ) {
+			$default_logo_url = esc_url_raw( $logourl_theme_mod );
+		}
+
+		// 2) Fallback to WordPress custom logo attachment.
+		if ( empty( $default_logo_url ) ) {
+			$default_logo_id = (int) get_theme_mod( 'custom_logo', 0 );
+			if ( $default_logo_id ) {
+				$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
+			}
+		}
+
+		// 3) Fallback to plugin uploaded image attachment id.
+		if ( empty( $default_logo_url ) ) {
+			$default_logo_id = (int) get_option( 'solace_uploaded_image_id', 0 );
+			if ( $default_logo_id ) {
+				$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
+			}
+		}
+
+		// Compatibility fallback for legacy/imported `logo_logo` values (URL or attachment ID in JSON).
+		if ( empty( $default_logo_url ) ) {
+			$logo_logo_theme_mod = get_theme_mod( 'logo_logo' );
+			if ( is_string( $logo_logo_theme_mod ) && '' !== $logo_logo_theme_mod ) {
+				$logo_logo_decoded = json_decode( $logo_logo_theme_mod, true );
+				$logo_logo_light = is_array( $logo_logo_decoded ) && isset( $logo_logo_decoded['light'] ) ? $logo_logo_decoded['light'] : $logo_logo_theme_mod;
+
+				if ( is_numeric( $logo_logo_light ) ) {
+					$default_logo_id = (int) $logo_logo_light;
+					if ( $default_logo_id ) {
+						$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
+					}
+				} elseif ( is_string( $logo_logo_light ) ) {
+					$default_logo_url = esc_url_raw( $logo_logo_light );
+				}
+			}
+		}
+
+		// Final fallback to Elementor placeholder.
+		if ( empty( $default_logo_url ) ) {
+			$default_logo_url = \Elementor\Utils::get_placeholder_image_src();
+		}
 
 		$this->start_controls_section(
 			'solace_extra_content_section',
@@ -196,8 +241,13 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 						'icon' => 'eicon-text-align-right',
 					],
 				],
+				'selectors_dictionary' => [
+					'left' => 'flex-start',
+					'center' => 'center',
+					'right' => 'flex-end',
+				],
 				'selectors' => [
-					'{{WRAPPER}} .elementor-site-logo' => 'text-align: {{VALUE}};',
+					'{{WRAPPER}} .elementor-site-logo' => 'display: flex; flex-wrap: wrap; justify-content: {{VALUE}};',
 				],
 			]
 		);
@@ -264,6 +314,27 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 				],
 				'selectors' => [
 					'{{WRAPPER}} .elementor-site-logo img' => 'height: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Border::get_type(),
+			[
+				'name'     => 'solace_extra_image_border',
+				'label'    => esc_html__( 'Border', 'solace-extra' ),
+				'selector' => '{{WRAPPER}} .elementor-site-logo img',
+			]
+		);
+
+		$this->add_responsive_control(
+			'solace_extra_image_border_radius',
+			[
+				'label'      => esc_html__( 'Border Radius', 'solace-extra' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%', 'em' ],
+				'selectors'  => [
+					'{{WRAPPER}} .elementor-site-logo img' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
 				],
 			]
 		);
@@ -338,12 +409,12 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 				<?php if ( $custom_link ) : ?>
 					<a href="<?php echo esc_url( $custom_link ); ?>" <?php echo esc_attr( $is_external ); ?> <?php echo esc_attr( $nofollow ); ?>>
 				<?php endif; ?>
-				<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" />
+				<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img style="display: block;" src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" />
 				<?php if ( $custom_link ) : ?>
 					</a>
 				<?php endif; ?>
 				<?php if ( $caption ) : ?>
-					<p class="site-logo-caption"><?php echo esc_html( $caption ); ?></p>
+					<p class="site-logo-caption" style="flex-basis: 100%;"><?php echo esc_html( $caption ); ?></p>
 				<?php endif; ?>
 			</div>
 		<?php endif;

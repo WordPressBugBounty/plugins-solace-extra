@@ -912,6 +912,81 @@ function solace_enqueue_icon_list_css_if_needed( $post_id ) {
     }
 }
 
+/**
+ * Check if a post contains a social-icons widget in its Elementor data
+ *
+ * @param int $post_id The post ID to check
+ * @return bool True if social-icons widget is found, false otherwise
+ */
+function solace_post_has_social_icons_widget( $post_id ) {
+    if ( ! $post_id ) {
+        return false;
+    }
+
+    $elementor_data = get_post_meta( $post_id, '_elementor_data', true );
+
+    if ( empty( $elementor_data ) ) {
+        return false;
+    }
+
+    $elements = json_decode( $elementor_data, true );
+
+    if ( empty( $elements ) || ! is_array( $elements ) ) {
+        return false;
+    }
+
+    $has_social_icons = false;
+
+    /**
+     * Recursive function to search for social-icons widget in Elementor data
+     *
+     * @param array $elements Array of Elementor elements to search through
+     */
+    $check_widgets = function( $elements ) use ( &$check_widgets, &$has_social_icons ) {
+        foreach ( $elements as $element ) {
+            // Check if element has a widget type
+            if ( isset( $element['widgetType'] ) && $element['widgetType'] === 'social-icons' ) {
+                $has_social_icons = true;
+                return; // Early return if found
+            }
+
+            // Recursively check nested elements
+            if ( ! empty( $element['elements'] ) ) {
+                $check_widgets( $element['elements'] );
+            }
+        }
+    };
+
+    $check_widgets( $elements );
+
+    return $has_social_icons;
+}
+
+/**
+ * Enqueue social-icons widget CSS if post has the widget
+ *
+ * @param int $post_id The post ID to check
+ */
+function solace_enqueue_social_icons_css_if_needed( $post_id ) {
+    static $css_enqueued = false;
+
+    // Only enqueue once per page load
+    if ( $css_enqueued ) {
+        return;
+    }
+
+    if ( $post_id && solace_post_has_social_icons_widget( $post_id ) ) {
+        wp_enqueue_style(
+            'solace-extra-widget-social-icons',
+            SOLACE_EXTRA_ASSETS_URL . 'css/widget-social-icons.min.css',
+            array(),
+            SOLACE_EXTRA_VERSION,
+            'all'
+        );
+        $css_enqueued = true;
+    }
+}
+
 function solace_display_custom_footer() {
     if (did_action('elementor/loaded')) {
         \Elementor\Plugin::$instance->frontend->enqueue_styles();
@@ -935,6 +1010,7 @@ function solace_display_custom_footer() {
     
     // Check if post has icon-list widget and enqueue CSS
     solace_enqueue_icon_list_css_if_needed( $post_id );
+    solace_enqueue_social_icons_css_if_needed( $post_id );
     
     $valid_archive_types = [
         'post|all|taxarchive|post_tag',
@@ -978,6 +1054,7 @@ function solace_display_custom_footer() {
                         if (get_post_status($matched_post_id) !== 'publish') {
                             continue; // Skip if post is not published
                         }
+
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
                             if (!empty($meta_content)) {
@@ -2520,21 +2597,51 @@ function solace_get_elementor_content_via_ajax() {
         wp_die(esc_html__('Elementor is not active. Please activate Elementor to view this content.', 'solace-extra'));
     }
 
-    // $post_id = isset($_GET['post_id']) ? absint($_GET['post_id']) : 0;
-     // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     $post_id = isset($_GET['post_id']) ? absint(sanitize_text_field(wp_unslash($_GET['post_id']))) : 0;
-
 
     if (!$post_id || get_post_type($post_id) !== 'solace-sitebuilder') {
         wp_die(esc_html__('Invalid post ID or post type.', 'solace-extra'));
     }
 
-    // Load Elementor content
-    $elementor_content = \Elementor\Plugin::$instance->frontend->get_builder_content($post_id, true);
+    // to the live frontend. Register the filter manually here.
+    $solace_extra_kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+    if ( ! has_filter( 'body_class', [ \Elementor\Plugin::$instance->frontend, 'body_class' ] ) ) {
+        add_filter( 'body_class', [ \Elementor\Plugin::$instance->frontend, 'body_class' ] );
+    }
 
-    // Start output buffering
+    // AJAX context.
+    add_filter( 'body_class', function( $classes ) use ( $solace_extra_kit_id ) {
+        if ( $solace_extra_kit_id ) {
+            $kit_class = 'elementor-kit-' . $solace_extra_kit_id;
+            if ( ! in_array( $kit_class, $classes, true ) ) {
+                $classes[] = $kit_class;
+            }
+        }
+        foreach ( [ 'elementor-default', 'elementor-page' ] as $extra_class ) {
+            if ( ! in_array( $extra_class, $classes, true ) ) {
+                $classes[] = $extra_class;
+            }
+        }
+        return $classes;
+    });
+
+    // Use `get_builder_content_for_display()` so all CSS/fonts/inline styles
+    // for this post are registered for output during `wp_head()`.
+    $elementor_content = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display( $post_id );
+
+    // Mirror the front-end atomic styles bridge so the AJAX preview gets the
+    // same asset pipeline (atomic styles, runtime elements, per-post CSS) as a
+    // natively rendered singular page.
+    if ( class_exists( 'Solace_Extra_Public' ) ) {
+        $solace_extra_public = new Solace_Extra_Public(
+            'solace-extra',
+            defined( 'SOLACE_EXTRA_VERSION' ) ? SOLACE_EXTRA_VERSION : '1.0.0'
+        );
+        $solace_extra_public->bridge_atomic_assets_for_post_ids( array( $post_id ) );
+    }
+
     ob_start();
-
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -2543,20 +2650,26 @@ function solace_get_elementor_content_via_ajax() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Preview</title>
         <?php
-        // Enqueue Elementor and dependent styles
         \Elementor\Plugin::$instance->frontend->enqueue_styles();
         \Elementor\Plugin::$instance->frontend->enqueue_scripts();
 
-        // Load global styles from Default Kit
-        $kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
-        $kit_content = \Elementor\Plugin::$instance->frontend->get_builder_content( $kit_id, true );
-        echo wp_kses_post($kit_content);
+        // Explicitly enqueue the active Kit CSS file (`post-{kit_id}.css`) so
+        // global button/typography styles load on the preview.
+        if ( $solace_extra_kit_id ) {
+            $kit_css_file = \Elementor\Core\Files\CSS\Post::create( $solace_extra_kit_id );
+            $kit_css_file->enqueue();
+        }
 
-        // Other theme or plugin styles
         wp_enqueue_style('solace-theme', get_template_directory_uri() . '/assets-solace/css/theme.min.css', array(), SOLACE_EXTRA_VERSION);
         wp_enqueue_style(
             'solace-widget-nav-menu',
             plugin_dir_url(__FILE__) . '../assets/css/widget-nav-menu.min.css',
+            array(),
+            SOLACE_EXTRA_VERSION
+        );
+        wp_enqueue_style(
+            'solace-widget-icon-list',
+            plugin_dir_url(__FILE__) . '../assets/css/widget-icon-list.min.css',
             array(),
             SOLACE_EXTRA_VERSION
         );
@@ -2571,10 +2684,9 @@ function solace_get_elementor_content_via_ajax() {
             body p.woocommerce-store-notice.demo_store {
                 display: none !important;
             }
-            
         </style>
     </head>
-    <body>
+    <body <?php body_class(); ?>>
         <?php
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo $elementor_content;
@@ -2741,14 +2853,175 @@ function solace_render_custom_styles() {
         body.solace-sitebuilder-singleproduct.single-product .container.shop-container {
             padding-left: 0;
             padding-right: 0;
+
         }
     </style>
     <?php
 }
 
-// add_action( 'wp', 'solace_debug_full_page_info' );
-// add_action( 'admin_init', 'solace_debug_full_page_info' );
 
-add_filter( 'body_class', 'solace_custom_body_class' );
-add_action( 'wp_head', 'solace_render_custom_styles', 100 );
 
+function solace_override_container_var() {
+
+    if ( is_admin() ) {
+        return;
+    }
+
+    global $wpdb;
+
+    $checks = [];
+
+    if ( is_singular('product') ) {
+        $checks[] = '_solace_singleproduct_status';
+    }
+
+    if ( is_singular('post') ) {
+        $checks[] = '_solace_blogsinglepost_status';
+    }
+
+    if ( empty($checks) ) {
+        return;
+    }
+
+    // handle CSS
+    // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+    wp_register_style( 'solace-container-layout', false );
+    wp_enqueue_style( 'solace-container-layout' );
+
+    foreach ( $checks as $meta_key ) {
+
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Single postmeta lookup; intentional.
+        $template_id = $wpdb->get_var( $wpdb->prepare("
+            SELECT post_id 
+            FROM {$wpdb->postmeta}
+            WHERE meta_key = %s
+            AND meta_value = '1'
+            LIMIT 1
+        ", $meta_key ) );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+        if ( ! $template_id ) {
+            continue;
+        }
+
+        $layout = get_post_meta( $template_id, '_wp_page_template', true );
+
+        if ( $layout === 'elementor_canvas' ) {
+            $layout_slug = 'canvas';
+        } elseif ( $layout === 'elementor_full_width' ) {
+            $layout_slug = 'fullwidth';
+        } else {
+            $layout_slug = 'default';
+        }
+
+        $page_type = str_replace( ['_solace_', '_status'], '', $meta_key );
+
+        add_filter('body_class', function ($classes) use ($layout_slug, $page_type) {
+            $classes[] = 'solace-elementor-pagelayout-' . $page_type . '-' . $layout_slug;
+            return $classes;
+        });
+
+
+        if ( $layout_slug === 'canvas' ) {
+
+            add_action('wp_head', function() {
+                echo '<style id="solace-canvas-hide">.delayed-content, .delayed-content.show { display: none !important; }</style>';
+            }, 1); 
+
+            wp_add_inline_style(
+                'solace-container-layout',
+                'body .delayed-content,
+                body .delayed-content.show {
+                    display: none !important;
+                }'
+            );
+
+            continue;
+        }
+
+        if ( ! in_array( $layout, ['elementor_canvas', 'elementor_full_width', 'elementor_theme'] ) ) {
+            continue;
+        }
+
+        $selector = '.elementor.elementor-' . $template_id;
+
+        $container_list_layout = get_theme_mod( 'solace_container_layout', 'custom' );
+
+        $css = '';
+
+
+        if ( $container_list_layout === 'fullwidth' ) {
+
+            $css = "{$selector} { max-width: 100%; width: 100%; }";
+            $css .= ":root { --container: {100%}; }";
+            $css .= "body.single-product .container.shop-container { 
+                max-width: 100%; 
+                width: 100%; 
+                margin: 0 auto; 
+                padding-left: 0;
+                padding-right: 0;
+            }";
+
+        } elseif ( $container_list_layout === 'boxed' ) {
+
+            $css = "{$selector} { max-width: 708px; width: 100%; margin: 0 auto; }";
+            $css .= "body.single-product .container.shop-container { 
+                max-width: 708px; 
+                width: 100%; 
+                margin: 0 auto; 
+            }";
+
+        } elseif ( $container_list_layout === 'left' ) {
+
+            $css = "{$selector} { max-width: 1280px; width: 100%; }";
+
+        } elseif ( $container_list_layout === 'right' ) {
+
+            $css = "{$selector} { max-width: 1280px; width: 100%; }";
+
+        }
+
+        else {
+
+            $container_custom_layout_width = get_theme_mod(
+                'solace_container_width',
+                '{ "mobile": 748, "tablet": 992, "desktop": 1280 }'
+            );
+
+            // error_log('[Solace] RAW customizer value: ' . $container_custom_layout_width);
+
+            $arrayDataCustom = json_decode( $container_custom_layout_width, true );
+
+            // error_log('[Solace] Decoded value: ' . print_r($arrayDataCustom, true));
+
+            $desktop = intval($arrayDataCustom['desktop'] ?? 1280);
+            $tablet  = intval($arrayDataCustom['tablet']  ?? 992);
+            $mobile  = intval($arrayDataCustom['mobile']  ?? 748);
+
+            // error_log('[Solace] Desktop: ' . $desktop);
+            // error_log('[Solace] Tablet: ' . $tablet);
+            // error_log('[Solace] Mobile: ' . $mobile);
+
+            $css  = "{$selector} { 
+                        max-width: {$desktop}px; 
+                        width: 100%; 
+                        margin: 0 auto;
+                    }";
+
+            $css .= "@media (max-width: 992px) {
+                        {$selector} { max-width: {$tablet}px; }
+                    }";
+
+            $css .= "@media (max-width: 748px) {
+                        {$selector} { max-width: {$mobile}px; }
+                    }";
+        }
+
+        // error_log('[Solace] layout_slug: ' . $layout_slug);
+        // error_log('[Solace] selector: ' . $selector);
+        // error_log('[Solace] CSS: ' . $css);
+
+        wp_add_inline_style( 'solace-container-layout', $css );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'solace_override_container_var', 99 );

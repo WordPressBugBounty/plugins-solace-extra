@@ -343,6 +343,7 @@ class Solace_Extra {
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
+		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'bridge_atomic_assets_for_override', 15 );
 		$this->loader->add_action( 'solace_render_customizer_social_share', $plugin_public, 'solace_render_customizer_social_share' );
 		$this->loader->add_shortcode( 'solace_year', $plugin_public, 'solace_year_shortcode' );
 		$this->loader->add_shortcode( 'solace_recent_posts', $plugin_public, 'solace_recent_posts_shortcode' );

@@ -1180,7 +1180,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				],
 				'default' => 'left',
 				'selectors' => [
-					'{{WRAPPER}} .solace-extra-pagination' => 'text-align: {{VALUE}};',
+					'{{WRAPPER}} .solace-extra-pagination' => 'justify-content: {{VALUE}};',
 				],
 			]
 		);
@@ -1622,6 +1622,8 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				margin-top: 30px;
 				text-align: center;
 				clear: both;
+				display: flex;
+				flex-wrap: wrap;
 			}
 
 			.solace-extra-pagination .page-numbers:not(:first-child) {
@@ -1631,7 +1633,6 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 			}
 			.solace-extra-pagination .page-numbers {
 				margin-right: 4px;
-				display: inline-block;
 				padding: 8px 16px;	
 				background: #f4f4f4;
 				color: #333;
@@ -1639,9 +1640,15 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				border-radius: 4px;
 				line-height: 1;
 				padding-top: 12px;
-				min-width: 42px;
 				text-align: center;
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				width: 48px;
 				height: 38px;
+				align-items: center;
+				line-height: inherit;
+				padding: 8px 16px;
 			}
 
 			.solace-extra-pagination .page-numbers.current {
@@ -1988,8 +1995,8 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
                     'format'    => '?paged=%#%',
                     'current'   => $current_page,
                     'total'     => $total_pages,
-                    'prev_text' => '<i class="fas fa-chevron-left"></i>',
-                    'next_text' => '<i class="fas fa-chevron-right"></i>',
+                    'prev_text' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M169.4 297.4C156.9 309.9 156.9 330.2 169.4 342.7L361.4 534.7C373.9 547.2 394.2 547.2 406.7 534.7C419.2 522.2 419.2 501.9 406.7 489.4L237.3 320L406.6 150.6C419.1 138.1 419.1 117.8 406.6 105.3C394.1 92.8 373.8 92.8 361.3 105.3L169.3 297.3z"/></svg>',
+                    'next_text' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M471.1 297.4C483.6 309.9 483.6 330.2 471.1 342.7L279.1 534.7C266.6 547.2 246.3 547.2 233.8 534.7C221.3 522.2 221.3 501.9 233.8 489.4L403.2 320L233.9 150.6C221.4 138.1 221.4 117.8 233.9 105.3C246.4 92.8 266.7 92.8 279.2 105.3L471.2 297.3z"/></svg>',
                     'type'      => 'plain',
                 ) );
                 echo '</div>';

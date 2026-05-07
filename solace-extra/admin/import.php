@@ -2736,6 +2736,61 @@ class Solace_Extra_Import {
             }
             // ==== END SPECIAL CASE SHOP ====
 
+            // ==== SPECIAL CASE: HOME / FRONT PAGE MENU ITEM ====
+            $home_path_normalized = trim( (string) $path, '/' );
+            $home_demo_slug       = str_replace( 'solace_extra_', '', $demo_name );
+            $home_path_parts      = ( '' === $home_path_normalized )
+                ? array()
+                : explode( '/', $home_path_normalized );
+
+            // Strip the demo slug prefix (e.g. "/nuvion/").
+            if ( ! empty( $home_path_parts ) && $home_path_parts[0] === $home_demo_slug ) {
+                array_shift( $home_path_parts );
+            }
+
+            $is_home_url  = empty( $home_path_parts );
+            $is_page_like = ! empty( $menu_item->object ) && 'page' === $menu_item->object;
+
+            if ( $is_home_url && $is_page_like ) {
+                $local_home_id = 0;
+
+                // 1) Prefer a page imported from this demo that matches the
+                //    menu item title (e.g. "Home").
+                $local_home_id = absint( $this->get_unique_posts_by_title( $menu_item->title, $demo_name ) );
+
+                // 2) Fallback to the local page with slug "home".
+                if ( ! $local_home_id ) {
+                    $home_page = get_page_by_path( 'home', OBJECT, 'page' );
+                    if ( $home_page && ! is_wp_error( $home_page ) && isset( $home_page->ID ) ) {
+                        $local_home_id = (int) $home_page->ID;
+                    }
+                }
+
+                // 3) Fallback to WordPress' configured front page.
+                if ( ! $local_home_id ) {
+                    $front_id = absint( get_option( 'page_on_front', 0 ) );
+                    if ( $front_id ) {
+                        $local_home_id = $front_id;
+                    }
+                }
+
+                if ( $local_home_id ) {
+                    $local_url = get_permalink( $local_home_id );
+                    if ( ! $local_url || is_wp_error( $local_url ) ) {
+                        $local_url = home_url( '/' );
+                    }
+
+                    $home_args = $common_args;
+                    $home_args['menu-item-object']    = 'page';
+                    $home_args['menu-item-type']      = 'post_type';
+                    $home_args['menu-item-object-id'] = $local_home_id;
+                    $home_args['menu-item-url']       = $local_url;
+
+                    return $home_args;
+                }
+            }
+            // ==== END SPECIAL CASE HOME ====
+
             // Determine the post type from menu item object
             $post_type = ! empty( $menu_item->object ) && post_type_exists( $menu_item->object )
                 ? $menu_item->object

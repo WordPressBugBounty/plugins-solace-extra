@@ -370,6 +370,40 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             ]
         );
 
+        $this->add_group_control(
+            \Elementor\Group_Control_Border::get_type(),
+            [
+                'name'     => 'thumbnail_border',
+                'label'    => __( 'Border', 'solace-extra' ),
+                'selector' => '{{WRAPPER}} .featured .sol-image .thumbnail-background',
+                'condition' => [
+                    'display_image' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'thumbnail_border_radius',
+            [
+                'label'      => esc_html__( 'Border Radius', 'solace-extra' ),
+                'type'       => Controls_Manager::DIMENSIONS,
+                'size_units' => [ 'px', '%' ],
+                'default'    => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 0,
+                    'left' => 0,
+                ],
+                'selectors'  => [
+                    '{{WRAPPER}} .featured .sol-image' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .featured .sol-image .thumbnail-background' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'display_image' => 'yes',
+                ],
+            ]
+        );
+
 
         $this->end_controls_section();
 
@@ -1275,6 +1309,7 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             .solace-pagination {
                 margin-top: 2rem;
                 display: flex;
+                grid-column: 1 / -1;
             }
 
             .solace-pagination .page-numbers {

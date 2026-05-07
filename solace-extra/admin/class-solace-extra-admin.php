@@ -52,6 +52,13 @@ class Solace_Extra_Admin {
 	private $version;
 
 	/**
+	 * True after Elementor preview body_class helpers are registered for this request.
+	 *
+	 * @var bool
+	 */
+	private static $solace_elementor_preview_body_class_ready = false;
+
+	/**
 	 * Initialize the class and set its properties.
 	 *
 	 * @since    1.0.0
@@ -422,7 +429,7 @@ class Solace_Extra_Admin {
 		// Only page starter templates
 		if ( $hook === 'solace_page_dashboard-starter-templates' ) {
 			// Starter Templates
-			wp_enqueue_script( 'solace-extra-starter-templates', plugin_dir_url( __FILE__ ) . 'js/starter-templates.js', array( 'jquery' ), '1.0.0', true );
+			wp_enqueue_script( 'solace-extra-starter-templates', plugin_dir_url( __FILE__ ) . 'js/starter-templates.js', array( 'jquery' ), SOLACE_EXTRA_DEMO_IMPORT_URL, true );
 		}		
 
 		// Only page preview
@@ -1554,7 +1561,98 @@ class Solace_Extra_Admin {
 	}
 
 	/**
-	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * Register Elementor body classes and build markup so assets register for wp_head()
+	 * (same pattern as sitebuilder AJAX preview).
+	 *
+	 * @param int $post_id Post ID.
+	 * @return string Builder HTML.
+	 */
+	private function solace_elementor_preview_prepare_markup( $post_id ) {
+		$post_id = absint( $post_id );
+		if ( ! $post_id || ! did_action( 'elementor/loaded' ) || ! class_exists( '\Elementor\Plugin' ) ) {
+			return '';
+		}
+
+		$frontend = \Elementor\Plugin::$instance->frontend;
+
+		if ( ! has_filter( 'body_class', array( $frontend, 'body_class' ) ) ) {
+			add_filter( 'body_class', array( $frontend, 'body_class' ) );
+		}
+
+		if ( ! self::$solace_elementor_preview_body_class_ready ) {
+			self::$solace_elementor_preview_body_class_ready = true;
+			$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+			add_filter(
+				'body_class',
+				static function ( $classes ) use ( $kit_id ) {
+					if ( $kit_id ) {
+						$kit_class = 'elementor-kit-' . $kit_id;
+						if ( ! in_array( $kit_class, $classes, true ) ) {
+							$classes[] = $kit_class;
+						}
+					}
+					foreach ( array( 'elementor-default', 'elementor-page' ) as $extra_class ) {
+						if ( ! in_array( $extra_class, $classes, true ) ) {
+							$classes[] = $extra_class;
+						}
+					}
+					return $classes;
+				},
+				20
+			);
+		}
+
+		$html = $frontend->get_builder_content_for_display( $post_id );
+
+		if ( class_exists( 'Solace_Extra_Public' ) ) {
+			$solace_extra_public = new Solace_Extra_Public(
+				'solace-extra',
+				defined( 'SOLACE_EXTRA_VERSION' ) ? SOLACE_EXTRA_VERSION : $this->version
+			);
+			$solace_extra_public->bridge_atomic_assets_for_post_ids( array( $post_id ) );
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Enqueue Elementor frontend, Kit CSS, and Solace widget/theme styles for previews.
+	 */
+	private function solace_elementor_preview_enqueue_assets() {
+		if ( ! did_action( 'elementor/loaded' ) || ! class_exists( '\Elementor\Plugin' ) ) {
+			return;
+		}
+
+		$frontend = \Elementor\Plugin::$instance->frontend;
+		$frontend->enqueue_styles();
+		$frontend->enqueue_scripts();
+
+		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
+		if ( $kit_id && class_exists( '\Elementor\Core\Files\CSS\Post' ) ) {
+			$kit_css_file = \Elementor\Core\Files\CSS\Post::create( $kit_id );
+			$kit_css_file->enqueue();
+		}
+
+		$version     = defined( 'SOLACE_EXTRA_VERSION' ) ? SOLACE_EXTRA_VERSION : $this->version;
+		$plugin_file = ( defined( 'SOLACE_EXTRA_DIR_PATH' ) ? SOLACE_EXTRA_DIR_PATH : dirname( __DIR__ ) . '/' ) . 'solace-extra.php';
+
+		wp_enqueue_style( 'solace-theme', get_template_directory_uri() . '/assets-solace/css/theme.min.css', array(), $version );
+		wp_enqueue_style(
+			'solace-widget-nav-menu',
+			plugins_url( 'assets/css/widget-nav-menu.min.css', $plugin_file ),
+			array(),
+			$version
+		);
+		wp_enqueue_style(
+			'solace-widget-icon-list',
+			plugins_url( 'assets/css/widget-icon-list.min.css', $plugin_file ),
+			array(),
+			$version
+		);
+	}
+
+	/**
+	 * Handles the rendering of a single product template preview via Elementor,
 	 * triggered by the `solace-single-product-preview` query parameter.
 	 *
 	 * Example: ?solace-single-product-preview=123
@@ -1579,13 +1677,18 @@ class Solace_Extra_Admin {
 					$post = get_post( $single_product_id );
 					if ( $post ) {
 
+						$elementor_content = $this->solace_elementor_preview_prepare_markup( $single_product_id );
+
 						// Output HTML structure
 						?><!DOCTYPE html>
 						<html <?php language_attributes(); ?>>
 						<head>
 							<meta charset="<?php bloginfo( 'charset' ); ?>">
 							<meta name="viewport" content="width=device-width, initial-scale=1">
-							<?php wp_head(); ?>
+							<?php
+							$this->solace_elementor_preview_enqueue_assets();
+							wp_head();
+							?>
 							<style>
 								#wpadminbar,
 								header.header,
@@ -1610,9 +1713,8 @@ class Solace_Extra_Admin {
 						</head>
 						<body <?php body_class(); ?>>
 							<?php
-							// Render the Elementor content for the given ID
-							$elementor_instance = Elementor\Plugin::instance();
-							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $single_product_id ) );
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							echo do_shortcode( $elementor_content );
 							wp_footer();
 							?>
 						</body>
@@ -1626,65 +1728,71 @@ class Solace_Extra_Admin {
 	}	
 
 	/**
-	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * Handles the rendering of a purchase summary template preview via Elementor,
 	 * triggered by the `solace-purchase-summary-preview` query parameter.
+	 *
+	 * Same standalone document flow as {@see handle_preview_single_post()}.
 	 *
 	 * Example: ?solace-purchase-summary-preview=123
 	 */
 	public function handle_preview_purchase_summary() {
-		// Check if the preview parameter is set in the URL
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['solace-purchase-summary-preview'] ) ) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$purchase_summary_id = absint( $_GET['solace-purchase-summary-preview'] );
 
-			// Validate the ID
 			if ( $purchase_summary_id > 0 ) {
 
-				// Ensure Elementor is active and the method exists
 				if (
 					class_exists( '\Elementor\Plugin' ) &&
-					class_exists( 'WooCommerce' ) &&
 					method_exists( Elementor\Plugin::instance()->frontend, 'get_builder_content_for_display' )
 				) {
-					// Optional: Ensure the post exists and is of allowed type
 					$post = get_post( $purchase_summary_id );
 					if ( $post ) {
 
-						// Check if preview mode is active via query parameter
-						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						if ( isset( $_GET['solace-purchase-summary-preview'] ) ) {
-							// Output CSS to hide specific elements for cleaner preview
-							echo '<style>
+						$elementor_content = $this->solace_elementor_preview_prepare_markup( $purchase_summary_id );
+
+						?><!DOCTYPE html>
+						<html <?php language_attributes(); ?>>
+						<head>
+							<meta charset="<?php bloginfo( 'charset' ); ?>">
+							<meta name="viewport" content="width=device-width, initial-scale=1">
+							<?php
+							$this->solace_elementor_preview_enqueue_assets();
+							wp_head();
+							?>
+							<style>
 								#wpadminbar,
 								header.header,
 								footer.site-footer,
-								.delayed-content,
-								.main-page,
-								.wrapper {
+								.delayed-content {
 									display: none !important;
 								}
 								body {
-									background: #fff !important;
 									overflow: hidden !important;
 								}
-							</style>';
-						}
-
-						// Output CSS to hide specific elements overflow
-						// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						if ( isset( $_GET['solace-hide-overflow'] ) ) {
-							echo '<style>
-							.woocommerce-order-received {
-								overflow: hidden !important;
-							}
-							</style>';
-						}
-
-						// Render the Elementor content for the given ID
-						$elementor_instance = Elementor\Plugin::instance();
-						echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $purchase_summary_id ) );
-	
+								<?php
+								// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+								if ( isset( $_GET['solace-hide-overflow'] ) ) {
+									?>
+									body.single-solace-sitebuilder {
+										overflow: hidden !important;
+									}
+									<?php
+								}
+								?>
+							</style>
+						</head>
+						<body <?php body_class(); ?>>
+							<?php
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							echo do_shortcode( $elementor_content );
+							wp_footer();
+							?>
+						</body>
+						</html>
+						<?php
+						exit;
 					}
 				}
 			}
@@ -1692,7 +1800,7 @@ class Solace_Extra_Admin {
 	}
 
 	/**
-	 * Handles the rendering of a purchase summary preview via Elementor,
+	 * Handles the rendering of a single post template preview via Elementor,
 	 * triggered by the `solace-single-post-preview` query parameter.
 	 *
 	 * Example: ?solace-single-post-preview=123
@@ -1716,13 +1824,18 @@ class Solace_Extra_Admin {
 					$post = get_post( $single_post_id );
 					if ( $post ) {
 
+						$elementor_content = $this->solace_elementor_preview_prepare_markup( $single_post_id );
+
 						// Output HTML structure
 						?><!DOCTYPE html>
 						<html <?php language_attributes(); ?>>
 						<head>
 							<meta charset="<?php bloginfo( 'charset' ); ?>">
 							<meta name="viewport" content="width=device-width, initial-scale=1">
-							<?php wp_head(); ?>
+							<?php
+							$this->solace_elementor_preview_enqueue_assets();
+							wp_head();
+							?>
 							<style>
 								#wpadminbar,
 								header.header,
@@ -1732,7 +1845,7 @@ class Solace_Extra_Admin {
 								}
 								body {
 									overflow: hidden !important;
-								}								
+								}
 								<?php
 								// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 								if ( isset( $_GET['solace-hide-overflow'] ) ) {
@@ -1747,9 +1860,8 @@ class Solace_Extra_Admin {
 						</head>
 						<body <?php body_class(); ?>>
 							<?php
-							// Render the Elementor content for the given ID
-							$elementor_instance = Elementor\Plugin::instance();
-							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $single_post_id ) );
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							echo do_shortcode( $elementor_content );
 							wp_footer();
 							?>
 						</body>
@@ -1787,13 +1899,18 @@ class Solace_Extra_Admin {
 					$post = get_post( $template_404_id );
 					if ( $post ) {
 
+						$elementor_content = $this->solace_elementor_preview_prepare_markup( $template_404_id );
+
 						// Output HTML structure
 						?><!DOCTYPE html>
 						<html <?php language_attributes(); ?>>
 						<head>
 							<meta charset="<?php bloginfo( 'charset' ); ?>">
 							<meta name="viewport" content="width=device-width, initial-scale=1">
-							<?php wp_head(); ?>
+							<?php
+							$this->solace_elementor_preview_enqueue_assets();
+							wp_head();
+							?>
 							<style>
 								#wpadminbar,
 								header.header,
@@ -1832,9 +1949,8 @@ class Solace_Extra_Admin {
 						</head>
 						<body <?php body_class(); ?>>
 							<?php
-							// Render the Elementor content for the given ID
-							$elementor_instance = Elementor\Plugin::instance();
-							echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $template_404_id ) );
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							echo do_shortcode( $elementor_content );
 							wp_footer();
 							?>
 							<script>

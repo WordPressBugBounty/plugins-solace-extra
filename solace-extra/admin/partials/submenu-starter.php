@@ -268,12 +268,11 @@
                 </div>
                 <?php 
                 // Check if load more should be shown
-                // Only show if remaining items >= posts_per_page (9)
                 $solace_extra_should_show_load_more = false;
                 if ($solace_extra_total_filtered > 0) {
                     $solace_extra_current_items = $solace_extra_current_page * $solace_extra_show_posts;
                     $solace_extra_remaining = $solace_extra_total_filtered - $solace_extra_current_items;
-                    $solace_extra_should_show_load_more = ($solace_extra_remaining >= $solace_extra_show_posts); // Only show if remaining >= posts_per_page
+                    $solace_extra_should_show_load_more = ( $solace_extra_remaining > 0 );
                 }
                 ?>
                 <?php if ($solace_extra_should_show_load_more) : ?>

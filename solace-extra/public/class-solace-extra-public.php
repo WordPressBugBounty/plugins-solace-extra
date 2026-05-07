@@ -399,4 +399,527 @@ class Solace_Extra_Public {
 		return $classes;
 	}	
 
+
+	/**
+	 * Bridge Elementor's atomic styles flow so the overriding site-builder document
+	 * receives the same asset pipeline as a natively rendered singular page.
+	 *
+	 * @since 1.0.0
+	 * @return void
+	 */
+	public function bridge_atomic_assets_for_override() {
+		if ( is_admin() ) {
+			return;
+		}
+
+		$sitebuilder_ids = $this->resolve_sitebuilder_post_ids_for_asset_bridge();
+		if ( empty( $sitebuilder_ids ) ) {
+			return;
+		}
+
+		$this->bridge_atomic_assets_for_post_ids( $sitebuilder_ids );
+	}
+
+	/**
+	 * Bridge Elementor's atomic styles flow for an explicit list of site-builder post IDs.
+	 *
+	 * Use this entry point when the rendering target is known directly (for example
+	 * AJAX previews) and the request-based resolution used by
+	 * bridge_atomic_assets_for_override() does not apply.
+	 *
+	 * @since 1.0.0
+	 * @param int[] $post_ids Site-builder post IDs to bridge.
+	 * @return void
+	 */
+	public function bridge_atomic_assets_for_post_ids( $post_ids ) {
+		if ( ! class_exists( 'Elementor\Plugin' ) ) {
+			return;
+		}
+
+		$sitebuilder_ids = array_values( array_unique( array_filter( array_map( 'absint', (array) $post_ids ) ) ) );
+		if ( empty( $sitebuilder_ids ) ) {
+			return;
+		}
+
+		$elementor = \Elementor\Plugin::$instance;
+
+		$sitebuilder_ids = array_values( array_filter( $sitebuilder_ids, function ( $sitebuilder_id ) use ( $elementor ) {
+			$document = $elementor->documents->get( $sitebuilder_id );
+
+			return $document && $document->is_built_with_elementor();
+		} ) );
+
+		if ( empty( $sitebuilder_ids ) ) {
+			return;
+		}
+
+		$bridge_callback = function () use ( $sitebuilder_ids ) {
+			static $done = array();
+
+			foreach ( $sitebuilder_ids as $sitebuilder_id ) {
+				if ( isset( $done[ $sitebuilder_id ] ) ) {
+					continue;
+				}
+				$done[ $sitebuilder_id ] = true;
+
+				// Feed the atomic styles manager with our site-builder post.
+				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
+				do_action( 'elementor/post/render', $sitebuilder_id );
+
+				// Replicate Elementor\Frontend::handle_page_assets() which is private.
+				$this->enqueue_sitebuilder_page_assets( $sitebuilder_id );
+
+				// Enqueue the legacy per-post CSS (mirrors what core does on singular).
+				if ( class_exists( 'Elementor\Core\Files\CSS\Post' ) ) {
+					$css_file = \Elementor\Core\Files\CSS\Post::create( $sitebuilder_id );
+					$css_file->enqueue();
+				}
+			}
+		};
+
+		add_action( 'elementor/frontend/after_enqueue_styles', $bridge_callback );
+
+		// Force Elementor's enqueue_styles() to run now (during wp_enqueue_scripts)
+		$elementor->frontend->enqueue_styles();
+	}
+
+	/**
+	 * Collect all site-builder documents expected to render on this request.
+	 *
+	 * @return int[]
+	 */
+	private function resolve_sitebuilder_post_ids_for_asset_bridge() {
+		$post_ids = array();
+
+		$override_post_id = $this->resolve_active_sitebuilder_post_id();
+		if ( $override_post_id ) {
+			$post_ids[] = $override_post_id;
+		}
+
+		foreach ( array( 'header', 'footer' ) as $part ) {
+			$post_ids = array_merge( $post_ids, $this->resolve_conditioned_sitebuilder_post_ids( $part ) );
+		}
+
+		return array_values( array_unique( array_filter( array_map( 'absint', $post_ids ) ) ) );
+	}
+
+	/**
+	 * Replicates the private Elementor\Frontend::handle_page_assets() behaviour
+	 * so runtime elements and page-level asset metadata still load for the
+	 * overriding site-builder document.
+	 *
+	 * @param int $post_id Site-builder post ID.
+	 * @return void
+	 */
+	private function enqueue_sitebuilder_page_assets( $post_id ) {
+		if ( ! class_exists( 'Elementor\Plugin' ) ) {
+			return;
+		}
+
+		$elementor = \Elementor\Plugin::$instance;
+
+		$page_assets = get_post_meta( $post_id, '_elementor_page_assets', true );
+		if ( ! empty( $page_assets ) && isset( $elementor->assets_loader ) ) {
+			$elementor->assets_loader->enable_assets( $page_assets );
+			return;
+		}
+
+		$document = $elementor->documents->get( $post_id );
+		if ( ! $document ) {
+			return;
+		}
+
+		if ( method_exists( $document, 'update_runtime_elements' ) ) {
+			$document->update_runtime_elements();
+		}
+	}
+
+	/**
+	 * Determine the site-builder post ID that is overriding the current request,
+	 * if any. Returns 0 when no override applies so the caller can bail cheaply.
+	 *
+	 * @return int
+	 */
+	private function resolve_active_sitebuilder_post_id() {
+		$part = $this->resolve_current_override_part();
+		if ( ! $part ) {
+			return 0;
+		}
+
+		$status = $this->solace_get_part_status( $part );
+		if ( empty( $status['is_checked'] ) ) {
+			return 0;
+		}
+
+		$posts = get_posts( array(
+			'post_type'      => 'solace-sitebuilder',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_key'       => '_solace_' . $part . '_status',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_value'     => '1',
+			'posts_per_page' => 1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+		) );
+
+		return $posts ? (int) $posts[0] : 0;
+	}
+
+	/**
+	 * Resolve published header/footer site-builder IDs whose conditions match
+	 * the current request using the same page-type tokens as the free plugin.
+	 *
+	 * @param string $part Site-builder part.
+	 * @return int[]
+	 */
+	private function resolve_conditioned_sitebuilder_post_ids( $part ) {
+		$status = $this->solace_get_part_status( $part );
+		if ( empty( $status['is_checked'] ) ) {
+			return array();
+		}
+
+		$post_ids = get_posts( array(
+			'post_type'      => 'solace-sitebuilder',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_key'       => '_solace_' . $part . '_status',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_value'     => '1',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'orderby'        => 'ID',
+			'order'          => 'DESC',
+		) );
+
+		return array_values( array_filter( $post_ids, function ( $post_id ) use ( $part ) {
+			return $this->sitebuilder_part_conditions_match_request( $post_id, $part );
+		} ) );
+	}
+
+	/**
+	 * Match a header/footer document against the current request.
+	 *
+	 * @param int    $post_id Site-builder post ID.
+	 * @param string $part    Site-builder part.
+	 * @return bool
+	 */
+	private function sitebuilder_part_conditions_match_request( $post_id, $part ) {
+		$conditions = maybe_unserialize( get_post_meta( $post_id, '_solace_' . $part . '_conditions', true ) );
+		$page_type  = $this->resolve_current_sitebuilder_page_type();
+
+		if ( 'publish' !== get_post_status( $post_id ) || empty( $conditions ) || ! is_array( $conditions ) || '' === $page_type ) {
+			return false;
+		}
+
+		foreach ( $conditions as $condition ) {
+			if ( ! is_array( $condition ) ) {
+				continue;
+			}
+
+			if (
+				isset( $condition['type'], $condition['value'] ) &&
+				'exclude' === $condition['type'] &&
+				$page_type === $condition['value']
+			) {
+				return false;
+			}
+		}
+
+		foreach ( $conditions as $condition ) {
+			if ( ! is_array( $condition ) ) {
+				continue;
+			}
+
+			if (
+				isset( $condition['type'], $condition['value'] ) &&
+				'include' === $condition['type'] &&
+				$this->sitebuilder_condition_value_matches_request( $condition['value'], $page_type )
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Resolve the request into the page-type tokens used by the free plugin.
+	 *
+	 * @return string
+	 */
+	private function resolve_current_sitebuilder_page_type() {
+		if ( function_exists( 'check_current_page_type' ) ) {
+			$page_type = check_current_page_type();
+
+			return is_string( $page_type ) ? $page_type : '';
+		}
+
+		if ( class_exists( 'WooCommerce' ) ) {
+			if ( function_exists( 'is_shop' ) && is_shop() ) {
+				return 'product|all';
+			} elseif ( function_exists( 'is_product' ) && is_product() ) {
+				return 'product|all';
+			} elseif ( function_exists( 'is_cart' ) && is_cart() ) {
+				return 'product|all';
+			} elseif ( function_exists( 'is_checkout' ) && is_checkout() ) {
+				return 'product|all';
+			} elseif ( function_exists( 'is_account_page' ) && is_account_page() ) {
+				return 'product|all';
+			} elseif ( function_exists( 'is_product_category' ) && is_product_category() ) {
+				return 'product|all|taxarchive|product_cat';
+			} elseif ( function_exists( 'is_product_tag' ) && is_product_tag() ) {
+				return 'product|all|taxarchive|product_tag';
+			} elseif ( is_search() && 'product' === get_query_var( 'post_type' ) ) {
+				return 'product|all|archive';
+			} elseif ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
+				return 'product|all';
+			}
+		}
+
+		if ( is_front_page() ) {
+			return 'special-front';
+		} elseif ( is_home() ) {
+			return 'special-blog';
+		} elseif ( is_404() ) {
+			return 'special-404';
+		} elseif ( is_author() ) {
+			return 'special-author';
+		} elseif ( is_search() ) {
+			return 'special-search';
+		} elseif ( is_date() ) {
+			return 'special-date';
+		}
+
+		if ( is_archive() ) {
+			if ( is_category() ) {
+				return 'post|all|taxarchive|category';
+			} elseif ( is_tag() ) {
+				return 'post|all|taxarchive|post_tag';
+			} elseif ( is_post_type_archive() ) {
+				return 'post|all|archives';
+			} elseif ( is_tax() ) {
+				return 'basic-archives';
+			}
+
+			return 'basic-archives';
+		}
+
+		if ( is_singular() ) {
+			if ( is_page() ) {
+				return 'page|all';
+			} elseif ( is_attachment() ) {
+				return 'basic-archives';
+			} elseif ( is_single() ) {
+				return 'post|all';
+			}
+
+			return 'basic-singulars';
+		}
+
+		if ( is_feed() || is_trackback() || is_embed() || is_privacy_policy() ) {
+			return 'basic-archives';
+		}
+
+		return 'basic-archives';
+	}
+
+	/**
+	 * Check whether an include condition matches the current page type.
+	 *
+	 * @param string $condition_value Stored include condition.
+	 * @param string $page_type       Current request page type.
+	 * @return bool
+	 */
+	private function sitebuilder_condition_value_matches_request( $condition_value, $page_type ) {
+		$valid_archive_types = array(
+			'post|all|taxarchive|post_tag',
+			'post|all|taxarchive|category',
+			'post|all|archives',
+			'basic-archives',
+			'special-author',
+			'special-date',
+			'special-search',
+			'author',
+		);
+
+		$valid_singular_types = array(
+			'post',
+			'attachment',
+			'page',
+			'basic-singulars',
+			'page|all',
+			'post|all',
+			'author',
+		);
+
+		switch ( $condition_value ) {
+			case 'basic-global':
+				return true;
+
+			case 'page|all':
+				if ( 'special-front' === $page_type && is_home() ) {
+					return false;
+				}
+
+				return ! in_array(
+					$page_type,
+					array(
+						'basic-singular',
+						'basic-archive',
+						'special-author',
+						'post|all|taxarchive|category',
+						'post|all|taxarchive|post_tag',
+						'post|all',
+						'special-date',
+						'special-search',
+						'special-404',
+					),
+					true
+				);
+
+			case 'basic-archives':
+				return in_array( $page_type, $valid_archive_types, true );
+
+			case 'basic-singulars':
+				return in_array( $page_type, $valid_singular_types, true );
+
+			default:
+				return $condition_value === $page_type;
+		}
+	}
+
+	/**
+	 * Mirror the part-matching logic used by the various override_*_template()
+	 * filters so we can decide, at wp_enqueue_scripts time, which site-builder
+	 * document will be rendered for this request.
+	 *
+	 * Keep this in sync with the override_*() methods above.
+	 *
+	 * @return string|null
+	 */
+	private function resolve_current_override_part() {
+		$has_woocommerce = class_exists( 'WooCommerce' );
+
+		if ( $has_woocommerce ) {
+			if ( function_exists( 'is_product' ) && is_product() ) {
+				return 'singleproduct';
+			}
+
+			if ( ( function_exists( 'is_product_category' ) && is_product_category() ) ||
+				( function_exists( 'is_product_tag' ) && is_product_tag() ) ) {
+				return 'shopproduct';
+			}
+
+			global $wp;
+			if ( isset( $wp->query_vars['order-received'] ) &&
+				function_exists( 'wc_get_order' ) &&
+				wc_get_order( intval( $wp->query_vars['order-received'] ) ) ) {
+				return 'purchase-summary';
+			}
+		}
+
+		if ( is_404() ) {
+			return '404';
+		}
+
+		if ( is_singular( 'post' ) ) {
+			return 'blogsinglepost';
+		}
+
+		$is_woo_shop = $has_woocommerce && function_exists( 'is_shop' ) && is_shop();
+		if ( $is_woo_shop ) {
+			return null;
+		}
+
+		$posts_page_id = absint( get_option( 'page_for_posts' ) );
+		$current_id    = get_queried_object_id();
+
+		if ( is_archive() || ( $posts_page_id && $current_id === $posts_page_id ) ) {
+			return 'blogarchive';
+		}
+
+		return null;
+	}
+
+	/**
+	 * Retrieve the status information of a specific UI part for the Solace Site Builder.
+	 *
+	 * This function checks the metadata of posts with the post type 'solace-sitebuilder'
+	 * to determine the visual and logical status of a given UI part (e.g., if it's active,
+	 * checked, disabled, etc.). It returns an array containing image filename, lock status,
+	 * checkbox state, and whether the element is disabled or not.
+	 *
+	 * @param string $part The identifier of the part to check (e.g., 'blogsinglepost').
+	 *
+	 * @return array {
+	 *     An associative array of part status data.
+	 *
+	 *     @type string  $image        Image filename to use based on status.
+	 *     @type string  $lock_class   CSS class indicating if the element is locked.
+	 *     @type bool    $is_checked   Whether the part should be marked as "checked".
+	 *     @type string  $active_blue  Optional class for active UI highlighting.
+	 *     @type bool    $is_disabled  Whether the part is disabled due to missing data.
+	 * }
+	 */	
+	public function solace_get_part_status( $part ) {
+		$is_checked = false;
+		$image = $part . '.svg'; // Default image
+		$lock_class = 'lock';    // Default lock class
+		$active_blue = '';
+		$is_disabled = false;    // Default to not disabled
+	
+		$posts = get_posts([
+			'post_type'      => 'solace-sitebuilder',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_key'       => '_solace_' . $part . '_status',
+			'posts_per_page' => -1,
+			'fields'         => 'ids'
+		]);
+	
+		if (empty($posts)) {
+			$is_disabled = true; // Disable the switch if no posts found
+	
+			return [
+				'image' => $part . '.svg', // Default image
+				'lock_class' => 'lock',    // Lock class
+				'is_checked' => false,
+				'active_blue' => $active_blue,
+				'is_disabled' => $is_disabled
+			];
+		}
+	
+		$found_value_1 = false;
+		$found_value_0 = true; // Default, assume all are 0
+	
+		foreach ($posts as $post_id) {
+			$meta_value = get_post_meta($post_id, '_solace_' . $part . '_status', true);
+	
+			if ($meta_value === '1') {
+				$found_value_1 = true;
+			}
+	
+			if ($meta_value !== '0') {
+				$found_value_0 = false; // At least one value is not 0
+			}
+		}
+	
+		if ($found_value_1) {
+			$active_blue = 'active';
+			$image = $part . '-active.svg'; 
+			$lock_class = ''; 
+			$is_checked = true;
+		} elseif ($found_value_0) {
+			$image = $part . '-dark.svg'; 
+			$is_checked = false;
+		}
+	
+		return [
+			'image' => $image,
+			'lock_class' => $lock_class,
+			'is_checked' => $is_checked,
+			'active_blue' => $active_blue,
+			'is_disabled' => $is_disabled
+		];
+	}	
+
 }

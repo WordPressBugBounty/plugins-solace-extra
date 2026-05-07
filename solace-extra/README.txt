@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 6.9
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,19 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.5.2 - 4 May 2026 =
+* feat(sitebuilder): bridge atomic assets in Elementor preview; align Elementor kit styles for demo preview.
+* fix(sitebuilder): demo header/footer preview stability; atomic editor CSS; typography accent; remove obsolete preview helper output.
+* fix(layout): sync Elementor page layout with Customizer (default, canvas, full width); improve single-product and single-post template handling.
+* fix(import): resolve demo Home menu item to the local front page.
+* fix(starter-templates): load-more behavior; remove unwanted header/footer gap on free templates.
+* fix(woocommerce): product gallery border styling.
+* feat(widget): site logo border and border-radius controls.
+* fix(widget): site logo default value and height; featured image wrapper overflow for border-radius; nav menu submenu icon; product rating undefined error; social icons styling.
+* feat(widget): archive/blog featured image border controls and thumbnail border-radius option.
+* fix(widget): blog archive pagination column; shop pagination alignment, icons, and number styling.
+* refactor(icons): breadcrumb-related icons (SVG conversion and Font Awesome handling).
 
 = 1.5.1 - 27 March 2026 =
 * feat: add a product-tag element to the Shop widget.

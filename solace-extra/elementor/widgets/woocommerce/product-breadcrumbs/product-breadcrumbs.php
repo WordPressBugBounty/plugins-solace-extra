@@ -240,6 +240,9 @@ class Solace_Extra_Product_Breadcrumbs extends Widget_Base {
 
 		$settings = $this->get_settings_for_display();
 
+		// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedStylesheet, PluginCheck.CodeAnalysis.Offloading.OffloadedContent -- Font Awesome from CDN (widget icons).
+		echo '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />';
+
 		$product = solace_get_preview_product();
 		
 		$checkempty = solace_check_empty_product( $product );

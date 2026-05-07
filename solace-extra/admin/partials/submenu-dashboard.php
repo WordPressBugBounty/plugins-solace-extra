@@ -99,7 +99,7 @@
 
                         if ( $solace_extra_result ) {
                             echo '<span class="title">' . esc_html__( 'Pro Activated 🎉', 'solace-extra' ) . '</span>';
-                            echo '<span class="desc">' . esc_html__( 'Thank you for purchasing SolaceExtraPro', 'solace-extra' ) . '</span>';
+                            echo '<span class="desc">' . esc_html__( 'Thank you for purchasing Solace Extra Pro', 'solace-extra' ) . '</span>';
                             echo '<a href="#" rel="noopener noreferrer" class="upgrade-link" style="visibility:hidden;">&nbsp;</a>';
                         } else {
                             echo '<span class="title">' . esc_html__( 'GO PRO', 'solace-extra' ) . '</span>';
