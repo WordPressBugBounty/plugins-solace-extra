@@ -91,9 +91,11 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 	// }
 
 	/**
-	 * Register list widget controls.
+	 * Build default Media control values from Customizer / import data.
 	 *
-	 * Add input fields to allow the user to customize the widget settings.
+	 * Order: explicit `logourl`, `custom_logo_url` (canonical URL from demo/import when
+	 * attachment IDs do not match), WordPress `custom_logo` attachment, plugin upload id,
+	 * legacy `logo_logo`, Elementor placeholder.
 	 *
 	 * @since 1.0.0
 	 * @access protected
@@ -111,34 +113,14 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 
 		// 2) Fallback to WordPress custom logo attachment.
 		if ( empty( $default_logo_url ) ) {
-			$default_logo_id = (int) get_theme_mod( 'custom_logo', 0 );
-			if ( $default_logo_id ) {
-				$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
-			}
-		}
-
-		// 3) Fallback to plugin uploaded image attachment id.
-		if ( empty( $default_logo_url ) ) {
-			$default_logo_id = (int) get_option( 'solace_uploaded_image_id', 0 );
-			if ( $default_logo_id ) {
-				$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
-			}
-		}
-
-		// Compatibility fallback for legacy/imported `logo_logo` values (URL or attachment ID in JSON).
-		if ( empty( $default_logo_url ) ) {
-			$logo_logo_theme_mod = get_theme_mod( 'logo_logo' );
-			if ( is_string( $logo_logo_theme_mod ) && '' !== $logo_logo_theme_mod ) {
-				$logo_logo_decoded = json_decode( $logo_logo_theme_mod, true );
-				$logo_logo_light = is_array( $logo_logo_decoded ) && isset( $logo_logo_decoded['light'] ) ? $logo_logo_decoded['light'] : $logo_logo_theme_mod;
-
-				if ( is_numeric( $logo_logo_light ) ) {
-					$default_logo_id = (int) $logo_logo_light;
-					if ( $default_logo_id ) {
-						$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
-					}
-				} elseif ( is_string( $logo_logo_light ) ) {
-					$default_logo_url = esc_url_raw( $logo_logo_light );
+			$custom_logo_url_mod = get_theme_mod( 'custom_logo_url' );
+			if ( is_string( $custom_logo_url_mod ) && '' !== $custom_logo_url_mod ) {
+				$default_logo_url = esc_url_raw( $custom_logo_url_mod );
+				$default_logo_id  = 0;
+			} else {
+				$default_logo_id = (int) get_theme_mod( 'custom_logo', 0 );
+				if ( $default_logo_id ) {
+					$default_logo_url = wp_get_attachment_image_url( $default_logo_id, 'full' );
 				}
 			}
 		}

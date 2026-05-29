@@ -193,6 +193,10 @@ body.solace_page_dashboard-sitebuilder {
                 display: flex;
                 align-items: center;
                 transition: all 0.3s ease-out;
+                line-height: 2.15384615;
+                min-height: 30px;
+                padding: 0 10px;
+
                 &.all {
                     margin-bottom: 30px;
                     font-weight: 600;
@@ -793,6 +797,8 @@ body.solace_page_dashboard-sitebuilder {
                 height: 40px;
                 position: relative;
                 padding-top: 3px;
+                line-height: normal;
+
                 &::before {
                     content: url('../../assets/images/plus-addcondition.svg');
                     position: absolute;
@@ -981,6 +987,7 @@ body.solace_page_dashboard-sitebuilder {
                 font-size: 12px;
                 height: 44px;
                 background-position: right 13px center;
+                line-height: normal;
             }
             select.condition-select {
                 padding-right: 100px;

@@ -56,6 +56,8 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                     '5' => esc_html__('5 Columns', 'solace-extra'),
                 ],
                 'default' => '3',
+                'tablet_default' => '2',
+                'mobile_default' => '1',
                 'selectors' => [
                     '{{WRAPPER}} .data-post' => 'grid-template-columns: repeat({{VALUE}}, 1fr);',
                 ],

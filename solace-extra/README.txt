@@ -3,8 +3,8 @@ Contributors: solacewp
 Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
-Tested up to: 6.9
-Stable tag: 1.5.2
+Tested up to: 7.0
+Stable tag: 1.5.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,16 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.5.3 - 28 May 2026 =
+* feat(archive-posts): add responsive default values for column controls
+* style(starter-templates): improve checked checkbox styling
+* fix(starter-templates): resolve issue preventing template selection clicks
+* style(wp7): improve sidebar component styling
+* style(wp7): improve popup header and footer styling
+* fix(site-logo): prioritize custom_logo_url and clear stale IDs for URL-only defaults
+* fix(sitebuilder): load header and footer atomic CSS in Elementor v4 editor
+* fix(site-logo): improve alignment control behavior
 
 = 1.5.2 - 4 May 2026 =
 * feat(sitebuilder): bridge atomic assets in Elementor preview; align Elementor kit styles for demo preview.

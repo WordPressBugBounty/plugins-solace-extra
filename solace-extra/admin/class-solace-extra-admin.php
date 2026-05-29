@@ -429,7 +429,7 @@ class Solace_Extra_Admin {
 		// Only page starter templates
 		if ( $hook === 'solace_page_dashboard-starter-templates' ) {
 			// Starter Templates
-			wp_enqueue_script( 'solace-extra-starter-templates', plugin_dir_url( __FILE__ ) . 'js/starter-templates.js', array( 'jquery' ), SOLACE_EXTRA_DEMO_IMPORT_URL, true );
+			wp_enqueue_script( 'solace-extra-starter-templates', plugin_dir_url( __FILE__ ) . 'js/starter-templates.js', array( 'jquery' ), SOLACE_EXTRA_VERSION, true );
 		}		
 
 		// Only page preview

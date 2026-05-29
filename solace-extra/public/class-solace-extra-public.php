@@ -479,6 +479,99 @@ class Solace_Extra_Public {
 
 		add_action( 'elementor/frontend/after_enqueue_styles', $bridge_callback );
 
+		// Skip the late-inlining ONLY for the header / footer part the user
+		$editing_part_id = $this->get_editing_header_or_footer_sitebuilder_part_id();
+		if ( $this->is_in_elementor_editor_or_preview() ) {
+			add_action( 'wp_footer', function () use ( $sitebuilder_ids, $editing_part_id ) {
+				$upload_dir = wp_upload_dir();
+				if ( empty( $upload_dir['basedir'] ) ) {
+					return;
+				}
+
+				$base_dir = trailingslashit( $upload_dir['basedir'] ) . 'elementor/css/';
+
+				static $printed = array();
+
+				foreach ( $sitebuilder_ids as $sitebuilder_id ) {
+					$sitebuilder_id = absint( $sitebuilder_id );
+					if ( ! $sitebuilder_id || isset( $printed[ $sitebuilder_id ] ) ) {
+						continue;
+					}
+
+					// Skip the part currently open in the editor itself
+					if ( $editing_part_id && $sitebuilder_id === $editing_part_id ) {
+						continue;
+					}
+
+					// Limit late-inlining to header / footer parts only.
+					$is_header_or_footer = (
+						'1' === (string) get_post_meta( $sitebuilder_id, '_solace_header_status', true )
+						|| '1' === (string) get_post_meta( $sitebuilder_id, '_solace_footer_status', true )
+					);
+					if ( ! $is_header_or_footer ) {
+						continue;
+					}
+
+					if ( 'solace-sitebuilder' !== get_post_type( $sitebuilder_id ) ) {
+						continue;
+					}
+
+					$printed[ $sitebuilder_id ] = true;
+
+					$pattern_files = glob( $base_dir . 'local-' . $sitebuilder_id . '-frontend-*.css' );
+					$preview_files = glob( $base_dir . 'local-' . $sitebuilder_id . '-preview-*.css' );
+
+					$files = array_merge(
+						is_array( $pattern_files ) ? $pattern_files : array(),
+						is_array( $preview_files ) ? $preview_files : array()
+					);
+
+					foreach ( $files as $file ) {
+						if ( ! is_readable( $file ) ) {
+							continue;
+						}
+
+						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+						$content = file_get_contents( $file );
+						if ( empty( $content ) ) {
+							continue;
+						}
+
+						$bumped = preg_replace_callback(
+							'/([^{}]+)\{([^{}]*)\}/',
+							function ( $matches ) {
+								$selectors = array_map( 'trim', explode( ',', $matches[1] ) );
+								$selectors = array_map(
+									function ( $selector ) {
+										if ( '' === $selector || ( isset( $selector[0] ) && '@' === $selector[0] ) ) {
+											return $selector;
+										}
+										return 'body ' . $selector;
+									},
+									$selectors
+								);
+								return implode( ',', $selectors ) . '{' . $matches[2] . '}';
+							},
+							$content
+						);
+
+						if ( null === $bumped || '' === $bumped ) {
+							$bumped = $content;
+						}
+
+						printf(
+							'<style id="solace-style-custom solace-sitebuilder-late-%s">%s</style>' . "\n",
+							esc_attr( basename( $file, '.css' ) ),
+							// CSS content is read from a file Elementor itself
+							// generated; the regex above only adds prefixes.
+							// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+							$bumped
+						);
+					}
+				}
+			}, 0 );
+		}
+
 		// Force Elementor's enqueue_styles() to run now (during wp_enqueue_scripts)
 		$elementor->frontend->enqueue_styles();
 	}
@@ -496,11 +589,115 @@ class Solace_Extra_Public {
 			$post_ids[] = $override_post_id;
 		}
 
+		// Inside the Elementor editor preview iframe 
+		$is_elementor_editing = $this->is_in_elementor_editor_or_preview();
+
 		foreach ( array( 'header', 'footer' ) as $part ) {
-			$post_ids = array_merge( $post_ids, $this->resolve_conditioned_sitebuilder_post_ids( $part ) );
+			if ( $is_elementor_editing ) {
+				$post_ids = array_merge( $post_ids, $this->resolve_active_sitebuilder_post_ids_for_part( $part ) );
+			} else {
+				$post_ids = array_merge( $post_ids, $this->resolve_conditioned_sitebuilder_post_ids( $part ) );
+			}
 		}
 
 		return array_values( array_unique( array_filter( array_map( 'absint', $post_ids ) ) ) );
+	}
+
+	/**
+	 * Detect Elementor editor or preview-iframe context.
+	 *
+	 * The editor admin UI runs under is_admin(); the preview iframe does not.
+	 * Both states benefit from the part assets being available, so we check
+	 * each one explicitly and tolerate older Elementor versions that may not
+	 * expose either accessor.
+	 *
+	 * @return bool
+	 */
+	private function is_in_elementor_editor_or_preview() {
+		if ( ! class_exists( 'Elementor\Plugin' ) ) {
+			return false;
+		}
+
+		$elementor = \Elementor\Plugin::$instance;
+
+		if ( isset( $elementor->preview ) && method_exists( $elementor->preview, 'is_preview_mode' ) && $elementor->preview->is_preview_mode() ) {
+			return true;
+		}
+
+		if ( isset( $elementor->editor ) && method_exists( $elementor->editor, 'is_edit_mode' ) && $elementor->editor->is_edit_mode() ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Resolve the post ID currently open in the Elementor editor /
+	 * preview iframe — but only when that document is itself a header
+	 * or footer site-builder part.
+	 *
+	 * @return int
+	 */
+	private function get_editing_header_or_footer_sitebuilder_part_id() {
+		if ( ! class_exists( 'Elementor\Plugin' ) ) {
+			return 0;
+		}
+
+		$elementor  = \Elementor\Plugin::$instance;
+		$editing_id = 0;
+
+		if ( isset( $elementor->preview ) && method_exists( $elementor->preview, 'get_post_id' ) ) {
+			$editing_id = (int) $elementor->preview->get_post_id();
+		}
+
+		if ( ! $editing_id && isset( $elementor->editor ) && method_exists( $elementor->editor, 'get_post_id' ) ) {
+			$editing_id = (int) $elementor->editor->get_post_id();
+		}
+
+		if ( ! $editing_id ) {
+			return 0;
+		}
+
+		if ( 'solace-sitebuilder' !== get_post_type( $editing_id ) ) {
+			return 0;
+		}
+
+		$is_header_or_footer = (
+			'1' === (string) get_post_meta( $editing_id, '_solace_header_status', true )
+			|| '1' === (string) get_post_meta( $editing_id, '_solace_footer_status', true )
+		);
+
+		return $is_header_or_footer ? $editing_id : 0;
+	}
+
+	/**
+	 * Resolve every published site-builder part flagged active for $part,
+	 * skipping the request-condition matcher used on the public site.
+	 *
+	 * @param string $part Site-builder part (e.g. 'header', 'footer').
+	 * @return int[]
+	 */
+	private function resolve_active_sitebuilder_post_ids_for_part( $part ) {
+		$status = $this->solace_get_part_status( $part );
+		if ( empty( $status['is_checked'] ) ) {
+			return array();
+		}
+
+		$post_ids = get_posts( array(
+			'post_type'      => 'solace-sitebuilder',
+			'post_status'    => 'publish',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_key'       => '_solace_' . $part . '_status',
+			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+			'meta_value'     => '1',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+			'no_found_rows'  => true,
+			'orderby'        => 'ID',
+			'order'          => 'DESC',
+		) );
+
+		return array_values( array_filter( array_map( 'absint', (array) $post_ids ) ) );
 	}
 
 	/**
