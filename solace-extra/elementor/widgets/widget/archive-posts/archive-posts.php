@@ -98,15 +98,13 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             ]
         );
 
-
-        $this->add_responsive_control(
+        $this->add_control(
             'posts_per_page',
             [
-                'label' => esc_html__( 'Post Per Page', 'solace-extra' ),
-                'type' => \Elementor\Controls_Manager::NUMBER,
+                'label'   => esc_html__( 'Posts Per Page', 'solace-extra' ),
+                'type'    => \Elementor\Controls_Manager::NUMBER,
                 'default' => 5,
-                'tablet_default' => 3,
-                'mobile_default' => 2,
+                'min'     => 1,
             ]
         );
 
@@ -185,12 +183,69 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
         $this->add_control(
             'show_pagination',
             [
-                'label' => esc_html__('Pagination', 'solace-extra'),
-                'type' => \Elementor\Controls_Manager::SWITCHER,
-                'label_on' => esc_html__('Show', 'solace-extra'),
-                'label_off' => esc_html__('Hide', 'solace-extra'),
+                'label'        => esc_html__( 'Pagination', 'solace-extra' ),
+                'type'         => \Elementor\Controls_Manager::SWITCHER,
+                'label_on'     => esc_html__( 'Show', 'solace-extra' ),
+                'label_off'    => esc_html__( 'Hide', 'solace-extra' ),
                 'return_value' => 'yes',
-                'default' => 'yes',
+                'default'      => 'yes',
+            ]
+        );
+
+        $this->add_control(
+            'pagination_type',
+            [
+                'label'     => esc_html__( 'Type', 'solace-extra' ),
+                'type'      => \Elementor\Controls_Manager::SELECT,
+                'default'   => 'numbers',
+                'options'   => [
+                    'numbers'       => esc_html__( 'Numbers', 'solace-extra' ),
+                    'prev_next'     => esc_html__( 'Previous / Next', 'solace-extra' ),
+                    'numbers_and_prev_next' => esc_html__( 'Numbers & Prev / Next', 'solace-extra' ),
+                ],
+                'condition' => [
+                    'show_pagination' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'pagination_page_limit',
+            [
+                'label'     => esc_html__( 'Page Limit', 'solace-extra' ),
+                'type'      => \Elementor\Controls_Manager::NUMBER,
+                'default'   => 5,
+                'min'       => 1,
+                'max'       => 20,
+                'condition' => [
+                    'show_pagination' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'pagination_prev_label',
+            [
+                'label'     => esc_html__( 'Previous Label', 'solace-extra' ),
+                'type'      => \Elementor\Controls_Manager::TEXT,
+                'default'   => '&laquo;',
+                'condition' => [
+                    'show_pagination'  => 'yes',
+                    'pagination_type'  => [ 'prev_next', 'numbers_and_prev_next' ],
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'pagination_next_label',
+            [
+                'label'     => esc_html__( 'Next Label', 'solace-extra' ),
+                'type'      => \Elementor\Controls_Manager::TEXT,
+                'default'   => '&raquo;',
+                'condition' => [
+                    'show_pagination'  => 'yes',
+                    'pagination_type'  => [ 'prev_next', 'numbers_and_prev_next' ],
+                ],
             ]
         );
 
@@ -1039,14 +1094,34 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                 'label' => __( 'Padding', 'solace-extra' ),
                 'type' => Controls_Manager::DIMENSIONS,
                 'size_units' => [ 'px', '%', 'em' ],
+
                 'default' => [
-					'top' => 5,
-					'right' => 20,
-					'bottom' => 5,
-					'left' => 20,
-				],
+                    'top' => 10,
+                    'right' => 10,
+                    'bottom' => 10,
+                    'left' => 10,
+                    'unit' => 'px',
+                ],
+
+                'tablet_default' => [
+                    'top' => 10,
+                    'right' => 10,
+                    'bottom' => 10,
+                    'left' => 10,
+                    'unit' => 'px',
+                ],
+
+                'mobile_default' => [
+                    'top' => 0,
+                    'right' => 0,
+                    'bottom' => 0,
+                    'left' => 0,
+                    'unit' => 'px',
+                ],
+
                 'selectors' => [
-                    '{{WRAPPER}} .solace-pagination .page-numbers' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                    '{{WRAPPER}} .solace-pagination .page-numbers' =>
+                        'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
                 ],
             ]
         );
@@ -1328,6 +1403,18 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                 margin: 0 0.2rem;
             }
 
+            @media (max-width: 768px) {
+                .solace-pagination .page-numbers {
+                    padding: 10px;
+                }
+            }
+            
+            @media (max-width: 375px) {
+                .solace-pagination .page-numbers {
+                    padding: 0px;
+                }
+            }
+
 
         </style>';
     }
@@ -1339,21 +1426,8 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
         <script>
         jQuery(document).ready(function($){
 
-            // Scope khusus widget ini
             var widget = $('#solace-post-archive-<?php echo esc_html( $widget_id ); ?>');
             var container = widget.find('.data-post');
-
-            function adjustPosts(){
-                var articles = container.find('article');
-                var w = window.innerWidth;
-
-                var max = container.data('posts-desktop');
-                if(w <= 768) max = container.data('posts-tablet');
-                if(w <= 480) max = container.data('posts-mobile');
-
-                articles.show();
-                articles.slice(max).hide();
-            }
 
             function adjustExcerpt(){
                 widget.find('.sol-excerpt').each(function(){
@@ -1379,7 +1453,6 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             }
 
             // Run initial
-            adjustPosts();
             adjustExcerpt();
 
             // On Resize
@@ -1387,7 +1460,6 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             $(window).on('resize', function(){
                 clearTimeout(resizeTimer);
                 resizeTimer = setTimeout(function(){
-                    adjustPosts();
                     adjustExcerpt();
                 }, 200);
             });
@@ -1410,25 +1482,27 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
         $columns_tablet  = isset( $columns['tablet'] ) ? $columns['tablet'] : $columns_desktop;
         $columns_mobile  = isset( $columns['mobile'] ) ? $columns['mobile'] : $columns_tablet;
 
-        $posts_per_page = !empty( $settings['posts_per_page'] ) ? $settings['posts_per_page'] : 5;
-        $posts_per_page_tablet = !empty( $settings['posts_per_page_tablet'] ) ? $settings['posts_per_page_tablet'] : $posts_per_page;
-        $posts_per_page_mobile = !empty( $settings['posts_per_page_mobile'] ) ? $settings['posts_per_page_mobile'] : $posts_per_page;
+        $posts_per_page = ! empty( $settings['posts_per_page'] )
+            ? absint( $settings['posts_per_page'] )
+            : 5;
 
         $excerpt_length = !empty( $settings['excerpt_length'] ) ? $settings['excerpt_length'] : 150;
         $excerpt_length_tablet = !empty( $settings['excerpt_length_tablet'] ) ? $settings['excerpt_length_tablet'] : $excerpt_length;
         $excerpt_length_mobile = !empty( $settings['excerpt_length_mobile'] ) ? $settings['excerpt_length_mobile'] : $excerpt_length;
 
-        
+        $show_pagination   = !empty( $settings['show_pagination'] ) && $settings['show_pagination'] === 'yes';
+        $pagination_type   = !empty( $settings['pagination_type'] ) ? $settings['pagination_type'] : 'numbers';
+        $page_limit        = !empty( $settings['pagination_page_limit'] ) ? absint( $settings['pagination_page_limit'] ) : 5;
+
+        $prev_label = !empty( $settings['pagination_prev_label'] ) ? $settings['pagination_prev_label'] : '&laquo;';
+        $next_label = !empty( $settings['pagination_next_label'] ) ? $settings['pagination_next_label'] : '&raquo;';
 
         ?>
        <div id="solace-post-archive-<?php echo esc_attr( $this->get_id() ); ?>" class="solace-post-archive 
             layout-column-desktop-<?php echo esc_attr( $columns_desktop ); ?> 
             layout-column-tablet-<?php echo esc_attr( $columns_tablet ); ?> 
             layout-column-mobile-<?php echo esc_attr( $columns_mobile ); ?>">
-            <div class="data-post" 
-                data-posts-desktop="<?php echo esc_attr( $posts_per_page ); ?>" 
-                data-posts-tablet="<?php echo esc_attr( $posts_per_page_tablet ); ?>" 
-                data-posts-mobile="<?php echo esc_attr( $posts_per_page_mobile ); ?>">
+            <div class="data-post">
                 <?php
                 // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Pagination from URL, value sanitized with intval().
                 $paged = isset($_GET['page_' . $this->get_id()]) ? intval($_GET['page_' . $this->get_id()]) : 1;
@@ -1473,7 +1547,7 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                                             <div class="sol-image">
                                                 <?php
                                                 if ( ! post_password_required() && ! is_attachment() ) :
-                                                    $thumbnail_url = get_the_post_thumbnail_url( get_the_ID(), 'solace-default-blog' );
+                                                    $thumbnail_url = get_the_post_thumbnail_url( get_the_ID(), 'full' );
                                                     if ( $thumbnail_url ) : ?>
                                                         <a class="thumbnail-link-grids" href="<?php the_permalink(); ?>" aria-hidden="true" tabindex="-1">
                                                             <div class="thumbnail-background" style="background-image: url('<?php echo esc_url( $thumbnail_url ); ?>');"></div>
@@ -1541,23 +1615,85 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                         endwhile;
                         wp_reset_postdata();
                         
-                        if ( $settings['show_pagination'] === 'yes' && $custom_query->max_num_pages > 1 ) :
-                            ?>
-                            <div class="solace-pagination">
-                                <?php
+                        if ( $show_pagination && $custom_query->max_num_pages > 1 ) :
 
-                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                echo paginate_links([
-                                    'total'   => $custom_query->max_num_pages,
-                                    'current' => $paged,
-                                    'format'  => '?' . $paged_key . '=%#%',
-                                    'prev_text' => '&laquo; Prev',
-                                    'next_text' => 'Next &raquo;',
-                                ]);
+                            $has_prev_next = in_array( $pagination_type, [ 'prev_next', 'numbers_and_prev_next' ], true );
+                            $has_numbers   = in_array( $pagination_type, [ 'numbers', 'numbers_and_prev_next' ], true );
+
+                            // Definisikan prev/next text SEBELUM paginate_links
+                            if ( $has_prev_next ) {
+                                $prev_text = wp_kses_post( $prev_label );
+                                $next_text = wp_kses_post( $next_label );
+                            } else {
+                                $prev_text = '';
+                                $next_text = '';
+                            }
+
+                            // Hitung range
+                            $half_limit = (int) floor( $page_limit / 2 );
+                            $start_page = max( 1, $paged - $half_limit );
+                            $end_page   = min( $custom_query->max_num_pages, $start_page + $page_limit - 1 );
+
+                            if ( ( $end_page - $start_page + 1 ) < $page_limit ) {
+                                $start_page = max( 1, $end_page - $page_limit + 1 );
+                            }
+
+                            $all_links = paginate_links( [
+                                'total'     => $custom_query->max_num_pages,
+                                'current'   => $paged,
+                                'format'    => '?' . $paged_key . '=%#%',
+                                'prev_text' => $has_prev_next ? $prev_text : false,
+                                'next_text' => $has_prev_next ? $next_text : false,
+                                'prev_next' => $has_prev_next,
+                                'end_size'  => 0,
+                                'mid_size'  => 0,
+                                'show_all'  => true,
+                                'type'      => 'array',
+                            ] );
+
+                            if ( ! empty( $all_links ) ) :
                                 ?>
-                            </div>
-                        <?php endif; ?>
-                    <?php 
+                                <div class="solace-pagination pagination-type-<?php echo esc_attr( $pagination_type ); ?>">
+                                    <?php foreach ( $all_links as $link ) :
+
+                                        $is_prev_next = (
+                                            strpos( $link, 'prev' ) !== false ||
+                                            strpos( $link, 'next' ) !== false
+                                        );
+
+                                        if ( $is_prev_next ) {
+                                            if ( $has_prev_next ) {
+                                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                                                echo $link;
+                                            }
+                                            continue;
+                                        }
+
+                                        if ( ! $has_numbers ) {
+                                            continue;
+                                        }
+
+                                        preg_match( '/[?&]' . preg_quote( $paged_key, '/' ) . '=(\d+)/', $link, $matches );
+
+                                        if ( ! empty( $matches[1] ) ) {
+                                            $link_page = (int) $matches[1];
+                                        } elseif ( strpos( $link, 'current' ) !== false ) {
+                                            $link_page = $paged;
+                                        } else {
+                                            $link_page = 1;
+                                        }
+
+                                        if ( $link_page >= $start_page && $link_page <= $end_page ) {
+                                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                                            echo $link;
+                                        }
+
+                                    endforeach; ?>
+                                </div>
+                                <?php
+                            endif;
+
+                        endif;
                     else :
                         ?>
                         <section class="no-results not-found">

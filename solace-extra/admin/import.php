@@ -1423,12 +1423,16 @@ class Solace_Extra_Import {
      */
     public function delete_previously_imported()
     {
-        // Verify nonce
-        if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
-            $response = array('error' => 'Invalid nonce!');
-			echo wp_json_encode($response);
-            wp_die();
-        }        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'error' => 'Unauthorized!' ), 403 );
+        }
+
+        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce(
+            sanitize_text_field( wp_unslash( $_POST['nonce'] ) ),
+            'ajax-nonce'
+        ) ) {
+            wp_send_json_error( array( 'error' => 'Invalid nonce!' ), 403 );
+        }  
 
         $this->delete_wp_importer_post_type_sitebuilder();
         $this->delete_imported_terms_category();
@@ -2619,6 +2623,65 @@ class Solace_Extra_Import {
         wp_die();
     }
 
+    /**
+     * Normalize a menu item URL from remote demo domain to local site.
+     *
+     * For custom-link menu items imported from a remote demo, the URL contains
+     * the remote domain and a demo-slug prefix (/clawnest/...). This method
+     * replaces the remote domain with the local site URL and strips the
+     * demo-slug prefix so the link works on the user's site.
+     *
+     * The allowed domain is extracted from SOLACE_EXTRA_DEMO_IMPORT_URL,
+     * so it adapts automatically when the demo server URL changes.
+     *
+     * @since 1.6.0
+     * @param string $url The original menu item URL from the demo data.
+     * @return string Normalized URL pointing to the local site.
+     */
+    private function normalize_menu_url($url)
+    {
+        // Keep fragment-only or empty links as-is.
+        if (empty($url) || '#' === $url || 0 === strpos($url, '#')) {
+            return $url;
+        }
+
+        $parsed = wp_parse_url($url);
+
+        // Relative path — keep as-is, WP will resolve it.
+        if (empty($parsed['host'])) {
+            return $url;
+        }
+
+        // Build allowed domains from SOLACE_EXTRA_DEMO_IMPORT_URL.
+        $demo_host  = wp_parse_url(SOLACE_EXTRA_DEMO_IMPORT_URL, PHP_URL_HOST);
+        $allowed    = array($demo_host);
+        if ($demo_host && 'www.' !== substr($demo_host, 0, 4)) {
+            $allowed[] = 'www.' . $demo_host;
+        }
+
+        if (!in_array($parsed['host'], $allowed, true)) {
+            return $url;
+        }
+
+        $path = isset($parsed['path']) ? $parsed['path'] : '/';
+
+        // Strip the first path segment (the demo slug, e.g. /clawnest/… → /…).
+        $segments = explode('/', trim($path, '/'));
+        if (count($segments) > 1) {
+            array_shift($segments); // remove demo slug
+            $path = '/' . implode('/', $segments);
+        } elseif (count($segments) === 1) {
+            // URL is just the demo slug root — point to site root.
+            $path = '/';
+        }
+
+        // Preserve query string if present.
+        $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+
+        return home_url($path . $query);
+    }
+
+    // Function to process menu item based on its type
     // Function to process menu item based on its type
     public function processMenuItem($menu_item, $demo_name, $index_menu_item)
     {
@@ -2631,7 +2694,7 @@ class Solace_Extra_Import {
             'menu-item-object-id'    => 0,
             'menu-item-position'     => $menu_item->menu_order,
             'menu-item-type'         => $menu_item->type,
-            'menu-item-url'          => $menu_item->url,
+            'menu-item-url'          => $this->normalize_menu_url($menu_item->url),
             'menu-item-description'  => $menu_item->description,
             'menu-item-attr-title'   => $menu_item->attr_title,
             'menu-item-target'       => $menu_item->target,
@@ -2650,7 +2713,7 @@ class Solace_Extra_Import {
                     'menu-item-type'      => 'custom',
                     'menu-item-object'    => 'custom',
                     'menu-item-object-id' => 0,
-                    'menu-item-url'       => $menu_item->url,
+                    'menu-item-url'       => $this->normalize_menu_url($menu_item->url),
                 )
             );
         };

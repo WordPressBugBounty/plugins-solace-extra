@@ -1173,6 +1173,11 @@ body.solace_page_dashboard-sitebuilder {
     }
 }
 
+// Fix previvew fancybox
+.fancybox-content {
+    height: 100% !important;
+}
+
 @media only screen and (max-width: 1350px) {
     body.solace_page_dashboard-sitebuilder {
         .solace-sitebuilder {

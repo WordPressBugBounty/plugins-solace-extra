@@ -1997,6 +1997,10 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .solace-rename-popup-
   cursor: pointer;
 }
 
+.fancybox-content {
+  height: 100% !important;
+}
+
 @media only screen and (max-width: 1350px) {
   body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .headlist span.label {
     text-align: center;

@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.5.3
+Stable tag: 1.6.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,20 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.6.0 - 2 July 2026 =
+* feat(sitebuilder): make "All Products" condition cover the whole WooCommerce surface.
+* feat(site-logo): sync site logo with the Customizer.
+* fix(customizer): sync logo preview across controls without reload.
+* fix(site-logo): sync logo on widget save.
+* fix(site-builder): improve demo preview.
+* fix(sitebuilder): only suppress header/footer in editor when editing a header/footer part.
+* fix(sitebuilder): resolve Site Builder exclude condition issue.
+* fix(widget): blog - add pagination option.
+* fix(widget): blog - fix thumbnail background.
+* fix(widget): blog - set posts_per_page without responsive and set default padding.
+* fix(import): normalize custom menu URLs from the demo domain to the local site.
+* fix(import): resolve delete_previously_imported issue.
 
 = 1.5.3 - 28 May 2026 =
 * feat(archive-posts): add responsive default values for column controls

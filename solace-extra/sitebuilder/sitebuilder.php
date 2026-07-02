@@ -120,6 +120,110 @@ function check_current_page_type() {
     return 'basic-archives';
 }
 
+/**
+ * Whether the current page type belongs to the WooCommerce surface.
+ *
+ * check_current_page_type() returns `product|all` for the main WooCommerce
+ * pages (shop, single product, cart, checkout, my account etc.
+ * @param string $page_type Page type returned by check_current_page_type().
+ * @return bool
+ */
+function solace_is_woocommerce_page_type( $page_type ) {
+    return is_string( $page_type ) && strpos( $page_type, 'product|all' ) === 0;
+}
+
+/**
+ * Determine whether a saved condition value matches the current page type.
+ *
+ * `check_current_page_type()` always returns a specific value (e.g. `page|all`,
+ * `post|all`, `post|all|taxarchive|category`) and never a grouping value such as
+ * `basic-global`, `basic-singulars`, or `basic-archives`. The include logic already
+ * expands these groups via $valid_singular_types / $valid_archive_types, so the
+ * exclude logic must use the same expansion instead of a strict `===` comparison —
+ * otherwise excluding "Entire Website", "All Singulars", or "All Archives" never works.
+ *
+ * @param string $value     The condition value selected by the user.
+ * @param string $page_type The current page type returned by check_current_page_type().
+ * @return bool
+ */
+function solace_sitebuilder_value_matches_page_type( $value, $page_type ) {
+    if ( $value === $page_type ) {
+        return true;
+    }
+
+    $singular_types = array(
+        'page|all',
+        'post|all',
+        'basic-singulars',
+        'product|all',
+    );
+
+    $archive_types = array(
+        'post|all|taxarchive|post_tag',
+        'post|all|taxarchive|category',
+        'post|all|archives',
+        'basic-archives',
+        'special-author',
+        'special-date',
+        'special-search',
+        'product|all|taxarchive|product_cat',
+        'product|all|taxarchive|product_tag',
+    );
+
+    switch ( $value ) {
+        case 'basic-global': // Entire Website.
+            return true;
+        case 'basic-singulars': // All Singulars.
+            return in_array( $page_type, $singular_types, true );
+        case 'basic-archives': // All Archives.
+            return in_array( $page_type, $archive_types, true );
+        case 'product|all': // All Products → entire WooCommerce surface.
+            return solace_is_woocommerce_page_type( $page_type );
+    }
+
+    return false;
+}
+
+/**
+ * Normalize a saved conditions array.
+ *
+ * The display logic is include-driven: a template only renders when one of its
+ * `include` conditions matches the current page. That means a rule containing
+ * ONLY `exclude` conditions would never render anywhere, so excluding a page type
+ * on an otherwise site-wide template appears to do nothing.
+ *
+ * An exclude-only rule is meant to read as "show on the entire website EXCEPT the
+ * excluded page types", so we inject an implicit `basic-global` include for it.
+ *
+ * @param mixed $conditions Unserialized conditions array.
+ * @return array
+ */
+function solace_sitebuilder_normalize_conditions( $conditions ) {
+    if ( ! is_array( $conditions ) ) {
+        return array();
+    }
+
+    $has_include = false;
+    $has_exclude = false;
+
+    foreach ( $conditions as $condition ) {
+        if ( ! isset( $condition['type'] ) ) {
+            continue;
+        }
+        if ( $condition['type'] === 'include' ) {
+            $has_include = true;
+        } elseif ( $condition['type'] === 'exclude' ) {
+            $has_exclude = true;
+        }
+    }
+
+    if ( $has_exclude && ! $has_include ) {
+        array_unshift( $conditions, array( 'type' => 'include', 'value' => 'basic-global' ) );
+    }
+
+    return $conditions;
+}
+
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Legacy function name, kept for backward compatibility.
 function get_solace_header_conditions() {
     global $wpdb;
@@ -157,7 +261,7 @@ function get_solace_header_conditions() {
             $final_results[] = [
                 'post_id'       => $row->post_id,
                 'header_status' => $row->header_status,
-                'conditions'    => maybe_unserialize($row->header_conditions)
+                'conditions'    => solace_sitebuilder_normalize_conditions( maybe_unserialize($row->header_conditions) )
             ];
         }
     }
@@ -203,7 +307,7 @@ function get_solace_footer_conditions() {
             $final_results[] = [
                 'post_id'       => $row->post_id,
                 'footer_status' => $row->footer_status,
-                'conditions'    => maybe_unserialize($row->footer_conditions)
+                'conditions'    => solace_sitebuilder_normalize_conditions( maybe_unserialize($row->footer_conditions) )
             ];
         }
     }
@@ -291,7 +395,7 @@ function get_solace_footer_conditionsx() {
             $final_results[] = [
                 'post_id'       => $row->post_id,
                 'footer_status' => $row->footer_status,
-                'conditions'    => maybe_unserialize($row->footer_conditions)
+                'conditions'    => solace_sitebuilder_normalize_conditions( maybe_unserialize($row->footer_conditions) )
             ];
         }
     }
@@ -307,7 +411,68 @@ function solace_is_elementor_editor() {
     return false;
 }
 
+/**
+ * Detect whether the current request is the Elementor editor or its preview
+ * iframe rendering a HEADER or FOOTER Site Builder part itself.
+ *
+ * The header/footer wrappers run inside the Elementor PREVIEW iframe, where
+ * editor->is_edit_mode() is false and only preview->is_preview_mode() is true.
+ * When a header/footer part is open in the editor, the wrappers must NOT inject
+ * the other active header/footer parts — only the part being edited should
+ * appear on the canvas.
+ *
+ * This deliberately matches header/footer parts ONLY. Other parts (single
+ * product, single post, archive, 404, ...) still need the header and footer to
+ * render around them for editing context.
+ *
+ * @return int The header/footer Site Builder post ID being edited, or 0 when not applicable.
+ */
+function solace_get_editing_header_or_footer_part_id() {
+    if ( ! class_exists( '\Elementor\Plugin' ) ) {
+        return 0;
+    }
+
+    $elementor = \Elementor\Plugin::$instance;
+
+    $is_editor_context = (
+        ( isset( $elementor->preview ) && method_exists( $elementor->preview, 'is_preview_mode' ) && $elementor->preview->is_preview_mode() )
+        || ( isset( $elementor->editor ) && method_exists( $elementor->editor, 'is_edit_mode' ) && $elementor->editor->is_edit_mode() )
+    );
+
+    if ( ! $is_editor_context ) {
+        return 0;
+    }
+
+    $editing_id = 0;
+    if ( isset( $elementor->preview ) && method_exists( $elementor->preview, 'get_post_id' ) ) {
+        $editing_id = (int) $elementor->preview->get_post_id();
+    }
+    if ( ! $editing_id && isset( $elementor->editor ) && method_exists( $elementor->editor, 'get_post_id' ) ) {
+        $editing_id = (int) $elementor->editor->get_post_id();
+    }
+
+    if ( ! $editing_id || 'solace-sitebuilder' !== get_post_type( $editing_id ) ) {
+        return 0;
+    }
+
+    // Only header/footer parts carry these meta keys. Match by key existence so
+    // disabled parts are still recognised as header/footer parts.
+    $is_header_or_footer = (
+        metadata_exists( 'post', $editing_id, '_solace_header_status' )
+        || metadata_exists( 'post', $editing_id, '_solace_footer_status' )
+    );
+
+    return $is_header_or_footer ? $editing_id : 0;
+}
+
 function solace_display_custom_header() {
+    // When editing a Site Builder part in the Elementor editor/preview, render
+    // nothing here — only the edited part should show on canvas. Return true so
+    // the theme wrapper does not fall back to the default header builder either.
+    if ( solace_get_editing_header_or_footer_part_id() ) {
+        return true;
+    }
+
     if (did_action('elementor/loaded')) {
         \Elementor\Plugin::$instance->frontend->enqueue_styles();
     }
@@ -359,7 +524,7 @@ function solace_display_custom_header() {
 
         if (!empty($condition['conditions'])) {
             foreach ($condition['conditions'] as $include_condition) {
-                if ($include_condition['type'] === 'exclude' && $include_condition['value'] === $page_type) {
+                if ($include_condition['type'] === 'exclude' && solace_sitebuilder_value_matches_page_type($include_condition['value'], $page_type)) {
                     $exclude = true;
                     break;
                 }
@@ -404,7 +569,7 @@ function solace_display_custom_header() {
 
         if (!empty($condition['conditions'])) {
             foreach ($condition['conditions'] as $include_condition) {
-                if ($include_condition['type'] === 'exclude' && $include_condition['value'] === $page_type) {
+                if ($include_condition['type'] === 'exclude' && solace_sitebuilder_value_matches_page_type($include_condition['value'], $page_type)) {
                     $exclude = true;
                     break;
                 }
@@ -454,7 +619,7 @@ function solace_display_custom_header() {
 
         if (!empty($condition['conditions'])) {
             foreach ($condition['conditions'] as $include_condition) {
-                if ($include_condition['type'] === 'exclude' && $include_condition['value'] === $page_type) {
+                if ($include_condition['type'] === 'exclude' && solace_sitebuilder_value_matches_page_type($include_condition['value'], $page_type)) {
                     $exclude = true;
                     break;
                 }
@@ -753,8 +918,11 @@ function solace_display_custom_header() {
         if (!$exclude) {
             foreach ($condition['conditions'] as $include_condition) {
                 if ($include_condition['type'] === 'include' && $include_condition['value'] === 'product|all') {
-                    
-                    if ($page_type === 'product|all') {
+
+                    // "All Products" covers the whole WooCommerce surface:
+                    // single product, cart, checkout, my account, shop, and
+                    // product category/tag/search archives.
+                    if (solace_is_woocommerce_page_type($page_type)) {
                         $matched_post_id = $condition['post_id'];
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
@@ -988,6 +1156,13 @@ function solace_enqueue_social_icons_css_if_needed( $post_id ) {
 }
 
 function solace_display_custom_footer() {
+    // When editing a Site Builder part in the Elementor editor/preview, render
+    // nothing here — only the edited part should show on canvas. Return true so
+    // the theme wrapper does not fall back to the default footer builder either.
+    if ( solace_get_editing_header_or_footer_part_id() ) {
+        return true;
+    }
+
     if (did_action('elementor/loaded')) {
         \Elementor\Plugin::$instance->frontend->enqueue_styles();
     }
@@ -1041,7 +1216,7 @@ function solace_display_custom_footer() {
 
         if (!empty($condition['conditions'])) {
             foreach ($condition['conditions'] as $include_condition) {
-                if ($include_condition['type'] === 'exclude' && $include_condition['value'] === $page_type) {
+                if ($include_condition['type'] === 'exclude' && solace_sitebuilder_value_matches_page_type($include_condition['value'], $page_type)) {
                     $exclude = true;
                     break;
                 }
@@ -1085,7 +1260,7 @@ function solace_display_custom_footer() {
 
         if (!empty($condition['conditions'])) {
             foreach ($condition['conditions'] as $include_condition) {
-                if ($include_condition['type'] === 'exclude' && $include_condition['value'] === $page_type) {
+                if ($include_condition['type'] === 'exclude' && solace_sitebuilder_value_matches_page_type($include_condition['value'], $page_type)) {
                     $exclude = true;
                     break;
                 }
@@ -1422,8 +1597,11 @@ function solace_display_custom_footer() {
         if (!$exclude) {
             foreach ($condition['conditions'] as $include_condition) {
                 if ($include_condition['type'] === 'include' && $include_condition['value'] === 'product|all') {
-                    
-                    if ($page_type === 'product|all') {
+
+                    // "All Products" covers the whole WooCommerce surface:
+                    // single product, cart, checkout, my account, shop, and
+                    // product category/tag/search archives.
+                    if (solace_is_woocommerce_page_type($page_type)) {
                         $matched_post_id = $condition['post_id'];
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {

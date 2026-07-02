@@ -6,6 +6,10 @@
  * @subpackage Importer
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
 if ( ! isset( $wp_filesystem ) || ! $wp_filesystem->method ) {
 	require_once ABSPATH . '/wp-admin/includes/file.php';
 	WP_Filesystem();

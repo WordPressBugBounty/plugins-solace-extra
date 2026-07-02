@@ -228,6 +228,18 @@ class Solace_Extra {
 		// Registers custom controls for Elementor.
 		$this->loader->add_action( 'elementor/controls/controls_registered', $plugin_admin, 'register_controls_elementor', 99999 );
 
+		// Customizer save -> push the selected logo into every Site Logo widget on the site.
+		$this->loader->add_action( 'customize_save_after', $plugin_admin, 'sync_site_logo_on_customizer_save' );
+
+		// Site Logo widget save -> mirror its logo back into the Customizer logo theme mods.
+		$this->loader->add_action( 'elementor/document/after_save', $plugin_admin, 'sync_customizer_logo_on_widget_save' );
+
+		// Live-preview the pending Customizer logo inside the Site Logo widgets (Customizer preview only).
+		$this->loader->add_action( 'elementor/widget/before_render_content', $plugin_admin, 'sync_site_logo_preview', 5 );
+
+		// Keep the header/footer logo controls in sync inside the Customizer panel.
+		$this->loader->add_action( 'customize_controls_enqueue_scripts', $plugin_admin, 'enqueue_customizer_logo_sync' );
+
 		// Sets the error reporting level.
 		// $this->loader->add_action( 'plugins_loaded', $plugin_admin, 'set_error_reporting_level' );
 
@@ -311,7 +323,6 @@ class Solace_Extra {
 
 		// Delete Previously Import
 		$this->loader->add_action( 'wp_ajax_action-delete-previously-imported', $plugin_admin, 'delete_previously_imported' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-delete-previously-imported', $plugin_admin, 'delete_previously_imported' );		
 
 		// Install Active Theme
 		$this->loader->add_action( 'wp_ajax_action-install-activate-theme', $plugin_admin, 'install_and_activate_theme' );

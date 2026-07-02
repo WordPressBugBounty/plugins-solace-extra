@@ -1458,7 +1458,367 @@ class Solace_Extra_Admin {
 		// Limit error reporting to fatal errors (E_ERROR) and parse errors (E_PARSE)
 		// error_reporting( E_ERROR | E_PARSE );
 	}
-	
+
+	/**
+	 * The Customizer logo theme mods kept in sync with the Site Logo widgets.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @var string[]
+	 */
+	private $logo_theme_mods = array( 'logo_logo', 'logo-footer_logo' );
+
+	/**
+	 * Read a logo attachment ID from a Solace Customizer logo theme mod.
+	 *
+	 * The control stores its value as a JSON theme mod, e.g.
+	 * {"light":<id>,"dark":<id>,"same":true}; the `light` key holds the logo
+	 * attachment ID. Returns 0 when the theme mod is missing or empty.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param string $mod_key Theme mod key. 'logo_logo' (header) or 'logo-footer_logo' (footer).
+	 * @return int Attachment ID, or 0 when not set.
+	 */
+	public function get_customizer_logo_id( $mod_key = 'logo_logo' ) {
+		return $this->parse_logo_json_id( get_theme_mod( $mod_key ) );
+	}
+
+	/**
+	 * Parse the attachment ID out of a logo control JSON value.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param mixed $raw JSON string such as {"light":<id>,"dark":<id>,"same":true}.
+	 * @return int Attachment ID, or 0 when it cannot be resolved.
+	 */
+	private function parse_logo_json_id( $raw ) {
+		if ( ! is_string( $raw ) || '' === $raw ) {
+			return 0;
+		}
+
+		$data = json_decode( $raw, true );
+		if ( ! is_array( $data ) || empty( $data['light'] ) ) {
+			return 0;
+		}
+
+		return (int) $data['light'];
+	}
+
+	/**
+	 * Write the same attachment ID into every Customizer logo theme mod.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $logo_id Attachment ID to store.
+	 * @return void
+	 */
+	private function set_customizer_logo_id( $logo_id ) {
+		$logo_id = (int) $logo_id;
+		if ( ! $logo_id ) {
+			return;
+		}
+
+		$json = wp_json_encode(
+			array(
+				'light' => $logo_id,
+				'dark'  => $logo_id,
+				'same'  => true,
+			)
+		);
+
+		foreach ( $this->logo_theme_mods as $mod_key ) {
+			set_theme_mod( $mod_key, $json );
+		}
+	}
+
+	/**
+	 * Resolve the logo attachment ID currently selected in the Customizer.
+	 *
+	 * Prefers whichever logo control is being changed in the active Customizer
+	 * request (works in both the preview iframe and on save), and falls back to
+	 * the saved theme mods otherwise.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Customize_Manager|null $manager Optional Customizer manager.
+	 * @return int Attachment ID, or 0 when none is set.
+	 */
+	private function resolve_customizer_logo_id( $manager = null ) {
+		if ( ! is_object( $manager ) && isset( $GLOBALS['wp_customize'] ) ) {
+			$manager = $GLOBALS['wp_customize'];
+		}
+
+		$changed = ( is_object( $manager ) && method_exists( $manager, 'unsanitized_post_values' ) )
+			? $manager->unsanitized_post_values()
+			: array();
+
+		foreach ( $this->logo_theme_mods as $mod_key ) {
+			if ( isset( $changed[ $mod_key ] ) ) {
+				$logo_id = $this->parse_logo_json_id( $changed[ $mod_key ] );
+				if ( $logo_id ) {
+					return $logo_id;
+				}
+			}
+		}
+
+		foreach ( $this->logo_theme_mods as $mod_key ) {
+			$logo_id = $this->get_customizer_logo_id( $mod_key );
+			if ( $logo_id ) {
+				return $logo_id;
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * When the Customizer is saved, push the selected logo into every Site Logo
+	 * widget across the whole site.
+	 *
+	 * Only reacts when one of the logo controls (logo_logo / logo-footer_logo)
+	 * was actually changed in the request.
+	 *
+	 * Hooked on `customize_save_after`.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \WP_Customize_Manager|null $manager The Customizer manager.
+	 * @return void
+	 */
+	public function sync_site_logo_on_customizer_save( $manager = null ) {
+		$changed = ( is_object( $manager ) && method_exists( $manager, 'unsanitized_post_values' ) )
+			? $manager->unsanitized_post_values()
+			: array();
+
+		$logo_touched = false;
+		foreach ( $this->logo_theme_mods as $mod_key ) {
+			if ( array_key_exists( $mod_key, $changed ) ) {
+				$logo_touched = true;
+				break;
+			}
+		}
+
+		if ( ! $logo_touched ) {
+			return;
+		}
+
+		$logo_id = $this->resolve_customizer_logo_id( $manager );
+		if ( ! $logo_id ) {
+			return;
+		}
+
+		// Keep both logo controls (logo_logo and logo-footer_logo) in sync.
+		$this->set_customizer_logo_id( $logo_id );
+
+		$this->push_logo_to_all_site_logos( $logo_id );
+	}
+
+	/**
+	 * Update every Site Logo widget anywhere on the site with the supplied
+	 * attachment.
+	 *
+	 * Scans every post that stores a Site Logo widget in its Elementor data,
+	 * regardless of post type or status.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param int $logo_id Attachment ID to apply.
+	 * @return void
+	 */
+	private function push_logo_to_all_site_logos( $logo_id ) {
+		$logo_id = (int) $logo_id;
+		if ( ! $logo_id || ! class_exists( 'Solace_Extra_Sitebuilder_Images' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		$post_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_elementor_data' AND meta_value LIKE %s",
+				'%' . $wpdb->esc_like( 'solace-extra-site-logo' ) . '%'
+			)
+		);
+
+		if ( empty( $post_ids ) ) {
+			return;
+		}
+
+		$service = new Solace_Extra_Sitebuilder_Images();
+
+		foreach ( $post_ids as $post_id ) {
+			$elementor_data = get_post_meta( $post_id, '_elementor_data', true );
+			if ( empty( $elementor_data ) ) {
+				continue;
+			}
+
+			$elements = json_decode( $elementor_data, true );
+			if ( empty( $elements ) || ! is_array( $elements ) ) {
+				continue;
+			}
+
+			// Empty data_id updates every matching Site Logo widget in the post.
+			$updated = $service->update_element_image( $elements, 'solace-extra-site-logo', $logo_id );
+			if ( ! $updated ) {
+				continue;
+			}
+
+			update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $elements ) ) );
+			$service->trigger_elementor_css_regeneration( (int) $post_id );
+		}
+	}
+
+	/**
+	 * When a Site Logo widget is changed in the Elementor editor, propagate its
+	 * logo to every other Site Logo widget on the site and mirror it back into
+	 * the Customizer theme mods (logo_logo and logo-footer_logo).
+	 *
+	 * Hooked on `elementor/document/after_save`.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \Elementor\Core\Base\Document $document The saved document.
+	 * @return void
+	 */
+	public function sync_customizer_logo_on_widget_save( $document ) {
+		if ( ! is_object( $document ) || ! method_exists( $document, 'get_elements_data' ) ) {
+			return;
+		}
+
+		/*
+		 * Guard against infinite recursion.
+		 *
+		 * For a post that has not yet been built with Elementor, calling
+		 * get_elements_data() makes Elementor run convert_to_elementor() ->
+		 * Document::save(), which fires `elementor/document/after_save` again and
+		 * re-enters this method. Without this guard that loops until PHP hits the
+		 * maximum call stack size and fatals.
+		 */
+		static $running = false;
+		if ( $running ) {
+			return;
+		}
+		$running = true;
+
+		try {
+			$logo_id = $this->find_first_site_logo_id( $document->get_elements_data() );
+			if ( ! $logo_id ) {
+				return;
+			}
+
+			// Mirror the logo into the Customizer theme mods when they differ.
+			$theme_mods_match = true;
+			foreach ( $this->logo_theme_mods as $mod_key ) {
+				if ( $logo_id !== $this->get_customizer_logo_id( $mod_key ) ) {
+					$theme_mods_match = false;
+					break;
+				}
+			}
+
+			if ( ! $theme_mods_match ) {
+				$this->set_customizer_logo_id( $logo_id );
+			}
+
+			// Propagate the logo to every Site Logo widget on the site.
+			$this->push_logo_to_all_site_logos( $logo_id );
+		} finally {
+			$running = false;
+		}
+	}
+
+	/**
+	 * Find the first Site Logo widget attachment ID within an Elementor element tree.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param array $elements Elementor elements array.
+	 * @return int Attachment ID, or 0 when no Site Logo widget is found.
+	 */
+	private function find_first_site_logo_id( $elements ) {
+		if ( ! is_array( $elements ) ) {
+			return 0;
+		}
+
+		foreach ( $elements as $element ) {
+			if ( isset( $element['widgetType'] ) && 'solace-extra-site-logo' === $element['widgetType']
+				&& ! empty( $element['settings']['solace_extra_site_logo']['id'] ) ) {
+				return (int) $element['settings']['solace_extra_site_logo']['id'];
+			}
+
+			if ( ! empty( $element['elements'] ) && is_array( $element['elements'] ) ) {
+				$found = $this->find_first_site_logo_id( $element['elements'] );
+				if ( $found ) {
+					return $found;
+				}
+			}
+		}
+
+		return 0;
+	}
+
+	/**
+	 * Live-preview the Customizer logo inside the Site Logo widgets.
+	 *
+	 * Runs only inside the Customizer preview so every Site Logo widget reflects
+	 * the pending (unsaved) logo while the user edits it; the logo settings use
+	 * the "refresh" transport, so the preview re-renders the widget on every
+	 * change. The persistent write happens separately on `customize_save_after`,
+	 * leaving the saved `_elementor_data` (and the Elementor editor) untouched
+	 * until the Customizer is actually saved.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @param \Elementor\Widget_Base $widget The widget being rendered.
+	 * @return void
+	 */
+	public function sync_site_logo_preview( $widget ) {
+		if ( ! is_customize_preview() ) {
+			return;
+		}
+
+		if ( 'solace-extra-site-logo' !== $widget->get_name() ) {
+			return;
+		}
+
+		$logo_id = $this->resolve_customizer_logo_id();
+		if ( ! $logo_id ) {
+			return;
+		}
+
+		$logo_url = wp_get_attachment_image_url( $logo_id, 'full' );
+		if ( ! $logo_url ) {
+			return;
+		}
+
+		$settings = $widget->get_settings();
+		$settings['solace_extra_site_logo']['id']  = $logo_id;
+		$settings['solace_extra_site_logo']['url'] = $logo_url;
+
+		$widget->set_settings( $settings );
+	}
+
+	/**
+	 * Enqueue the script that keeps the two logo controls in sync inside the
+	 * Customizer panel (header logo_logo <-> footer logo-footer_logo).
+	 *
+	 * Hooked on `customize_controls_enqueue_scripts`.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function enqueue_customizer_logo_sync() {
+		wp_enqueue_script(
+			'solace-extra-customizer-logo-sync',
+			plugin_dir_url( __FILE__ ) . 'js/customizer-logo-sync.js',
+			array( 'customize-controls', 'media-views' ),
+			$this->version,
+			true
+		);
+	}
+
 	/**
 	 * Allow SVG upload in WordPress media library.
 	 *
