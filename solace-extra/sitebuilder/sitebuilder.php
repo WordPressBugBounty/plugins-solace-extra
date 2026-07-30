@@ -540,7 +540,7 @@ function solace_display_custom_header() {
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
                             if (!empty($meta_content)) {   
-                                echo '<div class="delayed-content">';
+                                echo '<div class="solace-custom-header-content">';
                                 $elementor_instance = \Elementor\Plugin::instance();
                                 echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display($matched_post_id) );
                                 echo '</div>';
@@ -927,7 +927,7 @@ function solace_display_custom_header() {
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
                             if (!empty($meta_content)) {
-                                echo '<div class="delayed-content">';
+                                echo '<div class="solace-custom-footer-content">';
                                 $elementor_instance = Elementor\Plugin::instance();
                                 echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
                                 echo '</div>';
@@ -1233,18 +1233,18 @@ function solace_display_custom_footer() {
                         $meta_content = get_post_meta($matched_post_id, '_elementor_data', true);
                         if ( !$is_elementor_preview ) {
                             if (!empty($meta_content)) {
-                                echo '<div class="delayed-content">';
+                                echo '<div class="solace-custom-footer-content">';
                                 $elementor_instance = Elementor\Plugin::instance();
-			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
+                                echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
                                 echo '</div>';
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content basic-global">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
-                            }  
-                            $content_displayed = true; 
+                            }
+                            $content_displayed = true;
                         }
                     }
                 }
@@ -1806,16 +1806,22 @@ add_action('save_post', 'solace_set_taxonomy_based_on_part');
 // }
 
 function solace_update_sitebuilder_status() {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        // Verify nonce.
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
+        wp_send_json_error( 'Nonce verification failed.' );
+    }
+
+    // Check user capability.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Unauthorized.' );
+    }
+    
     if ( !isset($_POST['post_id']) || !isset($_POST['status']) || !isset($_POST['part']) ) {
         wp_send_json_error('Invalid data sent.');
     }
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing    
     $post_id = intval($_POST['post_id']);
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $part    = sanitize_text_field(wp_unslash($_POST['part']));
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $status  = sanitize_text_field(wp_unslash($_POST['status']));
 
     if ( $part && $part !== 'header' && $part !== 'footer' ) {
@@ -2879,39 +2885,9 @@ function solace_get_elementor_content_via_ajax() {
     die();
 }
 
-add_action('wp_head', function() {
-    ?>
-    <style>
-        .delayed-content {
-            visibility: hidden;
-            opacity: 0;
-            transition: visibility 0s linear .5s, opacity .5s ease-in-out; 
-        }
-        .delayed-content.show {
-            visibility: visible;
-            opacity: 1;
-            transition-delay: 0s; 
-        }
-    </style>
-    <?php
-});
 
 
 
-add_action('wp_footer', function() {
-    ?>
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() {
-                var delayedElements = document.querySelectorAll('.delayed-content');
-                delayedElements.forEach(function(el) {
-                    el.classList.add('show');
-                });
-            }, 1000); 
-        });
-    </script>
-    <?php
-});
 
 
 function solace_debug_full_page_info() {
@@ -3103,13 +3079,13 @@ function solace_override_container_var() {
         if ( $layout_slug === 'canvas' ) {
 
             add_action('wp_head', function() {
-                echo '<style id="solace-canvas-hide">.delayed-content, .delayed-content.show { display: none !important; }</style>';
+                echo '<style id="solace-canvas-hide">.solace-custom-header-content, .solace-custom-footer-content { display: none !important; }</style>';
             }, 1); 
 
             wp_add_inline_style(
                 'solace-container-layout',
-                'body .delayed-content,
-                body .delayed-content.show {
+                'body .solace-custom-header-content,
+                body .solace-custom-footer-content {
                     display: none !important;
                 }'
             );

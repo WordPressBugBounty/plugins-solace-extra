@@ -2,7 +2,7 @@
 
 if ( empty( $_COOKIE['solace_page_access'] ) ) {
     $solace_extra_url = get_admin_url() . 'admin.php?page=dashboard-starter-templates&type=elementor';
-    wp_safe_redirect( $solace_extra_url, 301 ); 
+    wp_safe_redirect( $solace_extra_url, 301 );
     exit;
 }
 
@@ -160,14 +160,38 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
 <div class="wrap wrap-congratulations">
     <?php require_once plugin_dir_path(dirname(__FILE__)) . 'partials/header.php'; ?>
     <div class="box-congrat">
-        <span class="cong_title"><?php esc_html_e('Congratulations!', 'solace-extra'); ?></span>
-        <span class="cong_desc"><?php esc_html_e('Your import is complete. You can check your website now.', 'solace-extra'); ?></span>
-        <div class="cong_border">
-        <?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img src="<?php echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/congratulations/border-congratulations.png' ); ?>" />
+        <div class="cong-success" aria-hidden="true">
+            <span class="cong-sparkles">
+                <svg class="cong-sparkle sparkle-one" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+                <svg class="cong-sparkle sparkle-two" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+                <svg class="cong-sparkle sparkle-three" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+                <svg class="cong-sparkle sparkle-four" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+                <svg class="cong-sparkle sparkle-five" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+                <svg class="cong-sparkle sparkle-six" viewBox="0 0 24 24"><path d="M12 0q1.1 10.9 12 12-10.9 1.1-12 12-1.1-10.9-12-12Q10.9 10.9 12 0Z"/></svg>
+            </span>
+            <svg viewBox="0 0 24 24"><path class="success-circle" d="M21.1 11.1a9.2 9.2 0 1 1-5.45-7.55"/><path d="m8 11.5 3.1 3.1L21 4.7"/></svg>
         </div>
-        <span class="done"><?php esc_html_e( 'done', 'solace-extra' ); ?></span>
-        <!--span class="cong_done">Done</span-->
-        <a class="button" target="_blank" href="<?php echo esc_url( site_url() ); ?>"><div class="cong_button"><?php esc_html_e( 'CHECK WEBSITE', 'solace-extra' ); ?></div></a>
+        <span class="cong_title"><?php esc_html_e('Your website is ready!', 'solace-extra'); ?></span>
+        <span class="cong_desc">
+            <?php esc_html_e('Your import is complete and everything is set up.', 'solace-extra'); ?><br>
+            <?php esc_html_e('You can now explore your new website.', 'solace-extra'); ?>
+        </span>
+        <div class="cong-progress" aria-label="<?php esc_attr_e('Import completed', 'solace-extra'); ?>">
+            <div class="cong-step"><span class="step-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12.5 3.2 3.2L17.5 8"/></svg></span><span><?php esc_html_e('Import Content', 'solace-extra'); ?></span></div>
+            <div class="cong-step"><span class="step-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12.5 3.2 3.2L17.5 8"/></svg></span><span><?php esc_html_e('Configure Settings', 'solace-extra'); ?></span></div>
+            <div class="cong-step"><span class="step-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12.5 3.2 3.2L17.5 8"/></svg></span><span><?php esc_html_e('Install Plugins', 'solace-extra'); ?></span></div>
+            <div class="cong-step"><span class="step-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 12.5 3.2 3.2L17.5 8"/></svg></span><span><?php esc_html_e('Setup Complete', 'solace-extra'); ?></span></div>
+        </div>
+        <a class="button" target="_blank" rel="noopener noreferrer" href="<?php echo esc_url( site_url() ); ?>">
+            <div class="cong_button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9"/><path d="M19 13v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h6"/></svg>
+                <?php esc_html_e( 'Check Website', 'solace-extra' ); ?>
+            </div>
+        </a>
+        <div class="cong-trust" aria-label="<?php esc_attr_e('Service benefits', 'solace-extra'); ?>">
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.7 2.8 8.1 7 10 4.2-1.9 7-5.3 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg><?php esc_html_e('Secure & Trusted', 'solace-extra'); ?></span>
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l2.5 1.5M7 3 3.5 6.5M17 3l3.5 3.5M7 20l-1.5 1.5M17 20l1.5 1.5"/></svg><?php esc_html_e('No Spam. Ever.', 'solace-extra'); ?></span>
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z"/></svg><?php esc_html_e('Fast & Reliable', 'solace-extra'); ?></span>
+        </div>
     </div>
 </div>
-

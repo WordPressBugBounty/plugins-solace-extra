@@ -4,6 +4,38 @@
     // Get nonce
     var nonce = ajax_object.nonce;    
 
+    // Keep the redesigned segmented bar and circular indicator synchronized
+    // with the existing import percentage animation.
+    function syncProgressVisual() {
+        var percentText = $('section.progress-import .percent').first().text();
+        var percentage = Math.max(0, Math.min(100, parseInt(percentText, 10) || 0));
+        var circumference = 119.38;
+
+        $('section.progress-import .progress-overall').css('width', percentage + '%');
+        $('section.progress-import .loading-percent span').text(percentage + '%');
+        $('section.progress-import .loading-value').css(
+            'stroke-dashoffset',
+            circumference - (circumference * percentage / 100)
+        );
+    }
+
+    function setImportStatus(message) {
+        var $status = $('section.progress-import span.info-import');
+        $status.empty().append($('<i>', { 'aria-hidden': 'true' })).append(
+            document.createTextNode(message)
+        );
+    }
+
+    var percentElement = document.querySelector('section.progress-import .percent');
+    if (percentElement) {
+        new MutationObserver(syncProgressVisual).observe(percentElement, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+        syncProgressVisual();
+    }
+
     // Function to get the value of a URL parameter by name
     function getParameterByName(name, url) {
         // If URL is not provided, use the current window's URL
@@ -436,7 +468,7 @@
                     prevDemo: prevDemo,
                 },
                 success: function(response) {
-                    $('section.progress-import .mycontainer .boxes span.info-import').text('');
+                    setImportStatus('Preparing website installation...');
                     $('section.progress-import .mycontainer .boxes .step-import').text('Delete Previously Imported Sites...');
                     // Remove list data demo
                     localStorage.removeItem('solaceRemoveDataDemo');
@@ -491,7 +523,7 @@
                 setTimeout(function() {
                     console.log(response);
                     // console.log ('Sukses Instal Activate Plugin, Now Importing Elementor ZIP');
-                    $('section.progress-import .mycontainer .boxes span.info-import').text('');
+                    setImportStatus('Importing demo content...');
                     $('section.progress-import .mycontainer .boxes .step-import').text('Importing Content...');
                     import_zip();
                    
@@ -588,7 +620,7 @@
                 function proceedToNextStep() {
                     console.log(response);
                     // console.log('Sukses Importing Elementor ZIP, Now Importing Customizer');
-                    $('section.progress-import .mycontainer .boxes span.info-import').text('Importing customizer.');
+                    setImportStatus('Importing customizer...');
                     solace_extra_import_step4();
                     import_menu();
                 }
@@ -680,7 +712,7 @@
                 $('section.progress-import .mycontainer .boxes .boxes-bar .bar4 .progress').attr('style', 'width: 100%;');
                 // console.log("Progress bar for import_zip 100%.");
                 console.log(response);
-                $('section.progress-import .mycontainer .boxes span.info-import').text('Final touches...');
+                setImportStatus('Final touches...');
                 clearInterval(solaceExtraStep4Interval);
                 clearTimeout(solaceExtraStep4Timeout);
                 

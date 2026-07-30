@@ -9,11 +9,23 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 
     $document_type_name = $document::get_type();
     $template_type = get_post_meta( $post_id, '_solace_template', true );
+    $template_part = is_string( $template_type ) ? str_replace( array( '_solace_', '_status' ), '', $template_type ) : '';
+
+    if ( '' === $template_part ) {
+        $preview_parts = array( 'blogarchive', 'blogsinglepost', 'singleproduct', 'shopproduct' );
+
+        foreach ( $preview_parts as $preview_part ) {
+            if ( metadata_exists( 'post', $post_id, '_solace_' . $preview_part . '_status' ) ) {
+                $template_part = $preview_part;
+                break;
+            }
+        }
+    }
 
     $settings = $document->get_settings();
     $target_post_type = isset( $settings['post_type'] ) ? $settings['post_type'] : 'not set';
 
-    if ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_blogarchive_status' ) {
+    if ( 'solace-sitebuilder' === $template_post_type && 'blogarchive' === $template_part ) {
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -52,7 +64,7 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
         );
 
         $document->end_controls_section();
-    } elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_blogsinglepost_status' ) {
+    } elseif ( 'solace-sitebuilder' === $template_post_type && 'blogsinglepost' === $template_part ) {
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -82,7 +94,7 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
         );
 
         $document->end_controls_section();
-    } elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_singleproduct_status' ) {
+    } elseif ( 'solace-sitebuilder' === $template_post_type && 'singleproduct' === $template_part ) {
         $document->start_controls_section(
             'solace_preview_section',
             [
@@ -112,7 +124,7 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
         );
 
         $document->end_controls_section();
-    }elseif ( 'solace-sitebuilder' === $template_post_type && $template_type === '_solace_shopproduct_status' ) {
+    } elseif ( 'solace-sitebuilder' === $template_post_type && 'shopproduct' === $template_part ) {
         $document->start_controls_section(
             'solace_preview_section',
             [

@@ -2,6 +2,244 @@ html.wp-toolbar:has(.solace_page_dashboard-congratulations) {
     padding-top: 0;
 }
 
+// Congratulations screen redesign.
+html body.solace_page_dashboard-congratulations {
+    background: #000f44;
+
+    #wpwrap,
+    #wpcontent,
+    #wpbody,
+    #wpbody-content {
+        min-height: 100vh;
+        background: #000f44;
+    }
+
+    .wrap-congratulations {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+        margin: 0;
+        padding: 0 24px 52px;
+        overflow: hidden;
+        background-color: #000f44;
+        background-image: linear-gradient(rgba(0, 10, 51, .04), rgba(0, 10, 51, .04)), url('../../assets/images/congratulations/background-v2.png');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+
+        >nav {
+            flex: 0 0 auto;
+            box-sizing: border-box;
+            width: calc(100% + 48px);
+            margin: 0 -24px 28px;
+            background: #000f44;
+        }
+
+        .box-congrat {
+            position: relative;
+            box-sizing: border-box;
+            width: min(750px, 100%);
+            height: auto;
+            margin: auto;
+            padding: 50px 70px 38px;
+            border: 1px solid rgba(8, 25, 66, .12);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, .985);
+            box-shadow: 0 28px 75px rgba(0, 4, 27, .38);
+
+            span { display: block; text-align: center; }
+
+            .cong-success {
+                position: relative;
+                display: grid;
+                place-items: center;
+                width: 94px;
+                height: 94px;
+                margin: 0 auto 15px;
+                border-radius: 50%;
+                background: radial-gradient(circle, #e5fae8 0 48%, rgba(224, 249, 228, .48) 49% 70%, transparent 71%);
+                filter: drop-shadow(0 8px 13px rgba(35, 169, 64, .15));
+
+                >svg {
+                    width: 70px;
+                    height: 70px;
+                    fill: none;
+                    stroke: #24a43f;
+                    stroke-width: 2.15;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+
+                // Four-point sparkle icons scattered around the badge.
+                .cong-sparkles {
+                    position: absolute;
+                    inset: 0;
+                    display: block;
+                    pointer-events: none;
+                }
+
+                .cong-sparkle {
+                    position: absolute;
+                    width: 12px;
+                    height: 12px;
+                    color: #ff9a14;
+                    fill: currentColor;
+                }
+
+                .sparkle-one { left: -52px; top: 54px; width: 15px; height: 15px; }
+                .sparkle-two { right: -50px; top: 14px; width: 12px; height: 12px; color: #ef80b7; }
+                .sparkle-three { left: -24px; top: 16px; width: 7px; height: 7px; color: #ffc46b; }
+                .sparkle-four { left: -14px; top: 76px; width: 6px; height: 6px; color: #b7dc7a; }
+                .sparkle-five { right: -20px; top: 56px; width: 8px; height: 8px; }
+                .sparkle-six { right: -58px; top: 70px; width: 6px; height: 6px; color: #f6aecf; }
+            }
+
+            span.cong_title {
+                margin: 0 0 10px;
+                padding: 0;
+                color: #001442;
+                font-size: 32px;
+                font-weight: 700;
+                line-height: 1.25;
+            }
+
+            span.cong_desc {
+                margin: 0 0 31px;
+                color: #59657d;
+                font-size: 15px;
+                font-weight: 400;
+                line-height: 1.65;
+            }
+
+            .cong-progress {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                margin: 0 -28px 35px;
+            }
+
+            .cong-step {
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 9px;
+                color: #33415d;
+                font-size: 11px;
+                font-weight: 500;
+
+                &:not(:last-child)::after {
+                    content: "";
+                    position: absolute;
+                    top: 15px;
+                    left: calc(50% + 26px);
+                    width: calc(100% - 52px);
+                    height: 2px;
+                    background: #36ad4b;
+                }
+
+                .step-check {
+                    display: grid;
+                    place-items: center;
+                    box-sizing: border-box;
+                    width: 32px;
+                    height: 32px;
+                    border: 2px solid #36ad4b;
+                    border-radius: 50%;
+                    color: #2da845;
+                    line-height: 1;
+
+                    svg {
+                        width: 20px;
+                        height: 20px;
+                        fill: none;
+                        stroke: currentColor;
+                        stroke-width: 2.4;
+                        stroke-linecap: round;
+                        stroke-linejoin: round;
+                    }
+                }
+            }
+
+            a.button {
+                display: flex;
+                justify-content: center;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+                text-decoration: none;
+
+                .cong_button {
+                    width: 360px;
+                    height: 54px;
+                    border-radius: 8px;
+                    gap: 12px;
+                    background: linear-gradient(90deg, #ff8500, #ffa000);
+                    color: #fff;
+                    font: 600 17px/1.3 Poppins, sans-serif;
+                    text-transform: none;
+                    box-shadow: 0 12px 23px rgba(255, 144, 0, .28);
+                    transition: transform .2s ease, box-shadow .2s ease;
+
+                    &:hover { transform: translateY(-2px); box-shadow: 0 15px 28px rgba(255, 144, 0, .35); }
+                    svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+                }
+            }
+
+            .cong-trust {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                margin-top: 34px;
+
+                span {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 11px;
+                    color: #42506a;
+                    font-size: 13px;
+                    font-weight: 500;
+                    line-height: 1.4;
+
+                    &:not(:last-child) { border-right: 1px solid #ccd1da; }
+                }
+                svg { width: 23px; height: 23px; fill: none; stroke: #526079; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
+            }
+        }
+    }
+}
+
+@media only screen and (max-width: 700px) {
+    html body.solace_page_dashboard-congratulations .wrap-congratulations {
+        padding: 0 14px 24px;
+        background-position: center;
+
+        >nav {
+            width: calc(100% + 28px);
+            margin: 0 -14px 24px;
+        }
+
+        .box-congrat {
+            padding: 35px 20px 28px;
+            border-radius: 20px;
+
+            span.cong_title { font-size: 27px; }
+            .cong-progress { margin: 0 0 30px; gap: 4px; }
+            .cong-step { font-size: 9px; }
+            .cong-step:not(:last-child)::after { left: calc(50% + 20px); width: calc(100% - 40px); }
+            a.button .cong_button { width: 100%; }
+            .cong-trust { gap: 8px; }
+            .cong-trust span { flex-direction: column; gap: 6px; font-size: 11px; }
+            .cong-trust span:not(:last-child) { border-right: 0; }
+        }
+    }
+}
+
 body.solace_page_dashboard-congratulations {
 
     #adminmenumain,

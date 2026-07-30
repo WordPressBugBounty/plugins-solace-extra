@@ -108,7 +108,21 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
 
                     add_filter('elementor/document/save/data', array($this, 'handle_pages_import'), 10, 2);
 
-                    \Elementor\Plugin::$instance->app->get_component('import-export')->import_kit($zip_file_path, array('include', 'selected_plugins', 'selected_cpt', 'selected_override_conditions'));
+                    $import_export = \Elementor\Plugin::$instance->app->get_component('import-export');
+
+                    // In non-admin contexts (WP-Cron / REST) Elementor skips registering
+                    // the 'import-export' component — App::__construct() gates it behind
+                    // current_user_can('manage_options'). When that happens, build the
+                    // module directly so the kit still imports.
+                    if (!$import_export && class_exists('\Elementor\App\Modules\ImportExport\Module')) {
+                        $import_export = new \Elementor\App\Modules\ImportExport\Module();
+                    }
+
+                    if (!$import_export) {
+                        throw new \RuntimeException('Elementor import-export component is unavailable; cannot import kit.');
+                    }
+
+                    $import_export->import_kit($zip_file_path, array('include', 'selected_plugins', 'selected_cpt', 'selected_override_conditions'));
 
                     $zip->close();
 
@@ -137,6 +151,37 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
         parent::complete();
         update_option('solace_extra_import_zip_complete', true);
         set_theme_mod('solace_extra_import_zip_complete', true);
+    }
+
+    /**
+     * Run a demo's Elementor kit import synchronously, in the current PHP process.
+     *
+     * The REST/automation bridge (Solace_Extra_REST_Demo) uses this instead of the
+     * async loopback dispatch, which fails under Application-Password auth: the
+     * loopback request carries no login cookie, so admin-ajax.php sees it as an
+     * unauthenticated user and check_ajax_referer() rejects the nonce — the queue
+     * is never processed. Running the import inline (from a WP-Cron event that does
+     * NOT require the admin nonce/cookie) sidesteps that entirely.
+     *
+     * @param string $demo_name The demo slug to import.
+     * @return void
+     */
+    public function run_import_now($demo_name) {
+        $this->import_elementor_kit($demo_name);
+    }
+
+    /**
+     * Drain the queued batch in this PHP process instead of via the async loopback.
+     *
+     * import_zip() ends with save()->dispatch(). Under Application-Password auth the
+     * dispatch is a dead end (cookieless loopback -> rejected nonce), so nothing ever
+     * processes the batch. Calling handle() here runs the queued task, then complete()
+     * flips solace_extra_import_zip_complete — exactly what the admin flow ends up doing.
+     *
+     * @return void
+     */
+    public function run_queue_now() {
+        $this->handle();
     }
 
     public function set_latest_page_as_default($page_title) {
@@ -476,15 +521,15 @@ class Solace_Extra_Import {
         $file = $demo_url;
         $importer->import( $file );
 
-		wp_send_json_success( 
-			array( 
+		wp_send_json_success(
+			array(
 				'message' => 'Import completed successfully.',
 				'file' => $file,
-			) 
+			)
 		);
 
 		wp_die();
-	}    
+	}
 
     /**
      * Solace Ajax Import
@@ -493,9 +538,7 @@ class Solace_Extra_Import {
     {
         // Verify nonce
         if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
-            $response = array('error' => 'Invalid nonce!');
-            echo wp_json_encode($response);
-            // wp_die();
+            wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
         }
 
         // Check current user
@@ -1451,6 +1494,37 @@ class Solace_Extra_Import {
         wp_die();
     }
 
+    /**
+     * Run the "delete previously imported" cleanup and return, without any
+     * AJAX/nonce/wp_die plumbing.
+     *
+     * delete_previously_imported() above is an admin-ajax handler: it does its
+     * own capability + 'ajax-nonce' check and ends with wp_die(), so it can't be
+     * reused from other contexts. This variant performs the exact same deletion
+     * sequence but is safe to call from the REST bridge, which authorizes the
+     * request itself (manage_options) and needs a normal return value.
+     *
+     * Only content tagged with the importer's own meta keys is removed
+     * (solace_import_pages / _posts / _products / _images, solace_imported_term_*,
+     * and the solace-sitebuilder CPT) — hand-authored content is left untouched.
+     *
+     * @return void
+     */
+    public function delete_previously_imported_data() {
+        $this->delete_wp_importer_post_type_sitebuilder();
+        $this->delete_imported_terms_category();
+        $this->delete_imported_terms_post_tag();
+        $this->delete_imported_attachments();
+        $this->delete_imported_posts();
+        $this->delete_imported_pages();
+
+        $this->delete_imported_terms_product_cat();
+        $this->delete_imported_terms_product_tag();
+        $this->delete_imported_products();
+
+        $this->delete_elementor_current_setting();
+    }
+
     function delete_elementor_current_setting(){
         $custom_typography = [
 			[
@@ -2216,6 +2290,13 @@ class Solace_Extra_Import {
             wp_die();
         }           
 
+		// Capability check — only administrators may install/activate themes.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			$response = array( 'error' => 'Forbidden' );
+			echo wp_json_encode( $response );
+			wp_die();
+		}
+
         solace_disable_image_processing();
 
         // Set import zip complete option to false
@@ -2387,7 +2468,14 @@ class Solace_Extra_Import {
             $response = array('error' => 'Invalid nonce!');
 			echo wp_json_encode($response);
             wp_die();
-        }         
+        }
+
+        // Capability check — only administrators may import/destructive-reset.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            $response = array( 'error' => 'Forbidden' );
+            echo wp_json_encode( $response );
+            wp_die();
+        }
 
         set_theme_mod('solace_extra_import_zip_complete', false); // Menyimpan status impor sebagai false
 

@@ -2,6 +2,321 @@ html.wp-toolbar:has(.solace_page_dashboard-step6) {
     padding-top: 0;
 }
 
+// Step 6 opt-in redesign.
+html body.solace_page_dashboard-step6 {
+    background: #000f44;
+
+    #wpwrap,
+    #wpcontent,
+    #wpbody,
+    #wpbody-content {
+        min-height: 100vh;
+        background: #000f44;
+    }
+
+    .wrap-step6 {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+        padding: 0 24px 54px;
+        overflow: hidden;
+        background-color: #000f44;
+        background-image: url('../../assets/images/step6-background-v2.png');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: cover;
+
+        >nav {
+            position: relative;
+            z-index: 2;
+            flex: 0 0 auto;
+            box-sizing: border-box;
+            width: calc(100% + 48px);
+            margin: 0 -24px 28px;
+            background: #000f44;
+        }
+
+        .step6-background-art {
+            display: none;
+        }
+
+        .step6-cube,
+        .step6-waves {
+            position: absolute;
+
+            g {
+                fill: none;
+                stroke: #45618f;
+                stroke-width: 1;
+                vector-effect: non-scaling-stroke;
+            }
+        }
+
+        .step6-cube-small {
+            top: 14%;
+            left: 2.5%;
+            width: 150px;
+            height: auto;
+            opacity: .2;
+
+            circle { fill: #ff970f; filter: drop-shadow(0 0 7px #ff970f); }
+        }
+
+        .step6-waves {
+            left: -25px;
+            bottom: -65px;
+            width: 38%;
+            height: 62%;
+            opacity: .18;
+
+            g { stroke-width: .8; }
+        }
+
+        .step6-cube-large {
+            right: 1.5%;
+            bottom: -3%;
+            width: 260px;
+            height: auto;
+            opacity: .28;
+
+            circle { fill: #ff970f; filter: drop-shadow(0 0 8px #ff970f); }
+        }
+
+        .box-optin {
+            position: relative;
+            z-index: 1;
+            box-sizing: border-box;
+            width: min(750px, 100%);
+            max-width: 750px;
+            margin: auto;
+            padding: 50px 70px 38px;
+            gap: 0;
+            border: 1px solid rgba(8, 25, 66, .12);
+            border-radius: 25px;
+            background: rgba(255, 255, 255, .985);
+            box-shadow: 0 28px 75px rgba(0, 4, 27, .38);
+
+            .step6-sparkle {
+                display: grid;
+                place-items: center;
+                width: 58px;
+                height: 58px;
+                margin-bottom: 22px;
+                border-radius: 50%;
+                background: #fff9ef;
+                box-shadow: 0 10px 25px rgba(255, 144, 0, .22);
+
+                svg { width: 31px; fill: none; stroke: #ff9000; stroke-width: 1.7; }
+            }
+
+            span.step6_title {
+                margin-bottom: 6px;
+                color: #001442;
+                font-size: 36px;
+                font-weight: 700;
+                line-height: 1.25;
+            }
+
+            span.step6_desc {
+                margin-bottom: 36px;
+                color: #687187;
+                font-size: 16px;
+                font-weight: 400;
+                line-height: 1.5;
+            }
+
+            form { width: 100%; }
+
+            .input {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+
+            .field-wrap { position: relative; display: block; }
+            .field-wrap::before {
+                content: "";
+                position: absolute;
+                z-index: 1;
+                left: 20px;
+                top: 50%;
+                width: 18px;
+                height: 18px;
+                transform: translateY(-50%);
+                opacity: .78;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-size: contain;
+                pointer-events: none;
+            }
+            .field-name::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374661' stroke-width='1.8'%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3Cpath d='M4.5 21v-2a7.5 7.5 0 0 1 15 0v2Z'/%3E%3C/svg%3E"); }
+            .field-email::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374661' stroke-width='1.8'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='m3 6 9 7 9-7'/%3E%3C/svg%3E"); }
+
+            input.firstname,
+            input.email {
+                box-sizing: border-box;
+                width: 100%;
+                height: 58px;
+                padding: 0 18px 0 54px;
+                border: 1px solid #dfe3eb;
+                border-radius: 10px;
+                color: #172442;
+                font: 400 14px/1.4 Poppins, sans-serif;
+                box-shadow: 0 2px 5px rgba(0, 15, 68, .025);
+
+                &:focus { border-color: #2770ea; box-shadow: 0 0 0 2px rgba(39, 112, 234, .14); }
+            }
+
+            .checkbox_agreement {
+                display: flex;
+                align-items: flex-start;
+                margin-bottom: 32px;
+                text-align: left;
+
+                input {
+                    flex: 0 0 auto;
+                    box-sizing: border-box;
+                    width: 18px;
+                    height: 18px;
+                    margin: 1px 12px 0 0;
+                    border: 1px solid #2770ea;
+                    border-radius: 3px;
+                    background: #fff;
+                    box-shadow: none;
+                    appearance: none;
+                    -webkit-appearance: none;
+
+                    &:checked {
+                        border-color: #2770ea;
+                        background-color: #2770ea;
+                        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m4 9.2 3.1 3.1L14.2 5' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+                        background-position: center;
+                        background-repeat: no-repeat;
+                        background-size: 16px;
+                    }
+
+                    &:checked::before { content: none; }
+                    &:focus { border-color: #2770ea; box-shadow: 0 0 0 2px rgba(39, 112, 234, .18); }
+                }
+                label {
+                    color: #59647b;
+                    font-size: 13px;
+                    line-height: 1.55;
+
+                    a {
+                        color: #2770ea;
+                        text-decoration: underline;
+
+                        &:hover, &:focus { color: #1b57bd; }
+                    }
+                }
+            }
+
+            label.note { display: block; margin: -18px 0 18px; text-align: center; }
+
+            .step6_submit {
+                width: 76%;
+                height: 56px;
+                border-radius: 9px;
+                background: linear-gradient(90deg, #ff8600, #ffa000);
+                font-size: 15px;
+                font-weight: 600;
+                gap: 12px;
+                box-shadow: 0 12px 24px rgba(255, 144, 0, .28);
+                transition: transform .2s ease, box-shadow .2s ease;
+
+                &:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 15px 28px rgba(255, 144, 0, .34); }
+                .button-rocket { width: 22px; height: 22px; fill: currentColor; }
+            }
+
+            .step6-divider {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                margin: 28px auto 15px;
+                color: #9aa2b2;
+                font-size: 13px;
+
+                &::before, &::after { content: ""; flex: 1; height: 1px; background: #e7e9ee; }
+            }
+
+            .step6-alternatives { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .skip-this-step,
+            .skip-no-thanks {
+                margin: 0 auto;
+                padding: 7px 4px;
+                color: #1262dd;
+                font: 500 13px/1.4 Poppins, sans-serif;
+                text-transform: none;
+            }
+
+            .step6-trust {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                width: 100%;
+                margin-top: 30px;
+                padding-top: 0;
+                border-top: 0;
+
+                span {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 9px;
+                    color: #42506a;
+                    font-size: 11px;
+                    font-weight: 500;
+                    text-align: center;
+                }
+                svg {
+                    flex: 0 0 auto;
+                    width: 21px;
+                    height: 21px;
+                    fill: none;
+                    stroke: #526079;
+                    stroke-width: 1.7;
+                    stroke-linecap: round;
+                    stroke-linejoin: round;
+                }
+            }
+        }
+    }
+}
+
+@media only screen and (max-width: 700px) {
+    html body.solace_page_dashboard-step6 .wrap-step6 {
+        padding: 0 14px 24px;
+
+        >nav {
+            width: calc(100% + 28px);
+            margin: 0 -14px 24px;
+        }
+
+        .step6-cube-small { top: 4%; left: -55px; }
+        .step6-cube-large { right: -110px; bottom: -30px; }
+        .step6-waves { width: 80%; height: 45%; }
+
+        .box-optin {
+            padding: 34px 22px 28px;
+            border-radius: 20px;
+
+            span.step6_title { font-size: 30px; }
+            span.step6_desc { margin-bottom: 26px; text-align: center; }
+            .input { grid-template-columns: 1fr; }
+            .step6_submit { width: 100%; }
+            .step6-trust span { flex-direction: column; gap: 7px; }
+        }
+    }
+}
+
 body.solace_page_dashboard-step6 {
 
     #submit-button:disabled {

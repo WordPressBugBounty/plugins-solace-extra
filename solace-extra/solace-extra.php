@@ -14,7 +14,7 @@
  * Plugin Name:       Solace Extra
  * Plugin URI:        https://solacewp.com/
  * Description:       Additional features for Solace Theme
- * Version:           1.6.0
+ * Version:           1.6.1
  * Requires PHP:      7.4
  * Author:            Solace
  * Author URI:        https://solacewp.com/
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SOLACE_EXTRA_VERSION', '1.6.0' );
+define( 'SOLACE_EXTRA_VERSION', '1.6.1' );
 define( 'SOLACE_EXTRA_DIR', plugin_dir_url( __FILE__ ) );
 define( 'SOLACE_EXTRA_DIR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SOLACE_EXTRA_ASSETS_URL', plugin_dir_url( __FILE__ ) . 'assets/' );
@@ -296,6 +296,11 @@ function solace_extra_handle_logo_upload() {
             wp_send_json_error('Invalid nonce.');
             return;
         }
+
+        // Check user capability.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorized.' );
+        }
         $method = !empty($_SERVER['REQUEST_METHOD']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) : '';
         
         if ($method === 'POST') {
@@ -448,8 +453,12 @@ add_action( 'elementor/elements/categories_registered', 'solace_add_elementor_su
 require plugin_dir_path( __FILE__ ) . 'sitebuilder/sitebuilder.php';
 
 // add_action('wp_head', 'solace_display_custom_header');
-
 function solace_check_import_status() {
+    // Check user capability.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Unauthorized.' );
+    }
+
     $status = get_option('solace_extra_import_zip_complete', false); 
     wp_send_json([
         'completed' => (bool) $status 

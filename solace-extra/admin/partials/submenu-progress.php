@@ -69,10 +69,14 @@ if ( function_exists( 'solace_check_license' ) && ! empty( $solace_saved_key ) )
     <section class="progress-import">
         <div class="mycontainer">
             <div class="boxes">
-                <h1><?php esc_html_e('We are building your website', 'solace-extra'); ?></h1>
+                <div class="progress-rocket" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14.5 4.5C17 2 20.4 2.2 21.5 2.5c.3 1.1.5 4.5-2 7l-4.2 4.2-5-.1-.1-5 4.3-4.1Z"/><circle cx="17" cy="7" r="1.7"/><path d="m10.5 9-4-.3L2.5 13l5.5 1M15 13.5l.3 4-4.3 4-1-5.5M6.8 16.2c-1.8.4-3 1.6-3.4 3.4 1.8-.4 3-1.6 3.4-3.4Z"/></svg>
+                </div>
+                <h1><?php esc_html_e("We're building your website", 'solace-extra'); ?></h1>
+                <p class="progress-subtitle"><?php esc_html_e('Please sit back while we install everything you need.', 'solace-extra'); ?></p>
                 <div class="box-step-import">
                     <span class="step-import">
-                        <?php esc_html_e('Installing required theme, plugins, forms, etc', 'solace-extra'); ?>
+                        <?php esc_html_e('Installing theme, plugins, forms, and demo content...', 'solace-extra'); ?>
                     </span>
                     <span class="percent">
                         <?php esc_html_e('0%', 'solace-extra'); ?>
@@ -91,16 +95,25 @@ if ( function_exists( 'solace_check_license' ) && ! empty( $solace_saved_key ) )
                     <div class="bar progress"></div>
                 </div>
                 <span class="info-import">
-                    <?php esc_html_e('Installing & Activated Theme & Plugins...','solace-extra');?>
+                    <i aria-hidden="true"></i>
+                    <?php esc_html_e('Activating Theme & Essential Plugins...','solace-extra');?>
                     <?php //_e('Importing content...', 'solace-extra'); ?>
                 </span>
                 <div class="boxes-loading">
-                    <dotlottie-player src="<?php echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/import/import3.json' ); ?>" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></dotlottie-player>
+                    <div class="loading-percent" aria-hidden="true">
+                        <svg viewBox="0 0 44 44">
+                            <circle class="loading-track" cx="22" cy="22" r="19"></circle>
+                            <circle class="loading-value" cx="22" cy="22" r="19"></circle>
+                        </svg>
+                        <span>0%</span>
+                    </div>
+                    <?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage ?>
+                    <img src="<?php echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/import/import-progress.gif' ); ?>" alt="<?php esc_attr_e('Website installation in progress', 'solace-extra'); ?>" />
                 </div>
 
                 <div class="box-did-you-know">
                     <div class="box-title">
-                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <span class="tip-icon"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <g clip-path="url(#clip0_2323_2082)">
                             <path d="M8.99951 2.10901C8.70828 2.10901 8.47217 2.34512 8.47217 2.63635C8.47217 2.92759 8.70828 3.1637 8.99951 3.1637C10.7445 3.1637 12.1641 4.58309 12.1641 6.32776C12.1641 6.61899 12.4002 6.8551 12.6914 6.8551C12.9827 6.8551 13.2188 6.61899 13.2188 6.32776C13.2188 4.00154 11.326 2.10901 8.99951 2.10901Z" fill="#FF9100"/>
                             <path d="M7.64083 0.141691C5.25829 0.639539 3.32646 2.55288 2.81813 4.95022C2.38891 6.97459 2.91784 9.00697 4.26928 10.5262C4.9299 11.2689 5.30874 12.2491 5.30874 13.2184V14.2731C5.30874 14.9748 5.76813 15.571 6.40186 15.7774C6.61026 17.0088 7.67901 17.9996 9.00015 17.9996C10.3209 17.9996 11.39 17.0091 11.5984 15.7774C12.2322 15.571 12.6916 14.9748 12.6916 14.2731V13.2184C12.6916 12.2472 13.0717 11.2787 13.7618 10.4913C14.772 9.33892 15.3283 7.86025 15.3283 6.32779C15.3283 2.33527 11.6738 -0.700863 7.64083 0.141691ZM9.00015 16.945C8.32227 16.945 7.72792 16.4785 7.50843 15.8516H10.4918C10.2724 16.4785 9.67803 16.945 9.00015 16.945ZM11.6369 14.2731C11.6369 14.5639 11.4003 14.8004 11.1095 14.8004H6.89078C6.6 14.8004 6.36343 14.5639 6.36343 14.2731V13.7458H11.6369V14.2731ZM12.9687 9.7962C12.2332 10.6353 11.7807 11.6471 11.6659 12.6911H6.33453C6.21985 11.6465 5.76852 10.6248 5.05738 9.82527C3.93104 8.55908 3.49092 6.86191 3.8499 5.169C4.26893 3.19273 5.87908 1.58732 7.85659 1.17412C11.2324 0.468644 14.2736 3.00383 14.2736 6.32779C14.2736 7.60438 13.8102 8.83615 12.9687 9.7962Z" fill="#FF9100"/>
@@ -116,7 +129,7 @@ if ( function_exists( 'solace_check_license' ) && ! empty( $solace_saved_key ) )
                             <rect width="18" height="18" fill="white"/>
                             </clipPath>
                             </defs>
-                        </svg>
+                        </svg></span>
                         <span class="title"><?php esc_html_e( 'Did you know?', 'solace-extra' ); ?></span>
                     </div>
                     <div class="box-desc">

@@ -287,13 +287,6 @@
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-            var delayedElements = document.querySelectorAll('.delayed-content');
-            delayedElements.forEach(function(el) {
-                el.classList.add('show');
-            });
-        }, 1000); // Delay 1 detik
-        
         // Bind hover active on DOM ready
         solaceExtraBindHoverActive();
     });

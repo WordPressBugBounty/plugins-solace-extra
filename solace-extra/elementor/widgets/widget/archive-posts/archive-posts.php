@@ -560,7 +560,8 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             \Elementor\Group_Control_Typography::get_type(),
             [
                 'name' => 'title_typography',
-                'selector' => '{{WRAPPER}} .sol-title a',
+                // 'selector' => '{{WRAPPER}} .sol-title a',
+                'selector' => '{{WRAPPER}} .sol-title, {{WRAPPER}} .sol-title a',
             ]
         );
 
@@ -1255,6 +1256,18 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
     }
     protected function style(){
         echo '<style>
+            .sol-title h1,
+            .sol-title h2,
+            .sol-title h3,
+            .sol-title h4,
+            .sol-title h5,
+            .sol-title h6,
+            .sol-title div,
+            .sol-title span,
+            .sol-title p {
+                margin: 0;
+                line-height: inherit; 
+            }
             .featured .sol-image {
                 position: relative;
                 overflow: hidden;
@@ -1414,6 +1427,7 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                     padding: 0px;
                 }
             }
+                
 
 
         </style>';

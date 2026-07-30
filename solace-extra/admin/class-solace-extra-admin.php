@@ -963,10 +963,15 @@ class Solace_Extra_Admin {
 			remove_all_actions('admin_notices');
 		}
 	}
+	
 
 	
 	
 	function update_sol_color_base_font_elementor_system_color(){
+		// Check user capability.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorized.' );
+        }
 		$solace_global_colors = get_theme_mod( 'solace_global_colors' );
 
 		$border_color = strtoupper($solace_global_colors['palettes']['base']['colors']['sol-color-border']);
@@ -1018,6 +1023,11 @@ class Solace_Extra_Admin {
 		if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
 			$response = array('error' => 'Invalid nonce 2!');
 			wp_die();
+		}			
+
+        // Check user capability.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorized.' );
 		}			
 		
 		// =========== BEGIN GET NEW FONT AND COLOR ===========
@@ -1277,6 +1287,11 @@ class Solace_Extra_Admin {
 				echo wp_json_encode($response);
 				wp_die();
 			}
+
+        // Check user capability.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorized.' );
+		}
 			
 			$logo_url = ! empty( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
 
@@ -1350,6 +1365,11 @@ class Solace_Extra_Admin {
             $response = array('error' => 'Invalid nonce5!');
 			echo wp_json_encode($response);
             wp_die();
+			}   
+
+        // Check user capability.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( 'Unauthorized.' );
         }   
 		
 		// Page congratulations
@@ -1912,10 +1932,8 @@ class Solace_Extra_Admin {
 		if (isset($_GET['solace-single-product-preview'], $_GET['product_id'])) {
 			echo '<style>
 				header.header,
-				footer.site-footer,
-				.delayed-content {
-					display: none !important;
-				}
+				footer.site-footer
+
 			</style>';
 		}
 	}
@@ -2052,10 +2070,8 @@ class Solace_Extra_Admin {
 							<style>
 								#wpadminbar,
 								header.header,
-								footer.site-footer,
-								.delayed-content {
-									display: none !important;
-								}
+								footer.site-footer
+
 								body {
 									overflow: hidden !important;
 								}
@@ -2124,10 +2140,8 @@ class Solace_Extra_Admin {
 							<style>
 								#wpadminbar,
 								header.header,
-								footer.site-footer,
-								.delayed-content {
-									display: none !important;
-								}
+								footer.site-footer
+
 								body {
 									overflow: hidden !important;
 								}
@@ -2199,10 +2213,8 @@ class Solace_Extra_Admin {
 							<style>
 								#wpadminbar,
 								header.header,
-								footer.site-footer,
-								.delayed-content {
-									display: none !important;
-								}
+								footer.site-footer
+
 								body {
 									overflow: hidden !important;
 								}
@@ -2274,10 +2286,8 @@ class Solace_Extra_Admin {
 							<style>
 								#wpadminbar,
 								header.header,
-								footer.site-footer,
-								.delayed-content {
-									display: none !important;
-								}
+								footer.site-footer
+
 
 								body {
 									overflow: hidden !important;

@@ -313,32 +313,26 @@ class Solace_Extra {
 
 		$plugin_admin = new Solace_Extra_Import( $this->get_plugin_name(), $this->get_version() );
 
-		// Import Customizer
+		// Import Customizer (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action-import-customizer', $plugin_admin, 'call_ajax_import_customizer' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-import-customizer', $plugin_admin, 'call_ajax_import_customizer' );		
 
-		// Import Widgets
+		// Import Widgets (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action-import-widgets', $plugin_admin, 'call_ajax_import_widget' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-import-widgets', $plugin_admin, 'call_ajax_import_widget' );		
 
 		// Delete Previously Import
 		$this->loader->add_action( 'wp_ajax_action-delete-previously-imported', $plugin_admin, 'delete_previously_imported' );
 
-		// Install Active Theme
+		// Install Active Theme (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action-install-activate-theme', $plugin_admin, 'install_and_activate_theme' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-install-activate-theme', $plugin_admin, 'install_and_activate_theme' );		
 
-		// Install Active Plugin
+		// Install Active Plugin (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action-install-activate-plugin', $plugin_admin, 'install_and_activate_plugins' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-install-activate-plugin', $plugin_admin, 'install_and_activate_plugins' );		
 
-		// Import Zip Elementor
+		// Import Zip Elementor (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action-import-zip', $plugin_admin, 'import_zip' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action-import-zip', $plugin_admin, 'import_zip' );		
 
-		// Import Menu
+		// Import Menu (admin-only: no nopriv)
 		$this->loader->add_action( 'wp_ajax_action_import_menu', $plugin_admin, 'call_ajax_import_menu');
-		$this->loader->add_action( 'wp_ajax_nopriv_action_import_menu', $plugin_admin, 'call_ajax_import_menu');   
 
 	}
 
@@ -361,7 +355,7 @@ class Solace_Extra {
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'add_color_style_soalceform' );
 		
 		// Enqueue style for frontend.
-		$this->loader->add_action( 'elementor/frontend/after_enqueue_styles', $plugin_public, 'enqueue_styles_elementor_frond_end' );
+		$this->loader->add_action( 'elementor/frontend/after_enqueue_styles', $plugin_public, 'enqueue_styles_elementor_front_end' );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'register_elementor_widget_assets' );
 

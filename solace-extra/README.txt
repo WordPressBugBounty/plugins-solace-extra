@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,17 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.6.1 - 30 July 2026 =
+* style(admin): redesign the final import opt-in form, progress experience, and congratulations screen.
+* style(admin): refine the import flow header, opt-in link, success animation, and background styling.
+* fix(security): restrict import and other privileged AJAX actions to authorized administrators.
+* fix(security): enforce nonce and capability checks for Customizer imports and Site Builder status updates.
+* fix(security): prevent direct access to the WXR regex parser.
+* fix(elementor): correct the front-end stylesheet name and callback, and clean up duplicate assets and hooks.
+* fix(sitebuilder): restore Site Builder loading and remove delayed header and footer rendering.
+* fix(sitebuilder): show preview settings when creating content through Claude Prompt.
+* fix(widget): ensure Archive Posts title typography and spacing work with configurable HTML tags.
 
 = 1.6.0 - 2 July 2026 =
 * feat(sitebuilder): make "All Products" condition cover the whole WooCommerce surface.

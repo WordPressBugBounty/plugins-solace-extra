@@ -74,9 +74,9 @@ class Solace_Extra_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles_elementor_frond_end() {
+	public function enqueue_styles_elementor_front_end() {
 
-		wp_enqueue_style( 'solace-extra-elementor-frond-end', SOLACE_EXTRA_ASSETS_URL . 'css/elementor-frond-end.min.css', array(), $this->version, 'all' );
+		wp_enqueue_style( 'solace-extra-elementor-front-end', SOLACE_EXTRA_ASSETS_URL . 'css/elementor-front-end.min.css', array(), $this->version, 'all' );
 
 	}	
 

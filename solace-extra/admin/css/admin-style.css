@@ -1505,7 +1505,6 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .solace-list-vi
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty {
   display: flex;
-  width: -moz-max-content;
   width: max-content;
   align-items: center;
   background: linear-gradient(180deg, #001958 0%, #001344 100%);
@@ -1546,7 +1545,6 @@ body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_em
 }
 body.solace_page_dashboard-sitebuilder .solace-sitebuilder .list .banner_part_empty {
   display: flex;
-  width: -moz-max-content;
   width: max-content;
   align-items: center;
   background: linear-gradient(180deg, #001958 0%, #001344 100%);
@@ -2945,10 +2943,6 @@ body.solace_page_dashboard-step5 .container-license .box-title-license svg.arrow
 body.solace_page_dashboard-step5 .container-license .box-content-license {
   display: none;
 }
-body.solace_page_dashboard-step5 .media-modal-content ::-moz-selection {
-  background-color: unset;
-  color: unset;
-}
 body.solace_page_dashboard-step5 .media-modal-content ::selection {
   background-color: unset;
   color: unset;
@@ -3125,6 +3119,354 @@ html.wp-toolbar:has(.solace_page_dashboard-step6) {
   padding-top: 0;
 }
 
+html body.solace_page_dashboard-step6 {
+  background: #000f44;
+}
+html body.solace_page_dashboard-step6 #wpwrap,
+html body.solace_page_dashboard-step6 #wpcontent,
+html body.solace_page_dashboard-step6 #wpbody,
+html body.solace_page_dashboard-step6 #wpbody-content {
+  min-height: 100vh;
+  background: #000f44;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  height: auto;
+  padding: 0 24px 54px;
+  overflow: hidden;
+  background-color: #000f44;
+  background-image: url("../../assets/images/step6-background-v2.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 > nav {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: calc(100% + 48px);
+  margin: 0 -24px 28px;
+  background: #000f44;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-background-art {
+  display: none;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube,
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-waves {
+  position: absolute;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube g,
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-waves g {
+  fill: none;
+  stroke: #45618f;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-small {
+  top: 14%;
+  left: 2.5%;
+  width: 150px;
+  height: auto;
+  opacity: 0.2;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-small circle {
+  fill: #ff970f;
+  filter: drop-shadow(0 0 7px #ff970f);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-waves {
+  left: -25px;
+  bottom: -65px;
+  width: 38%;
+  height: 62%;
+  opacity: 0.18;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-waves g {
+  stroke-width: 0.8;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-large {
+  right: 1.5%;
+  bottom: -3%;
+  width: 260px;
+  height: auto;
+  opacity: 0.28;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-large circle {
+  fill: #ff970f;
+  filter: drop-shadow(0 0 8px #ff970f);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: min(750px, 100%);
+  max-width: 750px;
+  margin: auto;
+  padding: 50px 70px 38px;
+  gap: 0;
+  border: 1px solid rgba(8, 25, 66, 0.12);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.985);
+  box-shadow: 0 28px 75px rgba(0, 4, 27, 0.38);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-sparkle {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 22px;
+  border-radius: 50%;
+  background: #fff9ef;
+  box-shadow: 0 10px 25px rgba(255, 144, 0, 0.22);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-sparkle svg {
+  width: 31px;
+  fill: none;
+  stroke: #ff9000;
+  stroke-width: 1.7;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin span.step6_title {
+  margin-bottom: 6px;
+  color: #001442;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin span.step6_desc {
+  margin-bottom: 36px;
+  color: #687187;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin form {
+  width: 100%;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .input {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .field-wrap {
+  position: relative;
+  display: block;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .field-wrap::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 20px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translateY(-50%);
+  opacity: 0.78;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .field-name::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374661' stroke-width='1.8'%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3Cpath d='M4.5 21v-2a7.5 7.5 0 0 1 15 0v2Z'/%3E%3C/svg%3E");
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .field-email::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374661' stroke-width='1.8'%3E%3Crect x='2' y='4' width='20' height='16' rx='2'/%3E%3Cpath d='m3 6 9 7 9-7'/%3E%3C/svg%3E");
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin input.firstname,
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin input.email {
+  box-sizing: border-box;
+  width: 100%;
+  height: 58px;
+  padding: 0 18px 0 54px;
+  border: 1px solid #dfe3eb;
+  border-radius: 10px;
+  color: #172442;
+  font: 400 14px/1.4 Poppins, sans-serif;
+  box-shadow: 0 2px 5px rgba(0, 15, 68, 0.025);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin input.firstname:focus,
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin input.email:focus {
+  border-color: #2770ea;
+  box-shadow: 0 0 0 2px rgba(39, 112, 234, 0.14);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  text-align: left;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement input {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin: 1px 12px 0 0;
+  border: 1px solid #2770ea;
+  border-radius: 3px;
+  background: #fff;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement input:checked {
+  border-color: #2770ea;
+  background-color: #2770ea;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m4 9.2 3.1 3.1L14.2 5' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement input:checked::before {
+  content: none;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement input:focus {
+  border-color: #2770ea;
+  box-shadow: 0 0 0 2px rgba(39, 112, 234, 0.18);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement label {
+  color: #59647b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement label a {
+  color: #2770ea;
+  text-decoration: underline;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement label a:hover, html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .checkbox_agreement label a:focus {
+  color: #1b57bd;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin label.note {
+  display: block;
+  margin: -18px 0 18px;
+  text-align: center;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6_submit {
+  width: 76%;
+  height: 56px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #ff8600, #ffa000);
+  font-size: 15px;
+  font-weight: 600;
+  gap: 12px;
+  box-shadow: 0 12px 24px rgba(255, 144, 0, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6_submit:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 28px rgba(255, 144, 0, 0.34);
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6_submit .button-rocket {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-divider {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 28px auto 15px;
+  color: #9aa2b2;
+  font-size: 13px;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-divider::before, html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e7e9ee;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-alternatives {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .skip-this-step,
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .skip-no-thanks {
+  margin: 0 auto;
+  padding: 7px 4px;
+  color: #1262dd;
+  font: 500 13px/1.4 Poppins, sans-serif;
+  text-transform: none;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-trust {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 100%;
+  margin-top: 30px;
+  padding-top: 0;
+  border-top: 0;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-trust span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #42506a;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+}
+html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-trust svg {
+  flex: 0 0 auto;
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: #526079;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media only screen and (max-width: 700px) {
+  html body.solace_page_dashboard-step6 .wrap-step6 {
+    padding: 0 14px 24px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 > nav {
+    width: calc(100% + 28px);
+    margin: 0 -14px 24px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-small {
+    top: 4%;
+    left: -55px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .step6-cube-large {
+    right: -110px;
+    bottom: -30px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .step6-waves {
+    width: 80%;
+    height: 45%;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin {
+    padding: 34px 22px 28px;
+    border-radius: 20px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin span.step6_title {
+    font-size: 30px;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin span.step6_desc {
+    margin-bottom: 26px;
+    text-align: center;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .input {
+    grid-template-columns: 1fr;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6_submit {
+    width: 100%;
+  }
+  html body.solace_page_dashboard-step6 .wrap-step6 .box-optin .step6-trust span {
+    flex-direction: column;
+    gap: 7px;
+  }
+}
 body.solace_page_dashboard-step6 #submit-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -3597,6 +3939,293 @@ html.wp-toolbar:has(.solace_page_dashboard-congratulations) {
   padding-top: 0;
 }
 
+html body.solace_page_dashboard-congratulations {
+  background: #000f44;
+}
+html body.solace_page_dashboard-congratulations #wpwrap,
+html body.solace_page_dashboard-congratulations #wpcontent,
+html body.solace_page_dashboard-congratulations #wpbody,
+html body.solace_page_dashboard-congratulations #wpbody-content {
+  min-height: 100vh;
+  background: #000f44;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 100vh;
+  height: auto;
+  margin: 0;
+  padding: 0 24px 52px;
+  overflow: hidden;
+  background-color: #000f44;
+  background-image: linear-gradient(rgba(0, 10, 51, 0.04), rgba(0, 10, 51, 0.04)), url("../../assets/images/congratulations/background-v2.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations > nav {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: calc(100% + 48px);
+  margin: 0 -24px 28px;
+  background: #000f44;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat {
+  position: relative;
+  box-sizing: border-box;
+  width: min(750px, 100%);
+  height: auto;
+  margin: auto;
+  padding: 50px 70px 38px;
+  border: 1px solid rgba(8, 25, 66, 0.12);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.985);
+  box-shadow: 0 28px 75px rgba(0, 4, 27, 0.38);
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat span {
+  display: block;
+  text-align: center;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 94px;
+  height: 94px;
+  margin: 0 auto 15px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #e5fae8 0 48%, rgba(224, 249, 228, 0.48) 49% 70%, transparent 71%);
+  filter: drop-shadow(0 8px 13px rgba(35, 169, 64, 0.15));
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success > svg {
+  width: 70px;
+  height: 70px;
+  fill: none;
+  stroke: #24a43f;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .cong-sparkles {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .cong-sparkle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  color: #ff9a14;
+  fill: currentColor;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-one {
+  left: -52px;
+  top: 54px;
+  width: 15px;
+  height: 15px;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-two {
+  right: -50px;
+  top: 14px;
+  width: 12px;
+  height: 12px;
+  color: #ef80b7;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-three {
+  left: -24px;
+  top: 16px;
+  width: 7px;
+  height: 7px;
+  color: #ffc46b;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-four {
+  left: -14px;
+  top: 76px;
+  width: 6px;
+  height: 6px;
+  color: #b7dc7a;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-five {
+  right: -20px;
+  top: 56px;
+  width: 8px;
+  height: 8px;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-success .sparkle-six {
+  right: -58px;
+  top: 70px;
+  width: 6px;
+  height: 6px;
+  color: #f6aecf;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat span.cong_title {
+  margin: 0 0 10px;
+  padding: 0;
+  color: #001442;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat span.cong_desc {
+  margin: 0 0 31px;
+  color: #59657d;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-progress {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0 -28px 35px;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  color: #33415d;
+  font-size: 11px;
+  font-weight: 500;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: calc(50% + 26px);
+  width: calc(100% - 52px);
+  height: 2px;
+  background: #36ad4b;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step .step-check {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #36ad4b;
+  border-radius: 50%;
+  color: #2da845;
+  line-height: 1;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step .step-check svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat a.button {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-decoration: none;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat a.button .cong_button {
+  width: 360px;
+  height: 54px;
+  border-radius: 8px;
+  gap: 12px;
+  background: linear-gradient(90deg, #ff8500, #ffa000);
+  color: #fff;
+  font: 600 17px/1.3 Poppins, sans-serif;
+  text-transform: none;
+  box-shadow: 0 12px 23px rgba(255, 144, 0, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat a.button .cong_button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 28px rgba(255, 144, 0, 0.35);
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat a.button .cong_button svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 34px;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  color: #42506a;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust span:not(:last-child) {
+  border-right: 1px solid #ccd1da;
+}
+html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: #526079;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media only screen and (max-width: 700px) {
+  html body.solace_page_dashboard-congratulations .wrap-congratulations {
+    padding: 0 14px 24px;
+    background-position: center;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations > nav {
+    width: calc(100% + 28px);
+    margin: 0 -14px 24px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat {
+    padding: 35px 20px 28px;
+    border-radius: 20px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat span.cong_title {
+    font-size: 27px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-progress {
+    margin: 0 0 30px;
+    gap: 4px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step {
+    font-size: 9px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-step:not(:last-child)::after {
+    left: calc(50% + 20px);
+    width: calc(100% - 40px);
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat a.button .cong_button {
+    width: 100%;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust {
+    gap: 8px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust span {
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+  }
+  html body.solace_page_dashboard-congratulations .wrap-congratulations .box-congrat .cong-trust span:not(:last-child) {
+    border-right: 0;
+  }
+}
 body.solace_page_dashboard-congratulations #adminmenumain,
 body.solace_page_dashboard-congratulations #wpadminbar {
   display: none;
@@ -4663,6 +5292,7 @@ body.solace_page_dashboard-starter-templates .wrap section.start-templates .cont
   width: 353px;
   height: 100%;
   position: relative;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
 }
@@ -5031,6 +5661,252 @@ html.wp-toolbar:has(.solace_page_dashboard-progress) {
   padding-top: 0;
 }
 
+html body.solace_page_dashboard-progress #wpwrap,
+html body.solace_page_dashboard-progress #wpcontent,
+html body.solace_page_dashboard-progress #wpbody,
+html body.solace_page_dashboard-progress #wpbody-content {
+  min-height: 100vh;
+  background: #000f44;
+}
+html body.solace_page_dashboard-progress .wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #000f44;
+  background-image: url("../../assets/images/step6-background-v2.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+}
+html body.solace_page_dashboard-progress .wrap > nav {
+  background: #000f44;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import {
+  display: flex;
+  flex: 1 0 auto;
+  align-items: center;
+  box-sizing: border-box;
+  max-width: none;
+  padding: 0 24px 52px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer {
+  display: flex;
+  width: 100%;
+  padding: 0;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes {
+  box-sizing: border-box;
+  flex: 0 0 750px;
+  width: 750px;
+  min-width: 750px;
+  max-width: 750px;
+  height: auto;
+  min-height: 0;
+  margin: auto;
+  padding: 40px 70px 34px;
+  border: 1px solid rgba(8, 25, 66, 0.12);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.985);
+  box-shadow: 0 28px 75px rgba(0, 4, 27, 0.38);
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .progress-rocket {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #fff8ed;
+  box-shadow: 0 10px 25px rgba(255, 145, 0, 0.2);
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .progress-rocket svg {
+  width: 32px;
+  height: 32px;
+  fill: none;
+  stroke: #ff9100;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes h1 {
+  margin: 0 0 7px;
+  color: #001442;
+  font-size: 30px;
+  line-height: 1.3;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .progress-subtitle {
+  margin: 0 0 37px;
+  color: #667188;
+  font: 400 15px/1.5 Poppins, sans-serif;
+  text-align: center;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-step-import {
+  align-items: center;
+  margin-bottom: 12px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-step-import span.step-import,
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-step-import span.percent {
+  color: #111a2e;
+  font-size: 14px;
+  font-weight: 600;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes span.info-import {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 23px;
+  color: #3f4d68;
+  font-size: 12px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes span.info-import i {
+  display: block;
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff9100;
+  box-shadow: none;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 218px;
+  margin-bottom: 13px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading > img {
+  display: block;
+  width: 430px;
+  max-width: 82%;
+  height: auto;
+  margin: 0;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent {
+  position: absolute;
+  z-index: 2;
+  left: 10%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  transform: translateY(-50%);
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent circle {
+  fill: none;
+  stroke-width: 3;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent .loading-track {
+  stroke: #e8ebf1;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent .loading-value {
+  stroke: #ff9100;
+  stroke-linecap: round;
+  stroke-dasharray: 119.38;
+  stroke-dashoffset: 119.38;
+  transition: stroke-dashoffset 0.35s ease-out;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #001442;
+  font-size: 14px;
+  font-weight: 700;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 15px;
+  width: 82%;
+  margin: 0 auto;
+  padding-top: 23px;
+  border-top: 1px solid #e5e7ec;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-title {
+  display: contents;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-title .tip-icon {
+  grid-row: 1/3;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #fff5e6;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-title .tip-icon svg {
+  width: 21px;
+  height: 21px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-title span.title {
+  margin: 0;
+  color: #111a2e;
+  font-size: 14px;
+  line-height: 21px;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-desc {
+  display: block;
+}
+html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know .box-desc span.desc {
+  color: #36425a;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: left;
+}
+
+@media only screen and (max-width: 900px) {
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes {
+    flex: 0 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 750px;
+  }
+}
+@media only screen and (max-width: 700px) {
+  html body.solace_page_dashboard-progress .wrap section.progress-import {
+    padding: 24px 14px 40px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes {
+    flex: 0 1 auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 750px;
+    min-height: 0;
+    padding: 32px 20px 28px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes h1 {
+    font-size: 25px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .progress-subtitle {
+    margin-bottom: 28px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-step-import {
+    flex-direction: row;
+    gap: 8px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-step-import span.step-import {
+    max-width: 80%;
+    font-size: 12px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading > img {
+    max-width: 85%;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .boxes-loading .loading-percent {
+    left: 0;
+    width: 58px;
+    height: 58px;
+  }
+  html body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .boxes .box-did-you-know {
+    width: 100%;
+  }
+}
 body.solace_page_dashboard-progress #wpwrap {
   background: #000f44;
 }
@@ -5250,4 +6126,6 @@ body.solace_page_dashboard-progress .wrap section.progress-import .mycontainer .
 }
 body.appearance_page_tgmpa-install-plugins .wrap iframe {
   display: none;
-}/*# sourceMappingURL=admin-style.css.map */
+}
+
+/*# sourceMappingURL=admin-style.css.map */

@@ -1,0 +1,104 @@
+// Global button widget elementor custom
+.solace-extra-button,
+a.solace-extra-button {
+    background: var(--sol-color-button-initial);
+    color: var(--sol-color-page-title-text);
+    border-radius: 0;
+}
+
+body {
+
+    // General
+    .thumb-45 img {
+        width: 45px;
+        height: 45px;
+        max-width: 45px;
+    }
+
+    // Solaceform.
+    .solaceform-form {
+        .solaceform-form-button-wrap {
+            @media only screen and (min-width: 767px) and (max-width: 1024px) {
+                button.tablet-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (min-width: 1024px) {
+                button.desktop-full-width {
+                    width: 100%;
+                }
+            }
+
+            @media only screen and (max-width: 766px) {
+                button.mobile-full-width {
+                    width: 100%;
+                }
+            }            
+        }
+    }
+
+    // Checkout
+    .solace-extra-checkout-vertical form.checkout.woocommerce-checkout {
+        display: block;
+    }
+
+    // Product Meta.
+    .elementor-widget-solace-extra-product-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+
+        .solace_extra_product_meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+
+            span.detail-container {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+
+                &::after {
+                    display: inline-block;
+                }
+            }
+        }
+    }    
+
+    // Product Meta - View Stacked
+    .elementor-woo-meta--view-stacked.elementor-widget-solace-extra-product-meta {
+
+        .solace_extra_product_meta {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .sku_wrapper,
+            .posted_in,
+            .tagged_as {
+                display: block;
+                padding-bottom: 0;
+            }
+
+            span.detail-container {
+                position: relative;
+                width: 100%;
+
+                &:not(:last-child) {
+                    &::after {
+                        left: 0;
+                        position: absolute !important;
+                    }
+                }
+            }
+        }
+
+    }    
+
+    // Product Meta - View Inline
+    .elementor-woo-meta--view-inline.elementor-widget-solace-extra-product-meta {
+        .solace_extra_product_meta {
+        }
+    }
+
+}
