@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.0
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,9 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.6.2 - 12 August 2026 =
+* fix: issue upsell widget not working on cart page
 
 = 1.6.1 - 30 July 2026 =
 * style(admin): redesign the final import opt-in form, progress experience, and congratulations screen.
