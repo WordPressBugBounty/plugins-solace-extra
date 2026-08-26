@@ -9,6 +9,10 @@
   display: block;
 }
 
+.js #adminmenu .toplevel_page_solace .wp-submenu li.solace-settings-menu-item {
+  display: block;
+}
+
 .js #adminmenu .toplevel_page_solace .wp-submenu li.upgrade-menu-item {
   display: block;
   background-color: #FF8F00;

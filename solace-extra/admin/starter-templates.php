@@ -335,6 +335,12 @@ class Solace_Extra_Starter_Templates {
 			return;
 		}
 
+		// Check user capability — admin-only operation.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => 'Unauthorized' ) );
+			return;
+		}
+
 		$keyword        = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
 		$getType        = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
 		$filter_license = ! empty( $_POST['filter_license'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_license'] ) ) : 'all';
@@ -389,6 +395,12 @@ class Solace_Extra_Starter_Templates {
 		// Verify nonce
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
+
+		// Check user capability — admin-only operation.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => 'Unauthorized' ) );
 			return;
 		}
 
@@ -447,6 +459,12 @@ class Solace_Extra_Starter_Templates {
 		// Verify nonce
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
+
+		// Check user capability — admin-only operation.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => 'Unauthorized' ) );
 			return;
 		}
 
@@ -510,6 +528,12 @@ class Solace_Extra_Starter_Templates {
 		// Verify nonce
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
+			return;
+		}
+
+		// Check user capability — admin-only operation.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'error' => 'Unauthorized' ) );
 			return;
 		}
 

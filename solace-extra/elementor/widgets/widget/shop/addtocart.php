@@ -355,10 +355,11 @@ class Solace_Extra_WooCommerce_AddToCart extends \Elementor\Widget_Base {
 			return;
 		}
 	
-		echo '<div class="solace-extra-add-to-cart">';
-		echo '<form class="cart" method="post" enctype="multipart/form-data">';
-		echo '<input type="number" class="quantity" name="quantity" value="1" min="1">';
-		echo '<button type="submit" data-product_id="' . esc_attr($product_id) . '" class="button add_to_cart_button ajax_add_to_cart">' . esc_html($button_text) . '</button>';
+	echo '<div class="solace-extra-add-to-cart">';
+	echo '<form class="cart" method="post" enctype="multipart/form-data">';
+	wp_nonce_field( 'solace_add_to_cart', 'nonce' );
+	echo '<input type="number" class="quantity" name="quantity" value="1" min="1">';
+	echo '<button type="submit" data-product_id="' . esc_attr($product_id) . '" class="button add_to_cart_button ajax_add_to_cart">' . esc_html($button_text) . '</button>';
 		$cart_page_id = get_option('woocommerce_cart_page_id'); 
 		$cart_page_slug = get_post_field('post_name', $cart_page_id); 
 		

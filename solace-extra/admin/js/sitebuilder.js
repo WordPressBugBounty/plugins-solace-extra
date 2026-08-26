@@ -102,7 +102,8 @@
                 data: {
                     action: 'woocommerce_ajax_add_to_cart',
                     product_id: product_id,
-                    quantity: quantity
+                    quantity: quantity,
+                    nonce: $form.find('input[name="nonce"]').val()
                 },
                 beforeSend: function() {
                     $button.addClass('loading').text('Adding...');

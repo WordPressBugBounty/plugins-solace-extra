@@ -1235,16 +1235,16 @@ function solace_display_custom_footer() {
                             if (!empty($meta_content)) {
                                 echo '<div class="solace-custom-footer-content">';
                                 $elementor_instance = Elementor\Plugin::instance();
-                                echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
+			                    echo do_shortcode( $elementor_instance->frontend->get_builder_content_for_display( $matched_post_id ) );
                                 echo '</div>';
                             } else {
                                 // Fallback to post content if Elementor data is not available
                                 $output = '<div class="custom-footer-content basic-global">';
-                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id));
+                                $output .= apply_filters('the_content', get_post_field('post_content', $matched_post_id)); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Core WordPress filter.
                                 $output .= '</div>';
                                 echo wp_kses_post( $output );
-                            }
-                            $content_displayed = true;
+                            }  
+                            $content_displayed = true; 
                         }
                     }
                 }
@@ -1806,7 +1806,7 @@ add_action('save_post', 'solace_set_taxonomy_based_on_part');
 // }
 
 function solace_update_sitebuilder_status() {
-        // Verify nonce.
+    // Verify nonce.
     if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['nonce'] ) ), 'solace_conditions_nonce_action' ) ) {
         wp_send_json_error( 'Nonce verification failed.' );
     }
@@ -1815,7 +1815,7 @@ function solace_update_sitebuilder_status() {
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_send_json_error( 'Unauthorized.' );
     }
-    
+
     if ( !isset($_POST['post_id']) || !isset($_POST['status']) || !isset($_POST['part']) ) {
         wp_send_json_error('Invalid data sent.');
     }
@@ -2291,13 +2291,17 @@ function solace_generate_options_html($selected_value = '') {
 }
 
 add_action('wp_ajax_save_conditions', 'solace_save_conditions');
-add_action('wp_ajax_nopriv_save_conditions', 'solace_save_conditions');
 add_action('wp_ajax_save_edit_conditions', 'solace_save_edit_conditions');
-add_action('wp_ajax_nopriv_save_edit_conditions', 'solace_save_edit_conditions');
 
 function solace_save_conditions() {
     if (!isset($_POST['security']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['security'])), 'solace_conditions_nonce_action')) {
         wp_send_json_error('Invalid nonce11.');
+        return;
+    }
+
+    // Check user capability — saving site builder conditions is admin-only.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Unauthorized.' );
         return;
     }
 
@@ -2382,6 +2386,12 @@ function solace_save_conditions() {
 function solace_save_edit_conditions() {
     if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['nonce'])), 'solace_conditions_nonce_action')) {
         wp_send_json_error('Invalid nonce.');
+        return;
+    }
+
+    // Check user capability — editing site builder conditions is admin-only.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Unauthorized.' );
         return;
     }
     // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized	 --- We need this.
@@ -2784,8 +2794,28 @@ function solace_get_elementor_content_via_ajax() {
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     $post_id = isset($_GET['post_id']) ? absint(sanitize_text_field(wp_unslash($_GET['post_id']))) : 0;
 
-    if (!$post_id || get_post_type($post_id) !== 'solace-sitebuilder') {
+    if (!$post_id) {
         wp_die(esc_html__('Invalid post ID or post type.', 'solace-extra'));
+    }
+
+    $solace_extra_post = get_post($post_id);
+    if (!$solace_extra_post || $solace_extra_post->post_type !== 'solace-sitebuilder') {
+        wp_die(esc_html__('Invalid post ID or post type.', 'solace-extra'));
+    }
+
+    // Post status check: only published parts are publicly readable. Draft,
+    // pending, private, scheduled, and trashed parts require an authenticated
+    // user who can edit the part, plus a valid nonce, before they are rendered.
+    if ('publish' !== $solace_extra_post->post_status) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $solace_extra_nonce = isset($_GET['_wpnonce']) ? sanitize_key(wp_unslash($_GET['_wpnonce'])) : '';
+        if (!$solace_extra_nonce || !wp_verify_nonce($solace_extra_nonce, 'solace_sitebuilder_preview_nonce')) {
+            wp_die(esc_html__('Nonce verification failed.', 'solace-extra'));
+        }
+
+        if (!current_user_can('edit_post', $post_id)) {
+            wp_die(esc_html__('You do not have permission to view this content.', 'solace-extra'));
+        }
     }
 
     // to the live frontend. Register the filter manually here.

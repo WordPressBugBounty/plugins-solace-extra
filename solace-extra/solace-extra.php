@@ -14,7 +14,7 @@
  * Plugin Name:       Solace Extra
  * Plugin URI:        https://solacewp.com/
  * Description:       Additional features for Solace Theme
- * Version:           1.6.2
+ * Version:           1.7.0
  * Requires PHP:      7.4
  * Author:            Solace
  * Author URI:        https://solacewp.com/
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SOLACE_EXTRA_VERSION', '1.6.2' );
+define( 'SOLACE_EXTRA_VERSION', '1.7.0' );
 define( 'SOLACE_EXTRA_DIR', plugin_dir_url( __FILE__ ) );
 define( 'SOLACE_EXTRA_DIR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SOLACE_EXTRA_ASSETS_URL', plugin_dir_url( __FILE__ ) . 'assets/' );
@@ -154,6 +154,7 @@ if (class_exists('Elementor\Plugin')) {
     require_once( __DIR__ . '/elementor/widgets/controls/gradient-text.php' );
     require_once( __DIR__ . '/elementor/widgets/functions.php' );
     require_once( __DIR__ . '/elementor/widgets/woocommerce/functions.php' );
+    require_once( __DIR__ . '/elementor/widgets/solace-custom-css.php' );
 
     /**
      * Registers Elementor widgets for the Solace Extra plugin.
@@ -348,8 +349,7 @@ function solace_extra_handle_logo_upload() {
         }
     }
 }
-add_action('wp_ajax_solace_extra_upload_logo', 'solace_extra_upload_logo'); 
-add_action('wp_ajax_nopriv_solace_extra_upload_logo', 'solace_extra_upload_logo');  
+add_action('wp_ajax_solace_extra_upload_logo', 'solace_extra_upload_logo');
 
 if ( ! function_exists( 'solace_is_run_in_shortcode' ) ) {
 
@@ -454,6 +454,11 @@ require plugin_dir_path( __FILE__ ) . 'sitebuilder/sitebuilder.php';
 
 // add_action('wp_head', 'solace_display_custom_header');
 function solace_check_import_status() {
+    // Verify nonce.
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'ajax-nonce')) {
+        wp_send_json_error('Invalid nonce.');
+    }
+
     // Check user capability.
     if ( ! current_user_can( 'manage_options' ) ) {
         wp_send_json_error( 'Unauthorized.' );
@@ -466,7 +471,6 @@ function solace_check_import_status() {
     exit; 
 }
 add_action('wp_ajax_check_import_status', 'solace_check_import_status');
-add_action('wp_ajax_nopriv_check_import_status', 'solace_check_import_status');
 
 
 function solace_disable_image_processing() {
@@ -692,7 +696,8 @@ add_action('wp_ajax_woocommerce_ajax_add_to_cart', 'solace_custom_ajax_add_to_ca
 add_action('wp_ajax_nopriv_woocommerce_ajax_add_to_cart', 'solace_custom_ajax_add_to_cart');
 
 function solace_custom_ajax_add_to_cart() {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    // Verify nonce to prevent CSRF cart manipulation.
+    check_ajax_referer( 'solace_add_to_cart', 'nonce' );
     if (!isset($_POST['product_id'])) {
         wp_send_json_error(['error' => true, 'message' => 'Product ID is missing.']);
     }

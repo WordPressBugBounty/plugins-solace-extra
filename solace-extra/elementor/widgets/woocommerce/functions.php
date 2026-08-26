@@ -228,6 +228,13 @@ function solace_extra_widgets() {
 			'demo'          => "{$demo_base}/{$single_product_url}/",
 			'keywords'      => [ 'cart', 'store', 'products', 'product-title', 'single', 'single-product' ],
 		],
+		'product-featured-image' => [
+			'title'         => __( 'Product Featured Image', 'solace-extra' ),
+			'icon'          => 'eicon-featured-image' . $branding_class,
+			'categories'    => [ 'solace-extra-single' ],
+			'demo'          => "{$demo_base}/{$single_product_url}/",
+			'keywords'      => [ 'cart', 'store', 'products', 'product', 'featured-image', 'thumbnail', 'image', 'single', 'single-product' ],
+		],
 		'product-price'     => [
 			'title'         => __( 'Product Price', 'solace-extra' ),
 			'icon'          => 'eicon-product-price' . $branding_class,

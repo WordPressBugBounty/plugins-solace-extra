@@ -593,7 +593,8 @@
                         url: ajax_object.ajax_url,
                         type: 'POST',
                         data: {
-                            action: 'check_import_status'
+                            action: 'check_import_status',
+                            nonce: nonce
                         },
                         success: function (statusResponse) {
                             if (statusResponse.completed) {

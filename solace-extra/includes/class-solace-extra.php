@@ -183,6 +183,7 @@ class Solace_Extra {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_sitebuilder' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_customization' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_starterlink' );
+		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_settings', 1000 );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_step1' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_step2' );
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_submenu_dashboard_step5' );
@@ -196,11 +197,13 @@ class Solace_Extra {
 		$this->loader->add_action( 'wp_ajax_nopriv_update_logo2', $plugin_admin, 'update_logo_url_callback'); 
 
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'hide_notifications_for_solace_page', 999 );
+		$this->loader->add_action( 'admin_init', $plugin_admin, 'solace_register_settings' );
 		
 		$this->loader->add_action( 'wp_ajax_update_sol_color_base_font_elementor_system_color', $plugin_admin, 'update_sol_color_base_font_elementor_system_color');
 		$this->loader->add_action( 'wp_ajax_nopriv_update_sol_color_base_font_elementor_system_color', $plugin_admin, 'update_sol_color_base_font_elementor_system_color'); 
 		$this->loader->add_action( 'wp_ajax_update_solace_font_and_color', $plugin_admin, 'update_solace_font_and_color');
 		$this->loader->add_action( 'wp_ajax_nopriv_update_solace_font_and_color', $plugin_admin, 'update_solace_font_and_color'); 
+		$this->loader->add_action( 'wp_ajax_solace_run_pagespeed_test', $plugin_admin, 'solace_run_pagespeed_test' );
 
 		// Remove cookies
 		$this->loader->add_action( 'wp_ajax_remove-cookie-continue-page-access', $plugin_admin, 'remove_cookies_continue_page_access');
@@ -233,6 +236,9 @@ class Solace_Extra {
 
 		// Site Logo widget save -> mirror its logo back into the Customizer logo theme mods.
 		$this->loader->add_action( 'elementor/document/after_save', $plugin_admin, 'sync_customizer_logo_on_widget_save' );
+		// Site Builder part save -> regenerate its Elementor CSS so the frontend
+		// header/footer styling stays fresh without a manual cache clear.
+		$this->loader->add_action( 'elementor/document/after_save', $plugin_admin, 'regenerate_sitebuilder_css_on_save' );
 
 		// Live-preview the pending Customizer logo inside the Site Logo widgets (Customizer preview only).
 		$this->loader->add_action( 'elementor/widget/before_render_content', $plugin_admin, 'sync_site_logo_preview', 5 );
@@ -286,19 +292,15 @@ class Solace_Extra {
 
 		// Ajax Search
 		$this->loader->add_action( 'wp_ajax_action_ajax_search', $plugin_admin, 'action_ajax_search_server' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action_ajax_search', $plugin_admin, 'action_ajax_search_server' );
 
 		// Ajax Checkbox
 		$this->loader->add_action( 'wp_ajax_action_ajax_checkbox', $plugin_admin, 'action_ajax_checkbox' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action_ajax_checkbox', $plugin_admin, 'action_ajax_checkbox' );
 
 		// Ajax Load More
-		$this->loader->add_action( 'wp_ajax_action_load_more', $plugin_admin, 'call_ajax_load_more' );
-		$this->loader->add_action( 'wp_ajax_nopriv_action_load_more', $plugin_admin, 'call_ajax_load_more' );		
+		$this->loader->add_action( 'wp_ajax_action_load_more', $plugin_admin, 'call_ajax_load_more' );		
 
 		// Add cookie page access.
 		$this->loader->add_action( 'wp_ajax_continue-page-access', $plugin_admin, 'add_cookie_page_access' );
-		$this->loader->add_action( 'wp_ajax_nopriv_continue-page-access', $plugin_admin, 'add_cookie_page_access' );
 
 	}
 

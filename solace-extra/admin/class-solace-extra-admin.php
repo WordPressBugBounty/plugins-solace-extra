@@ -112,6 +112,54 @@ class Solace_Extra_Admin {
 			wp_enqueue_style( 'solace-extra-sweetalert2-style', SOLACE_EXTRA_ASSETS_URL . 'css/sweetalert2.css', array(), $this->version, 'all' );
 		}
 
+		if ( 'solace_page_dashboard-settings' === $hook ) {
+			$solace_extra_settings_css = plugin_dir_path( __FILE__ ) . 'css/dashboard-settings.css';
+
+			wp_enqueue_style(
+				'solace-extra-dashboard-settings',
+				plugin_dir_url( __FILE__ ) . 'css/dashboard-settings.css',
+				array(),
+				file_exists( $solace_extra_settings_css ) ? filemtime( $solace_extra_settings_css ) : $this->version,
+				'all'
+			);
+		}
+
+		if ( 'toplevel_page_solace' === $hook || 'solace_page_dashboard' === $hook ) {
+			$solace_extra_dashboard_css = plugin_dir_path( __FILE__ ) . 'css/dashboard-home.css';
+			$solace_extra_dashboard_js  = plugin_dir_path( __FILE__ ) . 'js/dashboard-home.js';
+
+			wp_enqueue_style(
+				'solace-extra-dashboard-home',
+				plugin_dir_url( __FILE__ ) . 'css/dashboard-home.css',
+				array( 'solace-extra-admin-style' ),
+				file_exists( $solace_extra_dashboard_css ) ? filemtime( $solace_extra_dashboard_css ) : $this->version,
+				'all'
+			);
+
+			wp_enqueue_script(
+				'solace-extra-dashboard-home',
+				plugin_dir_url( __FILE__ ) . 'js/dashboard-home.js',
+				array(),
+				file_exists( $solace_extra_dashboard_js ) ? filemtime( $solace_extra_dashboard_js ) : $this->version,
+				true
+			);
+
+			wp_localize_script(
+				'solace-extra-dashboard-home',
+				'solaceDashboard',
+				array(
+					'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+					'nonce'   => wp_create_nonce( 'solace_pagespeed_test' ),
+					'strings' => array(
+						'testing'       => __( 'Testing...', 'solace-extra' ),
+						'runTest'       => __( 'Run Test', 'solace-extra' ),
+						'retest'        => __( 'Retest', 'solace-extra' ),
+						'requestFailed' => __( 'The PageSpeed test request failed.', 'solace-extra' ),
+					),
+				)
+			);
+		}
+
 	}
 
 	/**
@@ -581,6 +629,241 @@ class Solace_Extra_Admin {
 
 	}
 
+	/**
+	 * Register the settings page for the admin area.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_register_theme_submenu_settings() {
+		add_submenu_page(
+			'solace',
+			__( 'Solace Extra Settings', 'solace-extra' ),
+			__( 'Settings', 'solace-extra' ),
+			'manage_options',
+			'dashboard-settings',
+			array( $this, 'solace_template_theme_submenu_settings' )
+		);
+
+		global $submenu;
+
+		if ( isset( $submenu['solace'] ) ) {
+			$settings_item = null;
+
+			foreach ( $submenu['solace'] as $key => $item ) {
+				if ( isset( $item[2] ) && 'dashboard-settings' === $item[2] ) {
+					$submenu['solace'][ $key ][4] = 'solace-settings-menu-item';
+					$settings_item = $submenu['solace'][ $key ];
+					unset( $submenu['solace'][ $key ] );
+					break;
+				}
+			}
+
+			if ( null !== $settings_item ) {
+				$submenu['solace'] = array_values( $submenu['solace'] );
+				$insert_position   = count( $submenu['solace'] );
+
+				foreach ( $submenu['solace'] as $key => $item ) {
+					if ( isset( $item[2] ) && 'solace-support-link' === $item[2] ) {
+						$insert_position = $key;
+						break;
+					}
+				}
+
+				array_splice( $submenu['solace'], $insert_position, 0, array( $settings_item ) );
+			}
+
+			$upgrade_item = null;
+
+			foreach ( $submenu['solace'] as $key => $item ) {
+				if ( isset( $item[2] ) && 'solace-upgrade-link' === $item[2] ) {
+					$upgrade_item = $item;
+					unset( $submenu['solace'][ $key ] );
+					break;
+				}
+			}
+
+			if ( null !== $upgrade_item ) {
+				$submenu['solace']   = array_values( $submenu['solace'] );
+				$submenu['solace'][] = $upgrade_item;
+			}
+		}
+	}
+
+	/**
+	 * Register Solace Extra settings.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_register_settings() {
+		register_setting(
+			'solace_extra_settings',
+			'solace_extra_pagespeed_api_key',
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+				'default'           => '',
+			)
+		);
+
+		add_settings_section(
+			'solace_extra_pagespeed_section',
+			__( 'Google PageSpeed Insights', 'solace-extra' ),
+			array( $this, 'solace_render_pagespeed_settings_section' ),
+			'solace-extra-settings'
+		);
+
+		add_settings_field(
+			'solace_extra_pagespeed_api_key',
+			__( 'API Key', 'solace-extra' ),
+			array( $this, 'solace_render_pagespeed_api_key_field' ),
+			'solace-extra-settings',
+			'solace_extra_pagespeed_section'
+		);
+	}
+
+	/**
+	 * Render the PageSpeed settings section description.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_render_pagespeed_settings_section() {
+		$get_started_url = 'https://developers.google.com/speed/docs/insights/v5/get-started?hl=id';
+
+		echo '<p>';
+		printf(
+			/* translators: 1: Link opening tag, 2: Link closing tag. */
+			esc_html__( 'Enter a Google PageSpeed Insights API key to enable real mobile performance testing. %1$sGet an API key from Google Cloud Console%2$s.', 'solace-extra' ),
+			'<a href="' . esc_url( $get_started_url ) . '" target="_blank" rel="noopener noreferrer">',
+			'</a>'
+		);
+		echo '</p>';
+	}
+
+	/**
+	 * Render the PageSpeed API key field.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_render_pagespeed_api_key_field() {
+		$api_key = get_option( 'solace_extra_pagespeed_api_key', '' );
+		?>
+		<input
+			type="password"
+			id="solace_extra_pagespeed_api_key"
+			name="solace_extra_pagespeed_api_key"
+			value="<?php echo esc_attr( $api_key ); ?>"
+			class="regular-text"
+			autocomplete="off"
+			spellcheck="false"
+		/>
+		<p class="description">
+			<?php esc_html_e( 'The key is stored in your WordPress database and is only available to administrators.', 'solace-extra' ); ?>
+		</p>
+		<?php
+	}
+
+	/**
+	 * Run a Google PageSpeed Insights performance test.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_run_pagespeed_test() {
+		check_ajax_referer( 'solace_pagespeed_test', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'You do not have permission to run this test.', 'solace-extra' ) ),
+				403
+			);
+		}
+
+		$api_key = trim( (string) get_option( 'solace_extra_pagespeed_api_key', '' ) );
+
+		if ( '' === $api_key ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Add your Google PageSpeed Insights API key in Settings first.', 'solace-extra' ) ),
+				400
+			);
+		}
+
+		$now = time();
+
+		$request_url = add_query_arg(
+			array(
+				'url'      => home_url( '/' ),
+				'key'      => $api_key,
+				'strategy' => 'mobile',
+				'category' => 'performance',
+			),
+			'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
+		);
+		$response = wp_remote_get(
+			$request_url,
+			array(
+				'timeout'     => 60,
+				'redirection' => 3,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Google PageSpeed Insights could not be reached. Please try again.', 'solace-extra' ) ),
+				502
+			);
+		}
+
+		$response_code = (int) wp_remote_retrieve_response_code( $response );
+		$response_data = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if ( 200 !== $response_code ) {
+			if ( 429 === $response_code ) {
+				$error_message = __( 'The Google PageSpeed API quota has been exceeded.', 'solace-extra' );
+			} elseif ( 400 === $response_code || 403 === $response_code ) {
+				$error_message = __( 'The API key is invalid or is not authorized to use the PageSpeed Insights API.', 'solace-extra' );
+			} else {
+				$error_message = __( 'Google PageSpeed Insights returned an unexpected error.', 'solace-extra' );
+			}
+
+			wp_send_json_error(
+				array( 'message' => $error_message ),
+				$response_code > 0 ? $response_code : 502
+			);
+		}
+
+		$raw_score = $response_data['lighthouseResult']['categories']['performance']['score'] ?? null;
+
+		if ( ! is_numeric( $raw_score ) ) {
+			wp_send_json_error(
+				array( 'message' => __( 'Google PageSpeed Insights did not return a performance score.', 'solace-extra' ) ),
+				502
+			);
+		}
+
+		$score  = max( 0, min( 100, (int) round( (float) $raw_score * 100 ) ) );
+		$result = array(
+			'score'     => $score,
+			'tested_at' => $now,
+			'strategy'  => 'mobile',
+			'url'       => esc_url_raw( home_url( '/' ) ),
+		);
+		$tested_at = wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $now );
+
+		update_option( 'solace_extra_pagespeed_result', $result, false );
+
+		wp_send_json_success(
+			array(
+				'score'             => $score,
+				'scoreClass'        => $score < 50 ? 'is-critical' : ( $score < 90 ? 'is-warning' : 'is-good' ),
+				'testedAt'          => $tested_at,
+				'statusText'        => sprintf(
+					/* translators: %s: test date and time. */
+					__( 'Mobile · Tested %s', 'solace-extra' ),
+					$tested_at
+				),
+			)
+		);
+	}
+
 	public function solace_add_custom_class_to_submenu( $menu ) {
 		$menu = str_replace('dashboard-sitebuilder', 'dashboard-sitebuilder solace-sitebuilder-custom-class', $menu);
 		return $menu;
@@ -789,6 +1072,15 @@ class Solace_Extra_Admin {
 
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/submenu-dashboard.php';
     
+	}
+
+	/**
+	 * Template the settings page for the admin area.
+	 *
+	 * @since 1.0.0
+	 */
+	public function solace_template_theme_submenu_settings() {
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/partials/submenu-settings.php';
 	}
 
 	/**
@@ -1126,6 +1418,10 @@ class Solace_Extra_Admin {
 			$logo_logo_data = '{"light":'.$logo_id.',"dark":'.$logo_id.',"same":true}';
 			set_theme_mod('logo_logo',$logo_logo_data);
 			set_theme_mod('logo-footer_logo', $logo_logo_data);
+			// Push the uploaded logo into every Site Logo widget and into the
+			// Site Builder header part (which may use a plain Image widget).
+			$this->push_logo_to_all_site_logos( (int) $logo_id );
+			$this->push_logo_to_sitebuilder_header( (int) $logo_id );
 
 		}
 		// SET LOGO
@@ -1691,6 +1987,107 @@ class Solace_Extra_Admin {
 	}
 
 	/**
+	 * Push the uploaded logo into every active Site Builder header part.
+	 *
+	 * Site Builder headers store their logo either in a Site Logo widget
+	 * (`solace-extra-site-logo`) or in a plain Elementor Image widget. This
+	 * updates the header logo for both, so the uploaded logo replaces the
+	 * demo's default header logo after import.
+	 *
+	 * @param int $logo_id Attachment ID to apply.
+	 * @return void
+	 */
+	private function push_logo_to_sitebuilder_header( $logo_id ) {
+		$logo_id = (int) $logo_id;
+		if ( ! $logo_id || ! function_exists( 'get_solace_header_conditions' ) ) {
+			return;
+		}
+
+		$headers = get_solace_header_conditions();
+		if ( empty( $headers ) || ! is_array( $headers ) ) {
+			return;
+		}
+
+		$service = class_exists( 'Solace_Extra_Sitebuilder_Images' ) ? new Solace_Extra_Sitebuilder_Images() : null;
+
+		foreach ( $headers as $header ) {
+			$post_id = isset( $header['post_id'] ) ? absint( $header['post_id'] ) : 0;
+			if ( ! $post_id ) {
+				continue;
+			}
+
+			$elementor_data = get_post_meta( $post_id, '_elementor_data', true );
+			if ( empty( $elementor_data ) ) {
+				continue;
+			}
+
+			$elements = json_decode( $elementor_data, true );
+			if ( empty( $elements ) || ! is_array( $elements ) ) {
+				continue;
+			}
+
+			$updated = false;
+
+			// Prefer the dedicated Site Logo widget.
+			if ( $service ) {
+				$updated = $service->update_element_image( $elements, 'solace-extra-site-logo', $logo_id );
+			}
+
+			// Fallback: replace the first plain Image widget (the header logo).
+			if ( ! $updated ) {
+				$updated = $this->update_first_image_widget( $elements, $logo_id );
+			}
+
+			if ( ! $updated ) {
+				continue;
+			}
+
+			update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $elements ) ) );
+
+			if ( $service ) {
+				$service->trigger_elementor_css_regeneration( $post_id );
+			}
+		}
+	}
+
+	/**
+	 * Update the first plain Image widget in an Elementor element tree.
+	 *
+	 * The header logo is the first image in the header part, so a depth-first
+	 * scan that stops at the first Image widget matches the logo.
+	 *
+	 * @param array $elements Elementor elements array (by reference).
+	 * @param int   $logo_id  Attachment ID to apply.
+	 * @return bool
+	 */
+	private function update_first_image_widget( array &$elements, $logo_id ) {
+		foreach ( $elements as &$el ) {
+			if ( isset( $el['widgetType'] ) && 'image' === $el['widgetType'] ) {
+				$image_url = wp_get_attachment_image_url( (int) $logo_id, 'full' );
+
+				if ( ! isset( $el['settings'] ) || ! is_array( $el['settings'] ) ) {
+					$el['settings'] = array();
+				}
+
+				$el['settings']['image'] = array(
+					'id'  => (int) $logo_id,
+					'url' => $image_url ? $image_url : '',
+				);
+
+				return true;
+			}
+
+			if ( ! empty( $el['elements'] ) && is_array( $el['elements'] ) ) {
+				if ( $this->update_first_image_widget( $el['elements'], $logo_id ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * When a Site Logo widget is changed in the Elementor editor, propagate its
 	 * logo to every other Site Logo widget on the site and mirror it back into
 	 * the Customizer theme mods (logo_logo and logo-footer_logo).
@@ -1746,6 +2143,58 @@ class Solace_Extra_Admin {
 		} finally {
 			$running = false;
 		}
+	}
+
+	/**
+	 * Regenerate Elementor CSS for a Site Builder part after it is saved.
+	 *
+	 * After editing and publishing a header/footer part, Elementor can keep
+	 * serving the stale atomic CSS for that part on the frontend until
+	 * "Clear Files & Data" is run manually. Regenerating the part's CSS on
+	 * save keeps the frontend in sync without that manual step.
+	 *
+	 * @param \Elementor\Core\Base\Document $document The saved document.
+	 * @return void
+	 */
+	public function regenerate_sitebuilder_css_on_save( $document ) {
+		if ( ! is_object( $document ) || ! method_exists( $document, 'get_main_id' ) ) {
+			return;
+		}
+
+		$post_id = (int) $document->get_main_id();
+		if ( ! $post_id || 'solace-sitebuilder' !== get_post_type( $post_id ) ) {
+			return;
+		}
+
+		/*
+		 * Guard against infinite recursion.
+		 *
+		 * We must NOT call Elementor's Post::update() here: for a part that has
+		 * not been built with Elementor yet, update() triggers
+		 * get_elements_data() -> convert_to_elementor() -> Document::save(),
+		 * firing `elementor/document/after_save` again and re-entering this
+		 * method until PHP hits the maximum call stack size (high CPU).
+		 */
+		static $running = false;
+		if ( $running ) {
+			return;
+		}
+
+		$running = true;
+		try {
+			// Invalidate the part's CSS so the frontend regenerates it on the
+			// next render — the same effect as "Clear Files & Data" but without
+			// the recursion-inducing Post::update().
+			delete_post_meta( $post_id, '_elementor_css_status' );
+			delete_post_meta( $post_id, '_elementor_post_css' );
+
+			if ( class_exists( '\Elementor\Plugin' ) && isset( \Elementor\Plugin::$instance->files_manager ) ) {
+				\Elementor\Plugin::$instance->files_manager->clear_cache();
+			}
+		} finally {
+			$running = false;
+		}
+
 	}
 
 	/**

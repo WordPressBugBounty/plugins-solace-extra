@@ -328,12 +328,28 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				'type' => Controls_Manager::SELECT,
 				'options' => [
 					'Title'       => __( 'Title', 'solace-extra' ),
+					'Description' => __( 'Description', 'solace-extra' ),
 					'Category'    => __( 'Category', 'solace-extra' ),
 					'Tags'        => __( 'Tags', 'solace-extra' ),
 					'Price'       => __( 'Price', 'solace-extra' ),
 					'Add To Cart' => __( 'Add To Cart', 'solace-extra' ),
 				],
 				'default' => 'Title',
+			]
+		);
+
+		$repeater->add_control(
+			'excerpt_length',
+			[
+				'label'     => __( 'Excerpt Length', 'solace-extra' ),
+				'type'      => Controls_Manager::NUMBER,
+				'default'   => 150,
+				'min'       => 10,
+				'max'       => 1000,
+				'step'      => 1,
+				'condition' => [
+					'element' => 'Description',
+				],
 			]
 		);
 
@@ -954,6 +970,59 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 
         $this->end_controls_section();
 
+		$this->start_controls_section(
+			'section_product_description',
+			[
+				'label' => esc_html__( 'Product Description', 'solace-extra' ),
+				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
+			]
+		);
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'product_description_typography',
+				'selector' => '{{WRAPPER}} .sol-product .product-info .product-description',
+			]
+		);
+
+		$this->add_control(
+			'product_description_color',
+			[
+				'label'     => esc_html__( 'Color', 'solace-extra' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'selectors' => [
+					'{{WRAPPER}} .sol-product .product-info .product-description' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'product_description_padding',
+			[
+				'label'      => esc_html__( 'Padding', 'solace-extra' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%', 'em' ],
+				'selectors'  => [
+					'{{WRAPPER}} .sol-product .product-info .product-description' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'product_description_margin',
+			[
+				'label'      => esc_html__( 'Margin', 'solace-extra' ),
+				'type'       => \Elementor\Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%', 'em' ],
+				'selectors'  => [
+					'{{WRAPPER}} .sol-product .product-info .product-description' => 'margin: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->end_controls_section();
+
 
 		// ======= Section Price =======
 		$this->start_controls_section(
@@ -1524,6 +1593,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 			
 			.solace-extra-woocommerce-shop ul.products li.sol-product {
 				list-style: none;
+				min-width: 0;
 			}
 			.solace-extra-woocommerce-shop ul.products::before {
 				display: none;
@@ -1531,6 +1601,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 			
 			.solace-extra-woocommerce-shop .woocommerce-loop-product__title,
 			.solace-extra-woocommerce-shop .product-categories,
+			.solace-extra-woocommerce-shop .product-description,
 			.solace-extra-woocommerce-shop .price,
 			.solace-extra-woocommerce-shop .woocommerce ul.products li.sol-product .add_to_cart_button,
 			.solace-extra-woocommerce-shop .woocommerce ul.products li.sol-product .added_to_cart {
@@ -1549,6 +1620,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 
 			.solace-extra-woocommerce-shop .product-categories {
 				display: flex;
+				flex-wrap: wrap;
 				gap: 5px;
 			}
 
@@ -1561,6 +1633,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 
 			.solace-extra-woocommerce-shop li.sol-product .product-info .product-tags {
 				display: flex;
+				flex-wrap: wrap;
 			}
 			.solace-extra-woocommerce-shop li.sol-product .product-info .product-tags a {
 				margin: 10px 0px;
@@ -1676,6 +1749,33 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 		}
 		
 		return $options;
+	}
+
+	/**
+	 * Render a trimmed product description for the shop loop.
+	 *
+	 * @param WC_Product $product       Product object.
+	 * @param array      $item          Repeater item settings.
+	 */
+	private function render_product_description( $product, $item ) {
+		$excerpt_length = ! empty( $item['excerpt_length'] ) ? absint( $item['excerpt_length'] ) : 150;
+		$description    = $product->get_short_description();
+
+		if ( empty( $description ) ) {
+			$description = get_the_excerpt( $product->get_id() );
+		}
+
+		$description = wp_strip_all_tags( $description, true );
+
+		if ( empty( $description ) ) {
+			return;
+		}
+
+		if ( mb_strlen( $description ) > $excerpt_length ) {
+			$description = mb_substr( $description, 0, $excerpt_length ) . '...';
+		}
+
+		echo '<div class="product-description">' . esc_html( $description ) . '</div>';
 	}
 
 	protected function render() {
@@ -1922,6 +2022,10 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 								echo '<h4 class="woocommerce-loop-product__title"><a href="' . esc_url( get_permalink() ) . '">' . esc_html( get_the_title() ) . '</a></h4>';
 								break;
 
+							case 'Description':
+								$this->render_product_description( $solace_extra_product, $item );
+								break;
+
 							case 'Category':
 								$categories = wc_get_product_category_list($solace_extra_product->get_id(), ' ', '<span class="product-categories">', '</span>');
 								if ( $categories ) echo wp_kses_post( $categories );
@@ -1957,6 +2061,10 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 
 							case 'Title':
 								echo '<h4 class="woocommerce-loop-product__title"><a href="' . esc_url( get_permalink() ) . '">' . esc_html( get_the_title() ) . '</a></h4>';
+								break;
+
+							case 'Description':
+								$this->render_product_description( $solace_extra_product, $item );
 								break;
 
 							case 'Category':

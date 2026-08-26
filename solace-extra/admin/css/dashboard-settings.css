@@ -1,0 +1,17 @@
+.solace-extra-settings .form-table th {
+	width: 1%;
+	white-space: nowrap;
+	padding-right: 30px;
+}
+
+.solace-extra-settings .form-table td {
+	padding-left: 0;
+}
+
+@media screen and (max-width: 782px) {
+	.solace-extra-settings .form-table th {
+		width: auto;
+		white-space: normal;
+		padding-right: 0;
+	}
+}

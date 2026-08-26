@@ -597,15 +597,34 @@ if ( ! function_exists( 'solace_get_preview_product' ) ) {
 
     function solace_get_preview_product() {
 
-        if ( function_exists( 'is_product' ) && is_product() ) {
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return false;
+        }
 
+        // Live single-product page: use the main query product, not the Site Builder
+        // document ID that Elementor may set as the current post during rendering.
+        if ( function_exists( 'is_product' ) && is_product() ) {
             global $product;
 
             if ( $product && is_a( $product, 'WC_Product' ) ) {
                 return $product;
             }
 
-            return wc_get_product( get_the_ID() );
+            $queried_id = get_queried_object_id();
+            if ( $queried_id && 'product' === get_post_type( $queried_id ) ) {
+                $queried_product = wc_get_product( $queried_id );
+                if ( $queried_product && is_a( $queried_product, 'WC_Product' ) ) {
+                    return $queried_product;
+                }
+            }
+
+            $current_id = get_the_ID();
+            if ( $current_id && 'product' === get_post_type( $current_id ) ) {
+                $current_product = wc_get_product( $current_id );
+                if ( $current_product && is_a( $current_product, 'WC_Product' ) ) {
+                    return $current_product;
+                }
+            }
         }
 
         $template_id = get_the_ID();
@@ -613,10 +632,26 @@ if ( ! function_exists( 'solace_get_preview_product' ) ) {
         $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings', true );
 
         if ( ! empty( $preview_settings['preview_id'] ) ) {
+            $product_id      = absint( $preview_settings['preview_id'] );
+            $preview_product = wc_get_product( $product_id );
+            if ( $preview_product && is_a( $preview_product, 'WC_Product' ) ) {
+                return $preview_product;
+            }
+        }
 
-            $product_id = absint( $preview_settings['preview_id'] );
+        // Fallback: no preview product selected yet (e.g. the first time a product
+        // widget is dropped in the editor) — use the most recent published product.
+        $products = wc_get_products(
+            array(
+                'limit'   => 1,
+                'status'  => 'publish',
+                'orderby' => 'date',
+                'order'   => 'DESC',
+            )
+        );
 
-            return wc_get_product( $product_id );
+        if ( ! empty( $products ) ) {
+            return $products[0];
         }
 
         return false;

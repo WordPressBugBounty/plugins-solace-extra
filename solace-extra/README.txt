@@ -3,8 +3,8 @@ Contributors: solacewp
 Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
-Tested up to: 7.0
-Stable tag: 1.6.2
+Tested up to: 7.1
+Stable tag: 1.7.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,24 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.7.0 - 26 August 2026 =
+* feat(admin): redesign the Solace dashboard with responsive metrics, feature cards, and new assets.
+* feat(admin): add live Google PageSpeed testing, API settings, and a Google Cloud Console link.
+* feat(widget): add a product featured image widget as an alternative to Elementor Pro Dynamic Tags.
+* feat(widget): add Custom CSS controls to all Solace Extra widgets.
+* feat(shop): add a product description element with excerpt length control.
+* fix(security): restrict privileged AJAX actions to authenticated administrators and add nonce checks.
+* fix(widget): resolve product data from the main query on Site Builder single product pages.
+* fix(widget): show related products only on single product pages, not shop archives.
+* fix(widget): add a sale badge to the product featured image and restore shop category display.
+* fix(widget): restore blog title line-height and Elementor site logo handling.
+* fix(import): upload the logo to the Elementor site logo widget during import.
+* fix(sitebuilder): clear cache so the header logo updates correctly.
+* fix(elementor): resolve Plugin Check issues and CSS regeneration.
+* fix(admin): show accurate theme update and site availability statuses, including when the Solace theme is inactive.
+* fix(admin): refine PageSpeed layout, pause the hero slider during tests, and move Upgrade to the bottom.
+* style(admin): improve dashboard slider padding and two-column layout.
 
 = 1.6.2 - 12 August 2026 =
 * fix: issue upsell widget not working on cart page

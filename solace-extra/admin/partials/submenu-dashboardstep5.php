@@ -29,11 +29,18 @@ function solace_extra_upload_logo() {
         wp_die();
     }
 
+    // Check user capability — logo upload is an admin-only operation.
+    if ( ! current_user_can( 'manage_options' ) ) {
+        $solace_extra_upload_response = array( 'error' => 'Unauthorized.' );
+        echo wp_json_encode( $solace_extra_upload_response );
+        wp_die();
+    }
+
     if (isset($_FILES['logo'])) {
-        $file = esc_url( esc_url_raw( $_FILES['logo'] ) );
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- $_FILES is a file upload, validated by wp_handle_upload() below.
+        $file = $_FILES['logo'];
         $upload_overrides = array('test_form' => false);
         $upload_result = wp_handle_upload($file, $upload_overrides);
-
         if (!empty($upload_result['url'])) {
             // Set the logo URL in theme mods
             set_theme_mod('custom_logo', $upload_result['url']);

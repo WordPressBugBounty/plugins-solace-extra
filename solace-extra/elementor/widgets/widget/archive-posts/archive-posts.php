@@ -562,6 +562,17 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                 'name' => 'title_typography',
                 // 'selector' => '{{WRAPPER}} .sol-title a',
                 'selector' => '{{WRAPPER}} .sol-title, {{WRAPPER}} .sol-title a',
+                'fields_options' => [
+                    'typography' => [
+                        'default' => 'yes',
+                    ],
+                    'line_height' => [
+                        'default' => [
+                            'size' => 1,
+                            'unit' => 'em',
+                        ],
+                    ],
+                ],
             ]
         );
 

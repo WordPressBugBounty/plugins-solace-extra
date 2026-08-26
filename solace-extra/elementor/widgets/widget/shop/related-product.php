@@ -1010,25 +1010,76 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
 
     protected function render() {
         $settings = $this->get_settings_for_display();
+
+        // Related products render only inside a product context:
+        //  - frontend single product page
+        //  - frontend product archive (category/tag/brand)
+        //  - Site Builder "Single Product" template (editor)
+        //  - Site Builder "Shop" / product archive template (editor)
+        // Everywhere else render nothing to avoid a misleading preview.
+        $is_single_product_template = false;
+        $is_shop_archive_template   = false;
+        if ( function_exists( 'solace_is_elementor_editor' ) && solace_is_elementor_editor() ) {
+            $editing_id = get_the_ID();
+            $is_single_product_template = (
+                $editing_id
+                && 'solace-sitebuilder' === get_post_type( $editing_id )
+                && metadata_exists( 'post', $editing_id, '_solace_singleproduct_status' )
+            );
+            $is_shop_archive_template = (
+                $editing_id
+                && 'solace-sitebuilder' === get_post_type( $editing_id )
+                && metadata_exists( 'post', $editing_id, '_solace_shopproduct_status' )
+            );
+        }
+
+        // Context: either a specific product (single) or a term list (archive).
+        // $tax_args = false means "no archive term"; an array is a tax_query.
+        $product  = false;
+        $tax_args = false;
+
+        if ( function_exists( 'is_product' ) && is_product() ) {
+            // Frontend single product page.
+            $product = function_exists( 'wc_get_product' ) ? wc_get_product( get_the_ID() ) : false;
+        } elseif ( function_exists( 'is_product_category' ) && ( is_product_category() || is_product_tag() || is_tax( 'product_brand' ) ) ) {
+            // Frontend product archive: mirror the current term, the same way
+            // the Solace Shop widget does — "related" = products sharing the
+            // archived category/tag/brand.
+            $queried_object = get_queried_object();
+            if ( $queried_object && isset( $queried_object->term_id ) && isset( $queried_object->taxonomy ) ) {
+                $tax_args = [
+                    [
+                        'taxonomy' => sanitize_key( $queried_object->taxonomy ),
+                        'field'    => 'term_id',
+                        'terms'    => [ absint( $queried_object->term_id ) ],
+                        'operator' => 'IN',
+                    ],
+                ];
+            }
+        } elseif ( $is_shop_archive_template ) {
+            // Site Builder Shop (product archive) template editor/preview.
+            $tax_args = $this->solace_related_shop_archive_tax_args( get_the_ID() );
+        } elseif ( $is_single_product_template ) {
+            // Site Builder Single Product template editor/preview.
+            $product = function_exists( 'solace_get_preview_product' ) ? solace_get_preview_product() : false;
+        } else {
+            return;
+        }
+
+        // Single-product context always needs a valid product; archive context
+        // needs at least one resolvable term.
+        if ( ! $tax_args && ( ! $product || ! is_a( $product, 'WC_Product' ) ) ) {
+            if ( $is_single_product_template || $is_shop_archive_template ) {
+                $this->solace_related_products_empty();
+            }
+            return;
+        }
+
         $this->get_style();
         $hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
         $category_hover_animation = ! empty( $settings['category_hover_animation'] ) ? $settings['category_hover_animation'] : '';
         $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
         $category_hover_class     = $category_hover_animation ? ' elementor-animation-' . $category_hover_animation : '';
-
-        // Get current product context
-        $product = solace_get_preview_product();
-
-        if (! $product) {
-            $this->solace_related_products_empty();
-            return;
-        }
-
-        $checkempty = solace_check_empty_product( $product );
-        if ( $checkempty ) {
-            $this->solace_related_products_empty();
-            return;
-        }
 
         // Enqueue WooCommerce default styles
         if (function_exists('WC')) {
@@ -1037,26 +1088,40 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
             wp_enqueue_style('woocommerce-smallscreen');
         }
 
-        $product_id = $product->get_id();
         $heading = $settings['heading'];
         $limit = intval($settings['products_per_page']);
         $columns = intval($settings['columns']);
         $columns = ($columns >= 2 && $columns <= 6) ? $columns : 4;
 
-        $related_ids = wc_get_related_products($product_id, $limit);
-        if (empty($related_ids)) {
-            return;
-        }
+        if ( $tax_args ) {
+            // Archive context: products sharing the current/preview term.
+            $args = [
+                'post_type'           => 'product',
+                'post_status'         => 'publish',
+                'ignore_sticky_posts' => 1,
+                'no_found_rows'       => 1,
+                'posts_per_page'      => $limit,
+                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+                'tax_query'           => $tax_args,
+            ];
+        } else {
+            // Single product context: WooCommerce-style related products.
+            $product_id  = $product->get_id();
+            $related_ids = wc_get_related_products( $product_id, $limit );
+            if ( empty( $related_ids ) ) {
+                return;
+            }
 
-        $args = apply_filters('woocommerce_related_products_args', [
-            'post_type'           => 'product',
-            'ignore_sticky_posts' => 1,
-            'no_found_rows'       => 1,
-            'posts_per_page'      => $limit,
-            'post__in'            => $related_ids,
-            // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in	
-            'post__not_in'        => [$product_id],
-        ]);
+            $args = apply_filters('woocommerce_related_products_args', [
+                'post_type'           => 'product',
+                'ignore_sticky_posts' => 1,
+                'no_found_rows'       => 1,
+                'posts_per_page'      => $limit,
+                'post__in'            => $related_ids,
+                // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_post__not_in
+                'post__not_in'        => [$product_id],
+            ]);
+        }
 
         $query = new WP_Query($args);
 
@@ -1137,6 +1202,59 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
         wp_reset_postdata();
     }
 
+    /**
+     * Resolve the tax_query for the Site Builder "Shop" (product archive)
+     * template editor/preview: the saved preview category, falling back to the
+     * product category with the most products.
+     *
+     * @param int $template_id Site Builder part ID being edited.
+     * @return array|false Array of tax_query clauses, or false when no category
+     *                     can be resolved.
+     */
+    private function solace_related_shop_archive_tax_args( $template_id ) {
+        $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings_category_shop', true );
+        $category_id      = 0;
 
+        if ( ! empty( $preview_settings['preview_category'] ) ) {
+            $category_id = absint( $preview_settings['preview_category'] );
+        }
 
+        if ( ! $category_id ) {
+            $category_id = $this->solace_related_first_product_category_id();
+        }
+
+        if ( ! $category_id ) {
+            return false;
+        }
+
+        return [
+            [
+                'taxonomy' => 'product_cat',
+                'field'    => 'term_id',
+                'terms'    => [ $category_id ],
+                'operator' => 'IN',
+            ],
+        ];
+    }
+
+    /**
+     * ID of the product category with the most products, or 0 if none exists.
+     *
+     * @return int
+     */
+    private function solace_related_first_product_category_id() {
+        $terms = get_terms( [
+            'taxonomy'   => 'product_cat',
+            'hide_empty' => true,
+            'number'     => 1,
+            'orderby'    => 'count',
+            'order'      => 'DESC',
+        ] );
+
+        if ( is_wp_error( $terms ) || empty( $terms ) ) {
+            return 0;
+        }
+
+        return absint( $terms[0]->term_id );
+    }
 }
