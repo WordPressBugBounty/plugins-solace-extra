@@ -907,84 +907,54 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
 
 
     public function solace_related_products_empty() {
-        echo '<section class="related products woocommerce">
-            <h2>Related Products</h2>
-            <ul class="products columns-4">
-                <li class="product type-product post-5914 status-publish first instock">
-                    <div class="nv-card-content-wrapper">
-                        <div class="sp-product-image">
-                            <div class="img-wrap">
-                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Products" alt="Placeholder" style="background:#555; border-radius:8px;">
-                            </div>
-                        </div>
-                        <h5 class="woocommerce-loop-product__title">No Products</h5>
-                        <span class="price">
-                            <span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>299.99</bdi>
-                            </span>
-                        </span>
-                        <a href="#" class="button product_type_simple add_to_cart_button ajax_add_to_cart elementor-button" data-product_id="5914">No Products</a>
-                    </div>
-                </li>
-                <li class="product type-product post-5898 status-publish instock">
-                    <div class="nv-card-content-wrapper">
-                        <div class="sp-product-image">
-                            <div class="img-wrap">
-                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Products" alt="Placeholder" style="background:#555; border-radius:8px;">
-                            </div>
-                        </div>
-                        <h5 class="woocommerce-loop-product__title">No Products</h5>
-                        <span class="price">
-                            <del><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>266.00</bdi>
-                            </span></del>
-                            <ins><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>217.00</bdi>
-                            </span></ins>
-                        </span>
-                        <a href="#" class="button product_type_simple add_to_cart_button ajax_add_to_cart elementor-button" data-product_id="5898">No Products</a>
-                    </div>
-                </li>
-                <li class="product type-product post-5900 status-publish instock">
-                    <div class="nv-card-content-wrapper">
-                        <div class="sp-product-image">
-                            <div class="img-wrap">
-                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Products" alt="Placeholder" style="background:#555; border-radius:8px;">
-                            </div>
-                        </div>
-                        <h5 class="woocommerce-loop-product__title">No Products</h5>
-                        <span class="price">
-                            <del><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>379.00</bdi>
-                            </span></del>
-                            <ins><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>300.00</bdi>
-                            </span></ins>
-                        </span>
-                        <a href="#" class="button product_type_simple add_to_cart_button ajax_add_to_cart elementor-button" data-product_id="5900">No Products</a>
-                    </div>
-                </li>
-                <li class="product type-product post-5904 status-publish last instock">
-                    <div class="nv-card-content-wrapper">
-                        <div class="sp-product-image">
-                            <div class="img-wrap">
-                                <img width="300" height="300" src="https://placehold.co/600x400?text=No Products" alt="Placeholder" style="background:#555; border-radius:8px;">
-                            </div>
-                        </div>
-                        <h5 class="woocommerce-loop-product__title">No Products</h5>
-                        <span class="price">
-                            <del><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>338.00</bdi>
-                            </span></del>
-                            <ins><span class="woocommerce-Price-amount amount">
-                                <bdi><span class="woocommerce-Price-currencySymbol">$</span>299.00</bdi>
-                            </span></ins>
-                        </span>
-                        <a href="#" class="button product_type_simple add_to_cart_button ajax_add_to_cart elementor-button" data-product_id="5904">No Products</a>
-                    </div>
-                </li>
-            </ul>
-        </section>';
+        $settings = $this->get_settings_for_display();
+
+        $this->get_style();
+
+        $heading = $settings['heading'];
+        $tag     = ! empty( $settings['related_heading_tag'] ) ? $settings['related_heading_tag'] : 'h2';
+        $limit   = intval( $settings['products_per_page'] );
+        $columns = intval( $settings['columns'] );
+        $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
+
+        $hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
+        $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
+
+        if ( function_exists( 'WC' ) ) {
+            wp_enqueue_style( 'woocommerce-general' );
+            wp_enqueue_style( 'woocommerce-layout' );
+            wp_enqueue_style( 'woocommerce-smallscreen' );
+        }
+
+        echo '<section class="related products woocommerce">';
+        if ( ! empty( $heading ) ) {
+            echo sprintf(
+                '<%1$s class="solace-related-heading">%2$s</%1$s>',
+                esc_attr( $tag ),
+                esc_html( $heading )
+            );
+        }
+
+        add_filter( 'loop_shop_columns', function () use ( $columns ) {
+            return $columns;
+        } );
+
+        woocommerce_product_loop_start();
+
+        $placeholder_count   = max( 1, min( $limit, 8 ) );
+        $placeholder_product = function_exists( 'solace_extra_placeholder_product' ) ? solace_extra_placeholder_product() : false;
+        for ( $i = 0; $i < $placeholder_count; $i++ ) {
+            $card_title = ( $placeholder_product && 0 === $i ) ? $placeholder_product->get_name() : sprintf( 'Lorem Ipsum Dolor Sit Amet %d', $i + 1 );
+            if ( function_exists( 'solace_extra_placeholder_product_card' ) ) {
+                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                echo solace_extra_placeholder_product_card( $card_title, $hover_class );
+            }
+        }
+
+        woocommerce_product_loop_end();
+        remove_all_filters( 'loop_shop_columns' );
+
+        echo '</section>';
     }
 
     public function get_style(){
@@ -1108,7 +1078,45 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
             // Single product context: WooCommerce-style related products.
             $product_id  = $product->get_id();
             $related_ids = wc_get_related_products( $product_id, $limit );
+
+            // No related products. On a fresh store with no products yet,
+            // render lorem-ipsum placeholder cards so the section isn't blank
+            // in the Site Builder editor.
             if ( empty( $related_ids ) ) {
+                if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'solace_extra_is_placeholder_product' ) && solace_extra_is_placeholder_product( $product ) ) {
+                    $heading = $settings['heading'];
+                    $tag     = ! empty( $settings['related_heading_tag'] ) ? $settings['related_heading_tag'] : 'h2';
+                    $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
+
+                    if ( function_exists( 'WC' ) ) {
+                        wp_enqueue_style( 'woocommerce-general' );
+                        wp_enqueue_style( 'woocommerce-layout' );
+                        wp_enqueue_style( 'woocommerce-smallscreen' );
+                    }
+
+                    echo '<section class="related products woocommerce">';
+                    if ( ! empty( $heading ) ) {
+                        echo sprintf(
+                            '<%1$s class="solace-related-heading">%2$s</%1$s>',
+                            esc_attr( $tag ),
+                            esc_html( $heading )
+                        );
+                    }
+                    add_filter( 'loop_shop_columns', function () use ( $columns ) {
+                        return $columns;
+                    } );
+                    woocommerce_product_loop_start();
+                    $placeholder_count = max( 1, min( $limit, 8 ) );
+                    for ( $i = 0; $i < $placeholder_count; $i++ ) {
+                        $card_title = 0 === $i ? $product->get_name() : sprintf( 'Lorem Ipsum Dolor Sit Amet %d', $i + 1 );
+                        if ( function_exists( 'solace_extra_placeholder_product_card' ) ) {
+                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                            echo solace_extra_placeholder_product_card( $card_title, $hover_class );
+                        }
+                    }
+                    woocommerce_product_loop_end();
+                    echo '</section>';
+                }
                 return;
             }
 

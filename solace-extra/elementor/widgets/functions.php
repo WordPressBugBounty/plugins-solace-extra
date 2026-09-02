@@ -593,6 +593,97 @@ if ( ! function_exists( 'solace_check_empty_post' ) ) {
 //     }
 // }
 
+
+if ( ! function_exists( 'solace_extra_placeholder_product' ) ) {
+	/**
+	 * Build a virtual WooCommerce product populated with lorem-ipsum demo data.
+	 *
+	 * Used as a display-only fallback when the store has no products yet (e.g.
+	 * right after a site reset), so the Single Product / Shop Site Builder
+	 * templates render demo content instead of "Sorry, no products" or errors.
+	 *
+	 * The returned object is never persisted — it only exists in memory for the
+	 * current render, so widgets can read title/price/description/image from it
+	 * exactly like from a real product.
+	 *
+	 * @return \WC_Product_Simple|false
+	 */
+	function solace_extra_placeholder_product() {
+		if ( ! class_exists( 'WC_Product_Simple' ) ) {
+			return false;
+		}
+
+		$product = new \WC_Product_Simple();
+
+		$product->set_name( 'Lorem Ipsum Dolor Sit Amet' );
+		$product->set_slug( 'lorem-ipsum-dolor-sit-amet' );
+		$product->set_short_description( 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' );
+		$product->set_description( '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>' );
+		$product->set_regular_price( '129.00' );
+		$product->set_sale_price( '99.00' );
+		// WC_Product only syncs the derived `price` prop when the product is
+		// saved to the data store; set it explicitly so get_price_html() works
+		// on this in-memory fallback product.
+		$product->set_props( array( 'price' => '99.00' ) );
+		$product->set_sku( 'DEMO-001' );
+		$product->set_stock_status( 'instock' );
+		// Track stock so WC's stock availability text ("100 in stock") renders
+		// for the Product Stock widget on this in-memory fallback product.
+		$product->set_manage_stock( true );
+		$product->set_stock_quantity( 100 );
+		$product->set_average_rating( 4.5 );
+		$product->set_review_count( 12 );
+		$product->update_meta_data( '_solace_extra_placeholder', '1' );
+
+		return $product;
+	}
+}
+
+if ( ! function_exists( 'solace_extra_is_placeholder_product' ) ) {
+	/**
+	 * Whether the given product is the virtual lorem-ipsum fallback product.
+	 *
+	 * @param mixed $product
+	 * @return bool
+	 */
+	function solace_extra_is_placeholder_product( $product ) {
+		return $product && is_a( $product, 'WC_Product' ) && '1' === $product->get_meta( '_solace_extra_placeholder' );
+	}
+}
+
+
+if ( ! function_exists( 'solace_extra_placeholder_product_card' ) ) {
+	/**
+	 * Render a single WooCommerce-style product card populated with lorem-ipsum
+	 * demo data (placeholder image, title, price, add-to-cart).
+	 *
+	 * Used by the upsells / related-products widgets as a fallback when the
+	 * store has no products yet, so their sections aren't blank in the Site
+	 * Builder editor.
+	 *
+	 * @param string $title       Product title to display.
+	 * @param string $hover_class Optional Elementor hover animation class.
+	 * @return void
+	 */
+	function solace_extra_placeholder_product_card( $title, $hover_class = '' ) {
+		$product = function_exists( 'solace_extra_placeholder_product' ) ? solace_extra_placeholder_product() : false;
+		if ( ! $product ) {
+			return;
+		}
+
+		echo '<li class="product ' . esc_attr( implode( ' ', wc_get_product_class( '', $product ) ) ) . '">';
+		echo '<a href="#" class="woocommerce-LoopProduct-link woocommerce-loop-product__link">';
+		echo '<span class="onsale">' . esc_html__( 'Sale!', 'solace-extra' ) . '</span>';
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WC placeholder image markup.
+		echo function_exists( 'wc_placeholder_img' ) ? wc_placeholder_img( 'woocommerce_thumbnail' ) : '';
+		echo '<h4 class="woocommerce-loop-product__title">' . esc_html( $title ) . '</h4>';
+		echo '</a>';
+		echo '<span class="price">' . wp_kses_post( $product->get_price_html() ) . '</span>';
+		echo '<a href="#" data-quantity="1" data-product_id="0" class="elementor-button solace-extra-button product_type_simple add_to_cart_button ajax_add_to_cart' . esc_attr( $hover_class ) . '" rel="nofollow">' . esc_html__( 'Add to cart', 'solace-extra' ) . '</a>';
+		echo '</li>';
+	}
+}
+
 if ( ! function_exists( 'solace_get_preview_product' ) ) {
 
     function solace_get_preview_product() {
@@ -654,7 +745,10 @@ if ( ! function_exists( 'solace_get_preview_product' ) ) {
             return $products[0];
         }
 
-        return false;
+        // Fresh store with no products yet: fall back to a virtual lorem-ipsum
+        // product so Site Builder / Elementor previews render demo content
+        // (lorem ipsum + placeholder image) instead of "Sorry, no products".
+        return solace_extra_placeholder_product();
     }
 }
 

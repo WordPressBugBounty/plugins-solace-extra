@@ -24,6 +24,7 @@ require_once plugin_dir_path(__FILE__) . 'wp-background-processing.php';
 
 /** Display verbose errors */
 if ( ! defined( 'IMPORT_DEBUG' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress Importer compatibility constant.
 	define( 'IMPORT_DEBUG', WP_DEBUG );
 }
 
@@ -41,6 +42,42 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 		require $class_wp_importer;
 	}
 }
+
+if ( ! function_exists( 'solace_extra_deactivate_atomic_editor' ) ) {
+	/**
+	 * Keep Elementor's Atomic Editor (Editor V4) experiments inactive while the
+	 * Solace Extra plugin is active.
+	 *
+	 * Solace demo kits are built with v3 Elementor elements, so importing with
+	 * the Atomic Editor active is unnecessary: v4 element types written during
+	 * an import (or by editing pages in the Atomic Editor) render blank once the
+	 * Atomic Editor is turned off. Deactivating these experiments on every
+	 * request keeps every imported/edited template independent of the Atomic
+	 * Editor. The user may re-enable it from the Elementor dashboard — the next
+	 * request simply deactivates it again while this plugin is active.
+	 *
+	 * Mirrors Elementor's own `opt_out_v4()` list.
+	 *
+	 * @return void
+	 */
+	function solace_extra_deactivate_atomic_editor() {
+		$features = array(
+			'e_opt_in_v4',
+			'e_atomic_elements',
+			'e_global_classes',
+			'e_variables',
+			'e_components',
+		);
+
+		foreach ( $features as $feature ) {
+			update_option( 'elementor_experiment-' . $feature, 'inactive' );
+		}
+	}
+}
+
+// Keep the Atomic Editor deactivated on every request while this plugin runs.
+add_action( 'init', 'solace_extra_deactivate_atomic_editor', 1 );
+
 
 /** Functions missing in older WordPress versions. */
 require_once __DIR__ . '/export-import/compat.php';
@@ -90,6 +127,8 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
         $upload_dir = wp_upload_dir();
         $response = wp_remote_get($zip_url);
 
+
+
         $zip_data = wp_upload_bits(basename($zip_url), null, wp_remote_retrieve_body(wp_remote_get($zip_url)));
         if (!$zip_data['error']) {
             if (class_exists('Elementor\Plugin')) {
@@ -122,6 +161,8 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
                         throw new \RuntimeException('Elementor import-export component is unavailable; cannot import kit.');
                     }
 
+                    // The Atomic Editor is already kept inactive by the global
+                    // `init` hook, so no import-specific disable is needed.
                     $import_export->import_kit($zip_file_path, array('include', 'selected_plugins', 'selected_cpt', 'selected_override_conditions'));
 
                     $zip->close();
@@ -352,7 +393,7 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
     }
 }
 
-
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound -- WordPress Importer compatibility class name.
 class Thumbnail_Generator extends XWP_Background_Process {
 
     protected $action = 'generate_thumbnails';

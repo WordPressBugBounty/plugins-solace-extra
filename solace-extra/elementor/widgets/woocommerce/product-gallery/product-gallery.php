@@ -770,6 +770,19 @@ class Solace_Extra_Product_Gallery extends Widget_Base {
 		$gallery_image_ids = $product->get_gallery_image_ids();
 
 		if ( empty( $featured_image_id ) && empty( $gallery_image_ids ) ) {
+			// No product images yet (fresh store): render the placeholder image
+			// so the Single Product Site Builder template still shows something.
+			$placeholder_src = function_exists( 'wc_placeholder_img_src' ) ? wc_placeholder_img_src() : \Elementor\Utils::get_placeholder_image_src();
+			?>
+			<div class="solace-product-gallery layout-column">
+				<div class="solace-product-gallery-main">
+					<img id="solace-main-image"
+							src="<?php echo esc_url( $placeholder_src ); ?>"
+							data-full="<?php echo esc_url( $placeholder_src ); ?>"
+							alt="<?php echo esc_attr( $product_title ); ?>" />
+				</div>
+			</div>
+			<?php
 			return;
 		}
 

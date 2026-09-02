@@ -15,6 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @abstract
  */
+// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedClassFound -- Vendored WP-Background-Processing library class.
 abstract class XWP_Async_Request {
 
 	/**

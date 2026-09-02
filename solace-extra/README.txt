@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,16 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.7.1 - 2 September 2026 =
+* fix(elementor): resolve Plugin Check issues.
+* fix(widget): add image sizing controls to the Product Featured Image widget.
+* fix(widget): keep Related Products and Product Upsells working when no products are available.
+* fix(widget): correct the Shop widget pagination arrow color.
+* fix(elementor): deactivate the atomic editor while Solace Extra is active.
+* fix(import): disable the atomic editor before importing a demo.
+* fix(single-product): show a placeholder when no products are available.
+* fix(admin): skip the deprecated setAccessible() call on PHP 8.1+.
 
 = 1.7.0 - 26 August 2026 =
 * feat(admin): redesign the Solace dashboard with responsive metrics, feature cards, and new assets.

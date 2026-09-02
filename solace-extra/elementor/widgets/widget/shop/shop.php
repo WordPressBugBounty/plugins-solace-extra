@@ -1722,6 +1722,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				align-items: center;
 				line-height: inherit;
 				padding: 8px 16px;
+				fill: currentColor;
 			}
 
 			.solace-extra-pagination .page-numbers.current {
@@ -2112,6 +2113,42 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
             echo '</div>';
             wp_reset_postdata();
         } else {
+            // Fresh store with no products at all (e.g. right after a reset):
+            // render lorem-ipsum placeholder cards so the Shop Site Builder
+            // template previews/live page shows a designed grid instead of an
+            // empty container.
+            $placeholder_product = function_exists( 'solace_extra_placeholder_product' ) ? solace_extra_placeholder_product() : false;
+            $published_products  = (int) wp_count_posts( 'product' )->publish;
+
+            if ( $placeholder_product && 0 === $published_products ) {
+                $placeholder_count = max( 1, min( (int) $posts_per_page, 8 ) );
+                $placeholder_img   = function_exists( 'wc_placeholder_img' ) ? wc_placeholder_img( 'woocommerce_thumbnail' ) : '';
+
+                echo '<div class="woocommerce">';
+                echo '<div class="data-post">';
+                echo '<ul class="products">';
+
+                for ( $i = 0; $i < $placeholder_count; $i++ ) {
+                    $item_title = 0 === $i ? $placeholder_product->get_name() : sprintf( 'Lorem Ipsum Dolor Sit Amet %d', $i + 1 );
+                    ?>
+                    <li class="sol-product">
+                        <div class="product-wrapper" style="position: relative;">
+                            <a href="#" class="product-full-link rico-lay-else" style="position: absolute; "></a>
+                            <div class="product-image">
+                                <a href="#"><?php echo wp_kses_post( $placeholder_img ); ?></a>
+                            </div>
+                            <div class="product-info">
+                                <h4 class="woocommerce-loop-product__title"><a href="#"><?php echo esc_html( $item_title ); ?></a></h4>
+                                <span class="price"><?php echo wp_kses_post( $placeholder_product->get_price_html() ); ?></span>
+                                <a href="#" data-product_id="0" data-quantity="1" class="elementor-button solace-extra-button add_to_cart_button <?php echo esc_attr( $hover_class ); ?>" rel="nofollow"><?php esc_html_e( 'Add to cart', 'solace-extra' ); ?></a>
+                            </div>
+                        </div>
+                    </li>
+                    <?php
+                }
+
+                echo '</ul></div></div>';
+            }
         }
         echo '</div>';
     }

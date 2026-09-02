@@ -2881,7 +2881,10 @@ class Solace_Extra_Admin {
 
 				$reflection = new ReflectionObject( $elements_manager );
 				$property   = $reflection->getProperty( 'categories' );
-				$property->setAccessible( true );
+				// setAccessible() is a no-op since PHP 8.1 and deprecated in PHP 8.5.
+				if ( PHP_VERSION_ID < 80100 ) {
+					$property->setAccessible( true );
+				}
 				$property->setValue( $elements_manager, $reordered );
 			}
 		}

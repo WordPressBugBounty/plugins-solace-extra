@@ -243,6 +243,26 @@ class Solace_Extra_Product_Additional_Information extends Widget_Base {
 		$attributes = $product->get_attributes();
 
 		if ( empty( $attributes ) ) {
+			// Fresh store with no products yet: render lorem-ipsum placeholder
+			// attributes so the widget isn't blank in the Site Builder editor.
+			if ( function_exists( 'solace_extra_is_placeholder_product' ) && solace_extra_is_placeholder_product( $product ) ) {
+				$show_heading = isset( $settings['show_heading'] ) && $settings['show_heading'] === 'yes';
+
+				echo '<div class="solace-product-additional-information">';
+				if ( $show_heading ) {
+					echo '<h2 class="woocommerce-product-details__title">' . esc_html__( 'Additional Information', 'solace-extra' ) . '</h2>';
+				}
+				echo '<table class="shop_attributes">';
+				$demo_attributes = array(
+					__( 'Brand', 'solace-extra' )    => 'Lorem Ipsum Co.',
+					__( 'Material', 'solace-extra' ) => 'Premium Cotton',
+					__( 'Color', 'solace-extra' )    => 'Lorem / Ipsum',
+				);
+				foreach ( $demo_attributes as $label => $value ) {
+					echo '<tr><th>' . esc_html( $label ) . '</th><td>' . esc_html( $value ) . '</td></tr>';
+				}
+				echo '</table></div>';
+			}
 			return;
 		}
 

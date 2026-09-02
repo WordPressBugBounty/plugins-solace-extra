@@ -976,8 +976,46 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
             $upsell_ids = array_unique( $upsell_ids );
         }
 
-        // No upsells found — show nothing
+        // No upsells found — show nothing. On a fresh store with no products
+        // yet, render lorem-ipsum placeholder cards so the section isn't blank
+        // in the Site Builder editor.
         if ( empty( $upsell_ids ) ) {
+            if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'solace_extra_is_placeholder_product' ) && solace_extra_is_placeholder_product( $product ) ) {
+                $heading = $settings['heading'];
+                $limit   = intval( $settings['products_per_page'] );
+                $tag     = ! empty( $settings['upsells_heading_tag'] ) ? $settings['upsells_heading_tag'] : 'h2';
+                $columns = intval( $settings['columns'] );
+                $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
+
+                if ( function_exists( 'WC' ) ) {
+                    wp_enqueue_style( 'woocommerce-general' );
+                    wp_enqueue_style( 'woocommerce-layout' );
+                    wp_enqueue_style( 'woocommerce-smallscreen' );
+                }
+
+                echo '<section class="upsells products woocommerce">';
+                if ( ! empty( $heading ) ) {
+                    echo sprintf(
+                        '<%1$s class="solace-upsells-heading">%2$s</%1$s>',
+                        esc_attr( $tag ),
+                        esc_html( $heading )
+                    );
+                }
+                add_filter( 'loop_shop_columns', function () use ( $columns ) {
+                    return $columns;
+                } );
+                woocommerce_product_loop_start();
+                $placeholder_count = max( 1, min( $limit, 8 ) );
+                for ( $i = 0; $i < $placeholder_count; $i++ ) {
+                    $card_title = 0 === $i ? $product->get_name() : sprintf( 'Lorem Ipsum Dolor Sit Amet %d', $i + 1 );
+                    if ( function_exists( 'solace_extra_placeholder_product_card' ) ) {
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                        echo solace_extra_placeholder_product_card( $card_title, $hover_class );
+                    }
+                }
+                woocommerce_product_loop_end();
+                echo '</section>';
+            }
             return;
         }
 

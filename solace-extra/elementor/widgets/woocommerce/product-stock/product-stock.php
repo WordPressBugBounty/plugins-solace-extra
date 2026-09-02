@@ -121,18 +121,17 @@ class Solace_Extra_Product_Stock extends Widget_Base {
 			$product_id 	= solace_extra_get_product_id();
 			// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WooCommerce template convention
 			$product 		= wc_get_product( $product_id );
-			$stock_status 	= $product->get_stock_status();
-			$stock_qty 		= $product->get_stock_quantity();
-			// $stock_status = $product && $product->get_stock_status() ? $product->get_stock_status() : 'no_product';
-			// $stock_qty    = $product && $product->get_stock_quantity() ? $product->get_stock_quantity() : 0;
 
-
-			if ( $stock_status == 'instock' && is_null( $stock_qty ) ) {
-				echo "<div class='solace-product-stock'><span class='stock' >100 in stock</span></div>";
+			// Fresh store with no products yet: fall back to the virtual
+			// lorem-ipsum product so the widget renders demo stock instead of
+			// a blank box.
+			if ( ! $product || ! is_a( $product, 'WC_Product' ) ) {
+				// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- WooCommerce template convention
+				$product = function_exists( 'solace_get_preview_product' ) ? solace_get_preview_product() : false;
 			}
 		}
 
-		if ( empty( $product ) ) {
+		if ( empty( $product ) || ! is_a( $product, 'WC_Product' ) ) {
 			return;
 		}
 		$backorder_text 	= $settings['backorder_text'];

@@ -1372,8 +1372,9 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
 		}
 
 		$product_id    = $product->get_id();
-		$product_title = $product->get_title(); 
-        $product_id = $product ? $product->get_id() : 'not set';
+		$product_title = $product->get_title();
+		$product_description = ( $product && is_a( $product, 'WC_Product' ) ) ? $product->get_description() : '';
+		$product_id = $product ? $product->get_id() : 'not set';
 
         $has_variations = $product->is_type('variable'); 
         $has_attributes = count($product->get_attributes()) > 0; 
@@ -1382,12 +1383,17 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
         if (function_exists('comments_template')) {
             global $product;
     
-            $post_object = get_post($product_id);
+            // A virtual preview product (fresh store, no products) has no post
+            // row; guard get_post()/setup_postdata() so the tabs still render
+            // lorem-ipsum content instead of throwing PHP warnings.
+            $post_object = $product_id && is_numeric( $product_id ) ? get_post( (int) $product_id ) : null;
 
             $settings = $this->get_settings_for_display();
             $tabs_layout_class = isset($settings['tabs_layout']) ? 'tabs-layout-' . esc_attr($settings['tabs_layout']) : 'tabs-layout-horizontal';
 
-            setup_postdata($GLOBALS['post'] =& $post_object);?>
+            if ( $post_object && is_a( $post_object, 'WP_Post' ) ) {
+                setup_postdata($GLOBALS['post'] =& $post_object);
+            }?>
             <div class="solace-woocommerce-tabs wc-tabs-wrapper 
             <?php 
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -1414,7 +1420,14 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
                 <div class="tab-content">
     
                 <div class="solace-woocommerce-tabs-panel solace-woocommerce-tabs-panel--description panel entry-content wc-tab active" id="tab-description" role="tabpanel" aria-labelledby="tab-title-description">
-                    <?php the_content(); ?>
+                    <?php
+                    if ( $post_object && is_a( $post_object, 'WP_Post' ) ) {
+                        the_content();
+                    } else {
+                        // Virtual preview product: render the lorem-ipsum description.
+                        echo wp_kses_post( wpautop( $product_description ) );
+                    }
+                    ?>
                 </div>
 
                 <div class="solace-woocommerce-tabs-panel solace-woocommerce-tabs-panel--additional_information panel entry-content wc-tab" id="tab-additional_information" role="tabpanel" aria-labelledby="tab-title-additional_information">
@@ -1447,8 +1460,8 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
                                                     </div>
                                                     <div class="review-rating">
                                                         <?php
-                                                        $rating = get_comment_meta($comment->comment_ID, 'rating', true);
-                                                        $rating_percentage = ($rating / 5) * 100;
+                                                        $rating = (float) get_comment_meta($comment->comment_ID, 'rating', true);
+                                                        $rating_percentage = ($rating > 0 ? ($rating / 5) * 100 : 0);
                                                         echo '<div class="woocommerce-product-rating custom-star-rating">';
                                                         echo '<div class="star-rating" role="img" aria-label="Rated ' . esc_attr($rating) . ' out of 5">';
                                                         echo '<span style="width:' . esc_attr($rating_percentage) . '%"></span>';
@@ -1576,7 +1589,9 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
 
     
             <?php
-            wp_reset_postdata();
+            if ( $post_object && is_a( $post_object, 'WP_Post' ) ) {
+                wp_reset_postdata();
+            }
         }
     }
 

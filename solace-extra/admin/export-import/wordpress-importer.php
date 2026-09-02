@@ -23,6 +23,7 @@ if ( ! defined( 'WP_LOAD_IMPORTERS' ) ) {
 
 /** Display verbose errors */
 if ( ! defined( 'IMPORT_DEBUG' ) ) {
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress Importer compatibility constant.
 	define( 'IMPORT_DEBUG', WP_DEBUG );
 }
 

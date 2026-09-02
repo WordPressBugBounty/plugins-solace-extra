@@ -264,24 +264,40 @@ class Solace_Extra_Product_Breadcrumbs extends Widget_Base {
 			} );
 		}
 
-		global $post;
-		$original_post = $post;
+		// A virtual preview product (fresh store, no products) has no post row;
+		// render a static breadcrumb instead of calling setup_postdata() on null.
+		$product_post = $product_id ? get_post( $product_id ) : null;
 
-		$post = get_post( $product_id );
-		setup_postdata( $post );
+		if ( $product_post && is_a( $product_post, 'WP_Post' ) ) {
+			global $post;
+			$original_post = $post;
 
-		?>
-		<div class="sol-bc">
-			<?php 
-			if ( function_exists( 'woocommerce_breadcrumb' ) ) {
-				woocommerce_breadcrumb();
-			}
+			$post = $product_post;
+			setup_postdata( $product_post );
+
 			?>
-		</div>
-		<?php
+			<div class="sol-bc">
+				<?php
+				if ( function_exists( 'woocommerce_breadcrumb' ) ) {
+					woocommerce_breadcrumb();
+				}
+				?>
+			</div>
+			<?php
 
-		wp_reset_postdata();
-		$post = $original_post;
+			wp_reset_postdata();
+			$post = $original_post;
+		} else {
+			?>
+			<div class="sol-bc">
+				<nav class="woocommerce-breadcrumb" aria-label="Breadcrumb">
+					<a href="<?php echo esc_url( get_permalink( wc_get_page_id( 'shop' ) ) ); ?>"><?php esc_html_e( 'Shop', 'solace-extra' ); ?></a>
+					<span class="nv-breadcrumb-delimiter">\</span>
+					<?php echo esc_html( $product_title ); ?>
+				</nav>
+			</div>
+			<?php
+		}
 
 		do_action( 'solace_extra_after_main_content', $this );
 	}
