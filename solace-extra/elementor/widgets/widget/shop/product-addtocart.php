@@ -782,7 +782,7 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
 
 		if ( ! $kit_id ) {
-            // error_log('DEBUG: Kit ID tidak ditemukan');
+            // error_log( 'DEBUG: Kit ID not found' );
             // return;
         }
 
@@ -799,20 +799,20 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
         static $style_printed = [];
         $widget_id = $this->get_id();
         if ( isset( $style_printed[ $widget_id ] ) ) {
-            // error_log('DEBUG: Style untuk widget ' . $widget_id . ' sudah pernah diprint sebelumnya');
+            // error_log( 'DEBUG: Style for widget ' . $widget_id . ' already printed before' );
             // return;
         }
 
-        // error_log('DEBUG: Mengecek normal_styles...');
+        // error_log( 'DEBUG: Checking normal_styles...' );
         $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
         
-        // error_log('DEBUG: Mengecek focus_styles...');
+        // error_log( 'DEBUG: Checking focus_styles...' );
         $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
         
         // error_log('DEBUG: Hasil Normal Style: ' . $normal_styles);
 
         if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
-            // error_log('DEBUG: Semua styles kosong, membatalkan render <style>');
+            // error_log( 'DEBUG: All styles empty, cancelling <style> render' );
             // return;
         }
 

@@ -36,47 +36,19 @@
 		form.on( 'submit', function(e) {
 			e.preventDefault();
 
-			const formDataSerialize = form.serialize();
-
-			// Parse serialized form data into an object
-			const urlParams = new URLSearchParams(formDataSerialize);
-			let msg_email = '';
-
-			// // Convert URLSearchParams to an object
-			// urlParams.forEach((value, key) => {
-			// 	msg_email += key + ': ' + value + '<br/><br/>';
-			// });			
-
-			form.find('input, textarea, select').each(function() {
-				const el = $(this);
-			
-				// Get the custom label from `get_label` attribute
-				const label = el.attr('get_label');
-				const value = el.val();
-			
-				// Skip radio/checkbox if they are not checked
-				if ((el.is(':radio') || el.is(':checkbox')) && !el.is(':checked')) {
-					return; // Important: avoid unselected radios/checkboxes
-				}
-			
-				// Append label and value to the email message string
-				// For input type="number", this works the same as text
-				if ( label ) {
-					msg_email += label + ': ' + value + '<br/><br/>';
-				} else {
-					msg_email += value + '<br/><br/>';
-				}
-			});
-	
+			// The email body is composed server-side from the widget's own field
+			// definitions. This used to build it here and post it as
+			// 'dataSerialize', which meant the message that left the site's mail
+			// server was whatever the browser said it was. FormData already carries
+			// every field under its own name, which is all the server needs.
 			const formData = new FormData(form[0]);
-	
+
 			// Add additional data to FormData
 			formData.append('action', 'elementor_form_builder_form_ajax');
 			formData.append('post_id', post_id);
 			formData.append('post_id2', post_id2);
 			formData.append('el_id', el_id);
 			formData.append('nonce', elementor_form_builder_obj.nonce);
-			formData.append('dataSerialize', msg_email);
 			formData.append('extension', extension);
 
 			// Add class active

@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Elementor Post Author Widget.
  *
- * Widget Elementor yang menampilkan nama penulis dari pos atau halaman.
+ * Elementor widget that displays the author name of a post or page.
  *
  * @since 1.0.0
  */

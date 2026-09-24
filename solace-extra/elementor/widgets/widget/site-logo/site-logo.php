@@ -391,7 +391,33 @@ class Solace_Extra_Site_Logo extends \Elementor\Widget_Base {
 				<?php if ( $custom_link ) : ?>
 					<a href="<?php echo esc_url( $custom_link ); ?>" <?php echo esc_attr( $is_external ); ?> <?php echo esc_attr( $nofollow ); ?>>
 				<?php endif; ?>
-				<?php // phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage?><img style="display: block;" src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" />
+				<?php
+				// Reserve the RENDERED (target) size, not the image's natural
+				// size, so the browser allocates the correct box from the very
+				// first paint. Reserving the natural dimensions (e.g. 1587x404)
+				// made the logo appear huge before the header template css
+				// applied its width rule -> "grows then shrinks" flash.
+				$img_meta = wp_get_attachment_metadata( $image_id );
+				$nat_w    = ! empty( $img_meta['width'] ) ? (int) $img_meta['width'] : 300;
+				$nat_h    = ! empty( $img_meta['height'] ) ? (int) $img_meta['height'] : 100;
+
+				// Target width from the widget control (px). Tablet/mobile
+				// sizes are percentages handled by the template css, so the
+				// reserved box only needs to match the desktop px width.
+				$w_setting = ! empty( $settings['solace_extra_width']['size'] ) ? (float) $settings['solace_extra_width']['size'] : 0;
+				$w_unit    = ! empty( $settings['solace_extra_width']['unit'] ) ? $settings['solace_extra_width']['unit'] : 'px';
+
+				if ( $w_setting > 0 && 'px' === $w_unit ) {
+					$img_w = (int) $w_setting;
+					$img_h = (int) round( $img_w * ( $nat_h / max( 1, $nat_w ) ) );
+				} else {
+					// No px width configured - keep intrinsic ratio so the
+					// browser reserves a proportional box, never full natural.
+					$img_w = $nat_w;
+					$img_h = $nat_h;
+				}
+				?>
+				<img style="display: block;" src="<?php echo esc_url( $image_url ); ?>" alt="<?php echo esc_attr( get_bloginfo( 'name' ) ); ?>" width="<?php echo esc_attr( $img_w ); ?>" height="<?php echo esc_attr( $img_h ); ?>" />
 				<?php if ( $custom_link ) : ?>
 					</a>
 				<?php endif; ?>

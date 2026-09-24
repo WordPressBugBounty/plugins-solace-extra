@@ -110,6 +110,16 @@ class Solace_Extra_Admin {
 		if ( 'solace_page_dashboard-sitebuilder' === $hook ) {
 			// Sweetalert2.
 			wp_enqueue_style( 'solace-extra-sweetalert2-style', SOLACE_EXTRA_ASSETS_URL . 'css/sweetalert2.css', array(), $this->version, 'all' );
+
+			// Unified condition-dropdown styling (loads after admin-style.min.css).
+			$solace_extra_conditions_css = plugin_dir_path( __FILE__ ) . 'css/sitebuilder-conditions.css';
+			wp_enqueue_style(
+				'solace-extra-sitebuilder-conditions',
+				plugin_dir_url( __FILE__ ) . 'css/sitebuilder-conditions.css',
+				array( 'solace-extra-admin-style' ),
+				file_exists( $solace_extra_conditions_css ) ? filemtime( $solace_extra_conditions_css ) : $this->version,
+				'all'
+			);
 		}
 
 		if ( 'solace_page_dashboard-settings' === $hook ) {
@@ -386,7 +396,14 @@ class Solace_Extra_Admin {
 			);
 
 			// Fancybox
-			wp_enqueue_script( 'solace-extra-fancybox-script', SOLACE_EXTRA_ASSETS_URL . 'js/fancybox.min.js', array('jquery'), $this->version, true );			
+			wp_enqueue_script( 'solace-extra-fancybox-script', SOLACE_EXTRA_ASSETS_URL . 'js/fancybox.min.js', array('jquery'), $this->version, true );
+
+			// Searchable term dropdowns (Select2) for the condition form.
+			$solace_select2_base = defined( 'ELEMENTOR_ASSETS_URL' ) ? ELEMENTOR_ASSETS_URL . 'lib/e-select2/' : '';
+			if ( $solace_select2_base && file_exists( WP_PLUGIN_DIR . '/elementor/assets/lib/e-select2/js/e-select2.full.min.js' ) ) {
+				wp_enqueue_style( 'solace-e-select2', $solace_select2_base . 'css/e-select2.min.css', array(), $this->version, 'all' );
+				wp_enqueue_script( 'solace-e-select2', $solace_select2_base . 'js/e-select2.full.min.js', array( 'jquery' ), $this->version, true );
+			}
 
 			// Check if WooCommerce is active
 			$is_woocommerce_active = class_exists('WooCommerce') ? true : false;
@@ -410,8 +427,25 @@ class Solace_Extra_Admin {
 					'part_footer' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=footer')),  // Redirect URL
 					'part_singleblog' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=singleblog')),  // Redirect URL
 					'part_404' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=404')),  // Redirect URL
+					'part_shopproduct' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=shopproduct')),  // Redirect URL
+					'part_singleproduct' => esc_url(admin_url('admin.php?page=dashboard-sitebuilder&part=singleproduct')),  // Redirect URL
 					'woocommerce'   => $is_woocommerce_active,  // WooCommerce active check
-					'upgradeUrl' => SOLACE_UPGRADE_URL
+					'upgradeUrl' => SOLACE_UPGRADE_URL,
+					'product_categories' => class_exists( 'WooCommerce' ) ? wp_list_pluck( get_terms( array( 'taxonomy' => 'product_cat', 'hide_empty' => false ) ), 'name', 'term_id' ) : array(),
+					'product_tags' => class_exists( 'WooCommerce' ) ? wp_list_pluck( get_terms( array( 'taxonomy' => 'product_tag', 'hide_empty' => false ) ), 'name', 'term_id' ) : array(),
+					'product_brands' => class_exists( 'WooCommerce' ) && taxonomy_exists( 'product_brand' ) ? wp_list_pluck( get_terms( array( 'taxonomy' => 'product_brand', 'hide_empty' => false ) ), 'name', 'term_id' ) : array(),
+					// Product properties must be read through getters — plucking
+					// 'name'/'id' directly triggers WC_Abstract_Legacy_Product::__get
+					// wc_doing_it_wrong notices (one per product per property).
+					'product_products' => class_exists( 'WooCommerce' ) ? array_reduce(
+						wc_get_products( array( 'limit' => -1, 'status' => 'publish', 'orderby' => 'title', 'order' => 'ASC' ) ),
+						function ( $carry, $product ) {
+							$carry[ $product->get_id() ] = $product->get_name();
+							return $carry;
+						},
+						array()
+					) : array(),
+					'product_authors' => wp_list_pluck( get_users( array( 'fields' => array( 'ID', 'display_name' ) ) ), 'display_name', 'ID' ),
 
 				)
 			);
@@ -422,6 +456,7 @@ class Solace_Extra_Admin {
 			$solace_conditions = array(
 				'includeLabel' => __('Include', 'solace-extra'),
 				'excludeLabel' => __('Exclude', 'solace-extra'),
+				'shopArchive'  => __('Product Archive', 'solace-extra'),
 				'options' => array(
 					'Basic' => array(
 						'basic-global' => __('Entire Website', 'solace-extra'),
@@ -448,7 +483,7 @@ class Solace_Extra_Admin {
 					
 				),
 			);
-			// Tambahkan opsi WooCommerce jika plugin WooCommerce aktif
+			// Add WooCommerce options if the WooCommerce plugin is active.
 			if (class_exists('WooCommerce')) {
 				$solace_conditions['options']['Products'] = array(
 					'product|all' => __('All Products', 'solace-extra'),
@@ -458,7 +493,7 @@ class Solace_Extra_Admin {
 				);
 			}
 		
-			// Kirim data ke JavaScript
+			// Send data to JavaScript.
 			wp_localize_script('solace-sitebuilder', 'solaceConditions', $solace_conditions);
 
 			// Sweetalert2.
@@ -486,7 +521,7 @@ class Solace_Extra_Admin {
 			wp_enqueue_script( 'solace-extra-preview', plugin_dir_url( __FILE__ ) . 'js/preview.js', array( 'jquery' ), '1.0.0', true );
 
 			// Sweetalert
-			wp_enqueue_script( 'solace-extra-sweetalert', plugin_dir_url( __FILE__ ) . 'js/sweetalert.min.js', array(), '1.0.0', true );
+			wp_enqueue_script( 'solace-extra-preview-sweetalert', plugin_dir_url( __FILE__ ) . 'js/sweetalert.min.js', array(), '1.0.0', true );
 
 			// Register dan enqueue script JavaScript untuk postMessage
 			wp_enqueue_script('solace-iframe-loader', plugin_dir_url( __FILE__ ) . 'js/solace-iframe-loader.js', array( 'jquery' ), $this->version, true );
@@ -1169,7 +1204,7 @@ class Solace_Extra_Admin {
     }
 
     public function solace_enable_image_processing() {
-		// error_log('menyalakan kembali image processing');
+		// error_log('re-enabling image processing');
         remove_filter('intermediate_image_sizes_advanced', [$this, 'disable_sizes']);
         remove_filter('wp_image_editors', [$this, 'disable_editors']);
         remove_filter('wp_generate_attachment_metadata', [$this, 'disable_metadata'], 10);
@@ -1259,56 +1294,6 @@ class Solace_Extra_Admin {
 
 	
 	
-	function update_sol_color_base_font_elementor_system_color(){
-		// Check user capability.
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Unauthorized.' );
-        }
-		$solace_global_colors = get_theme_mod( 'solace_global_colors' );
-
-		$border_color = strtoupper($solace_global_colors['palettes']['base']['colors']['sol-color-border']);
-		if (empty($solace_global_colors['palettes']['base']['colors']['sol-color-bg-menu-dropdown'])){
-			$solace_global_colors['palettes']['base']['colors']['sol-color-bg-menu-dropdown'] = $border_color;	
-		}
-		
-		set_theme_mod( 'solace_global_colors' , $solace_global_colors );
-		$active_palette = $solace_global_colors['activePalette'];
-
-		$primary = strtoupper($solace_global_colors['palettes'][$active_palette]['colors']['sol-color-button-initial']);
-		$secondary = strtoupper($solace_global_colors['palettes'][$active_palette]['colors']['sol-color-page-title-background']);
-		$text = strtoupper($solace_global_colors['palettes'][$active_palette]['colors']['sol-color-base-font']);
-		$border_color = strtoupper($solace_global_colors['palettes'][$active_palette]['colors']['sol-color-border']);
-		$accent = strtoupper($solace_global_colors['palettes'][$active_palette]['colors']['sol-color-bg-menu-dropdown']);
-		$accent = empty($accent)?$border_color:$accent;
-
-		if (defined('ELEMENTOR_PATH') && class_exists('\Elementor\Plugin')) {
-			$system_colors = array(
-				array(
-					'_id' => 'primary',
-					'color' => isset($primary)?$primary:'',
-				),
-				array(
-					'_id' => 'secondary',
-					'color' => isset($secondary)?$secondary:'',
-				),
-				array(
-					'_id' => 'text',
-					'color' => isset($text)?$text:'',
-				),
-				array(
-					'_id' => 'accent',
-					'color' => isset($accent)?$accent:'',
-				),
-			);
-
-			\Elementor\Plugin::$instance->kits_manager->update_kit_settings_based_on_option( 'system_colors', $system_colors );
-
-			\Elementor\Plugin::$instance->files_manager->clear_cache();
-		}
-	}
-
-	
-
 	function update_solace_font_and_color(){
 
 		// Verify nonce
@@ -1574,34 +1559,50 @@ class Solace_Extra_Admin {
 	}
 
 
+	/**
+	 * Store the chosen logo as the header and footer logo.
+	 *
+	 * The request parameter is called logo_url for historical reasons, but what
+	 * the media picker sends is an attachment ID, and an ID is what the theme
+	 * stores: logo_logo holds {"light":123,"dark":123,"same":true}.
+	 *
+	 * That mismatch used to break the value. The ID went through esc_url_raw(),
+	 * which turns 10402 into "http://10402", and the JSON was then pasted
+	 * together by hand, so the theme mod ended up as
+	 * {"light":http://10402,...} -- not JSON at all, and unreadable by whatever
+	 * decoded it. It is built with wp_json_encode() from a validated ID now.
+	 *
+	 * @return void
+	 */
 	function update_logo_url_callback() {
-		if (isset($_POST['logo_url'])) {
-
-			// Verify nonce
-			if (!isset($_POST['nonce']) || !wp_verify_nonce( sanitize_text_field( wp_unslash ( $_POST['nonce'] ) ), 'ajax-nonce' )) {
-				$response = array('error' => 'Invalid nonce3!');
-				echo wp_json_encode($response);
-				wp_die();
-			}
-
-        // Check user capability.
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Unauthorized.' );
+		// Verify nonce
+		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
+			wp_send_json_error( 'Invalid nonce.' );
 		}
-			
-			$logo_url = ! empty( $_POST['logo_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_url'] ) ) : '';
 
-			$logo_id = $logo_url;
-			$theme_mods = get_theme_mod('theme_mods_solace');  
-			$logo_data = json_decode($theme_mods['logo_logo'], true);  
-			$logo_logo_data = '{"light":'.$logo_id.',"dark":'.$logo_id.',"same":true}';
-			set_theme_mod('logo_logo',$logo_logo_data);
-			set_theme_mod('logo-footer_logo', $logo_logo_data);
-
-			wp_send_json_success('Logo URL updated successfully.');
-		} else {
-			wp_send_json_error('No logo URL provided.');
+		// Check user capability.
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Unauthorized.' );
 		}
+
+		$logo_id = isset( $_POST['logo_url'] ) ? absint( wp_unslash( $_POST['logo_url'] ) ) : 0;
+
+		if ( ! $logo_id || 'attachment' !== get_post_type( $logo_id ) ) {
+			wp_send_json_error( 'No valid logo attachment provided.' );
+		}
+
+		$logo_logo_data = wp_json_encode(
+			array(
+				'light' => $logo_id,
+				'dark'  => $logo_id,
+				'same'  => true,
+			)
+		);
+
+		set_theme_mod( 'logo_logo', $logo_logo_data );
+		set_theme_mod( 'logo-footer_logo', $logo_logo_data );
+
+		wp_send_json_success( 'Logo updated successfully.' );
 	}
 
     /**
@@ -2350,11 +2351,18 @@ class Solace_Extra_Admin {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if (isset($_GET['solace-single-product-preview'], $_GET['product_id'])) {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( ! $this->solace_can_preview_part( absint( $_GET['solace-single-product-preview'] ) ) ) {
+				return;
+			}
+
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$product_id = absint($_GET['product_id']);
 			$product = get_post($product_id);
 
-			// Only proceed if the post exists and is a WooCommerce product
-			if ($product && $product->post_type === 'product') {
+			// Only proceed if the post exists, is a WooCommerce product, and the
+			// requester may read or edit it. Without this, ?product_id= can force
+			// product widgets to render a draft/private product's content.
+			if ( $product && 'product' === $product->post_type && ( 'publish' === $product->post_status || current_user_can( 'edit_post', $product_id ) ) ) {
 				global $post, $wp_query;
 
 				// Override the global post and query to behave like a product single page
@@ -2379,12 +2387,38 @@ class Solace_Extra_Admin {
 	public function hide_header_footer_on_product_preview() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if (isset($_GET['solace-single-product-preview'], $_GET['product_id'])) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( ! $this->solace_can_preview_part( absint( $_GET['solace-single-product-preview'] ) ) ) {
+				return;
+			}
+
 			echo '<style>
 				header.header,
 				footer.site-footer
 
 			</style>';
 		}
+	}
+
+	/**
+	 * Whether this request may render a standalone Site Builder part preview.
+	 *
+	 * The ?solace-*-preview= URLs are only ever built by the Site Builder
+	 * dashboard, for a solace-sitebuilder part, and opened by someone who edits
+	 * the site. Without this gate any visitor could pass the ID of any published
+	 * post and get its Elementor content in a bare preview shell. When the check
+	 * fails the handler steps aside, so the URL renders as if the parameter was
+	 * not there.
+	 *
+	 * @param int $post_id Part ID taken from the preview parameter.
+	 * @return bool
+	 */
+	private function solace_can_preview_part( $post_id ) {
+		$post_id = absint( $post_id );
+
+		return $post_id > 0
+			&& current_user_can( 'edit_posts' )
+			&& 'solace-sitebuilder' === get_post_type( $post_id );
 	}
 
 	/**
@@ -2397,6 +2431,19 @@ class Solace_Extra_Admin {
 	private function solace_elementor_preview_prepare_markup( $post_id ) {
 		$post_id = absint( $post_id );
 		if ( ! $post_id || ! did_action( 'elementor/loaded' ) || ! class_exists( '\Elementor\Plugin' ) ) {
+			return '';
+		}
+
+		// Security: never render a post's Elementor content to a requester who
+		// cannot read or edit it. Published posts are public; any other status
+		// (draft, pending, private, future, trash) requires edit capability on
+		// that exact post.
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return '';
+		}
+
+		if ( 'publish' !== $post->post_status && ! current_user_can( 'edit_post', $post_id ) ) {
 			return '';
 		}
 
@@ -2492,7 +2539,7 @@ class Solace_Extra_Admin {
 			$single_product_id = absint( $_GET['solace-single-product-preview'] );
 
 			// Validate the ID
-			if ( $single_product_id > 0 ) {
+			if ( $this->solace_can_preview_part( $single_product_id ) ) {
 
 				// Ensure Elementor is active and the method exists
 				if (
@@ -2566,7 +2613,7 @@ class Solace_Extra_Admin {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$purchase_summary_id = absint( $_GET['solace-purchase-summary-preview'] );
 
-			if ( $purchase_summary_id > 0 ) {
+			if ( $this->solace_can_preview_part( $purchase_summary_id ) ) {
 
 				if (
 					class_exists( '\Elementor\Plugin' ) &&
@@ -2636,7 +2683,7 @@ class Solace_Extra_Admin {
 			$single_post_id = absint( $_GET['solace-single-post-preview'] );
 
 			// Validate the ID
-			if ( $single_post_id > 0 ) {
+			if ( $this->solace_can_preview_part( $single_post_id ) ) {
 
 				// Ensure Elementor is active and the method exists
 				if (
@@ -2709,7 +2756,7 @@ class Solace_Extra_Admin {
 			$template_404_id = absint( $_GET['solace-404-preview'] );
 
 			// Validate the ID
-			if ( $template_404_id > 0 ) {
+			if ( $this->solace_can_preview_part( $template_404_id ) ) {
 
 				// Ensure Elementor is active and the method exists
 				if (
@@ -2855,8 +2902,41 @@ class Solace_Extra_Admin {
 			}
 		}
 
-		// If no GET parameter matches any Solace category ID, bail out.
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// Opened any way other than the dashboard's Edit link -- the post list, a
+		// bookmark, Elementor's own "Edit with Elementor" -- the URL carries no flag,
+		// and the relevant category used to drop back among all the others. Work
+		// the part out from the post instead, mapped to the same category the
+		// dashboard link would have asked for.
+		if ( null === $requested_priority_id && function_exists( 'solace_get_editor_post_id' ) && function_exists( 'solace_get_part_for_post' ) ) {
+			$part_categories = [
+				'header'           => 'solace-extra',
+				'footer'           => 'solace-extra',
+				'404'              => 'solace-extra',
+				'singleproduct'    => 'solace-extra-single',
+				'shopproduct'      => 'solace-extra-woocommerce',
+				'purchase-summary' => 'solace-extra-woocommerce',
+				'blogsinglepost'   => 'solace-extra-single-post',
+				'blogarchive'      => 'solace-extra-archive',
+				// Not solace-extra-cart / solace-extra-checkout: those categories
+				// are registered but hold no widgets. The cart, checkout and
+				// account widgets all live in solace-extra-woocommerce.
+				'cart'             => 'solace-extra-woocommerce',
+				'checkout'         => 'solace-extra-woocommerce',
+				'myaccount'        => 'solace-extra-woocommerce',
+			];
+
+			$editor_post_id = solace_get_editor_post_id();
+
+			if ( $editor_post_id && 'solace-sitebuilder' === get_post_type( $editor_post_id ) ) {
+				$editor_part = solace_get_part_for_post( $editor_post_id );
+
+				if ( isset( $part_categories[ $editor_part ] ) ) {
+					$requested_priority_id = $part_categories[ $editor_part ];
+				}
+			}
+		}
+
+		// Neither a flag nor a recognisable part: leave the categories alone.
 		if ( null === $requested_priority_id ) {
 			return;
 		}
@@ -2896,11 +2976,21 @@ class Solace_Extra_Admin {
      */
     public function enqueue_elementor_editor_menu_customization_script() {
         // Valid part values
-        $valid_parts = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404'];
+        $valid_parts = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'cart', 'checkout', 'myaccount'];
         
         // Get part parameter from URL
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $part_param = isset($_GET['part']) ? sanitize_text_field( wp_unslash( $_GET['part'] ) ) : '';
+
+        // Without ?part= in the URL the dashboard link used to be left out
+        // entirely. Fall back to the part the edited post belongs to.
+        if ( '' === $part_param && function_exists( 'solace_get_editor_post_id' ) && function_exists( 'solace_get_part_for_post' ) ) {
+            $editor_post_id = solace_get_editor_post_id();
+
+            if ( $editor_post_id && 'solace-sitebuilder' === get_post_type( $editor_post_id ) ) {
+                $part_param = solace_get_part_for_post( $editor_post_id );
+            }
+        }
         
         // Return early if part parameter is not valid
         if (empty($part_param) || !in_array($part_param, $valid_parts)) {
@@ -2930,7 +3020,7 @@ class Solace_Extra_Admin {
             // const exitSpan = Array.from(pop.querySelectorAll('span, .MuiTypography-root, .MuiListItemText-primary'))
             //     .find(function(el){ return el.textContent && el.textContent.trim().match(/^Exit to WordPress$/i); });
             // if (exitSpan) {
-            //     exitSpan.textContent = 'Kembali ke Dashboard';
+            //     exitSpan.textContent = 'Back to Dashboard';
             // }
 
             if (!pop.querySelector('.solace-custom-menu-item')) {
@@ -2947,7 +3037,7 @@ class Solace_Extra_Admin {
                         
                         // Extract part parameter from current URL
                         var currentUrl = new URL(window.location.href);
-                        var partParam = currentUrl.searchParams.get('part');
+                        var partParam = currentUrl.searchParams.get('part') || <?php echo wp_json_encode( $part_param ); ?>;
                         
                         // Build dashboard URL with part parameter if it exists
                         var dashboardUrl = SolaceEditorData.admin_url + 'admin.php?page=dashboard-sitebuilder';
@@ -3097,8 +3187,14 @@ class Solace_Extra_Admin {
 		if ( preg_match( '/class="([^"]*)"/', $link, $matches ) ) {
 			$classes = $matches[1];
 
-			// Replace 'button' with 'solace-extra-button'
-			$classes = preg_replace( '/\bbutton\b/', 'solace-extra-button', $classes );
+			// Keep the original 'button' class and ADD 'solace-extra-button' next
+			// to it. Replacing 'button' broke Elementor Pro's per-widget css: its
+			// selector (e.g. ...ul.products li.product .button) no longer matched,
+			// so the widget's Button controls (text/background/border/padding/
+			// spacing/align) silently stopped working. With 'button' kept, the
+			// widget css matches again; plugin/theme overrides are excluded via
+			// :not(.elementor-widget-woocommerce-products *) selectors.
+			$classes = preg_replace( '/\bbutton\b/', 'button solace-extra-button', $classes );
 
 			// Add 'elementor-button' if it doesn't exist
 			if ( strpos( $classes, 'elementor-button' ) === false ) {

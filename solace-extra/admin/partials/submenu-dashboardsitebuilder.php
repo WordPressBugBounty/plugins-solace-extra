@@ -176,6 +176,29 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                     </div>
                     <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
                 </a>
+                <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts are hidden for now. ?>
+                <a href="#" class="button nf">
+                    <div class='desc'>
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <span><?php esc_html_e( 'Cart', 'solace-extra' ); ?></span>
+                    </div>
+                    <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
+                </a>
+                <a href="#" class="button nf">
+                    <div class='desc'>
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <span><?php esc_html_e( 'Checkout', 'solace-extra' ); ?></span>
+                    </div>
+                    <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
+                </a>
+                <a href="#" class="button nf">
+                    <div class='desc'>
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <span><?php esc_html_e( 'My Account', 'solace-extra' ); ?></span>
+                    </div>
+                    <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
+                </a>
+                <?php endif; ?>
                 <?php endif; ?>
                 <a href="#" class="button nf">
                     <div class='desc'>
@@ -214,6 +237,23 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                 <?php endif; ?>
             </div>
 
+            <?php
+            // Elementor Pro Theme Builder conflict info for every part that has
+            // an Elementor Pro theme builder counterpart.
+            $solace_extra_ep_parts = array( 'header', 'footer', 'singleproduct', 'shopproduct', 'blogsinglepost', 'blogarchive', '404' );
+            if ( in_array( $solace_extra_part, $solace_extra_ep_parts, true ) ) {
+                if ( function_exists( 'solace_sitebuilder_elementor_pro_notice' ) ) {
+                    solace_sitebuilder_elementor_pro_notice( $solace_extra_part );
+                }
+            }
+
+            // Pages chosen in Elementor Site Settings > WooCommerce Pages that
+            // this part replaces (Shop and Purchase Summary).
+            if ( in_array( $solace_extra_part, array( 'shopproduct', 'purchase-summary' ), true ) && function_exists( 'solace_sitebuilder_elementor_site_settings_notice' ) ) {
+                solace_sitebuilder_elementor_site_settings_notice( $solace_extra_part );
+            }
+            ?>
+
             <?php if ($solace_extra_part) : 
                 $solace_extra_is_there_post = FALSE;
                 ?>
@@ -226,6 +266,15 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                     $solace_extra_get_the_title = get_the_title(); 
                     $solace_extra_meta_key = '_solace_' . $solace_extra_part . '_conditions';
                     $solace_extra_conditions = get_post_meta($post_id, $solace_extra_meta_key, true);
+
+                    // Corrupt/missing conditions meta — fall back to the part's
+                    // default (Shop Page / All Products) so cards, the hidden
+                    // conditions-data and the edit popup always get a valid array.
+                    if ( ! is_array( $solace_extra_conditions ) ) {
+                        $solace_extra_conditions = function_exists( 'solace_sitebuilder_default_conditions' )
+                            ? solace_sitebuilder_default_conditions( $solace_extra_part )
+                            : array();
+                    }
 
                     // Single Product
                     $solace_extra_url = null;
@@ -281,20 +330,26 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                         <div class="solace-list-item">
                             <div style="display: none;" class="conditions-data" data-conditions='<?php echo wp_json_encode($solace_extra_conditions); ?>'></div>
 
-                            <?php if ($solace_extra_part == 'header' || $solace_extra_part == 'footer') { ?>
+                            <?php if ( $solace_extra_part == 'header' || $solace_extra_part == 'footer' || 'shopproduct' === $solace_extra_part || 'singleproduct' === $solace_extra_part ) { ?>
                                 <div class="box-group-instances" style="display: flex;">
                             <?php } ?>
                             <div class="list-column title-column">
                                 <?php echo esc_html( $solace_extra_get_the_title ); ?>
                             </div>
                             <?php
-                            if ($solace_extra_part == 'header' || $solace_extra_part == 'footer') {?>
+                            if ( $solace_extra_part == 'header' || $solace_extra_part == 'footer' || 'shopproduct' === $solace_extra_part || 'singleproduct' === $solace_extra_part ) {?>
                                 <div class="group instances">
                                     <span class="label">Instances:&nbsp;</span>
                                     <span class="label listinstances">
                                         <?php
                                         $solace_extra_label = "";
-                                        if (is_array($solace_extra_conditions)) {
+                                        if ( empty( $solace_extra_conditions ) ) {
+                                            // Not an error: the part simply has no
+                                            // conditions yet, so it never renders.
+                                            ?>
+                                            <span class="text-no-conditions"><?php echo esc_html__( 'No conditions set', 'solace-extra' ); ?></span>
+                                            <?php
+                                        } else {
                                             $solace_extra_is_first = true;
                                     
                                             foreach ($solace_extra_conditions as $solace_extra_condition) {
@@ -314,13 +369,11 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                                 </span>
                                                 <?php
                                             }
-                                        } else {
-                                            echo 'Conditions data is not a valid array.';
                                         }
                                         ?>
                                     </span>
                                     <div class="list-column conditions-column">
-                                    <a href="#" class="button edit-conditions-button" data-post-id="<?php echo esc_attr( get_the_ID() ); ?>" data-conditions='<?php echo wp_json_encode($solace_extra_conditions); ?>'>
+                                    <a href="#" class="button edit-conditions-button" data-post-id="<?php echo esc_attr( $post_id ); ?>" data-conditions='<?php echo wp_json_encode($solace_extra_conditions); ?>'>
                                         <?php echo esc_html__('Edit Conditions', 'solace-extra'); ?>
                                     </a>
                                     </div>
@@ -350,6 +403,10 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                         $solace_extra_link_preview = admin_url('post.php?post=' . $post_id . '&action=elementor&solace-extra-single-post=1');
                                     } else if ( 'blogarchive' === $solace_extra_part ) {
                                         $solace_extra_link_preview = admin_url('post.php?post=' . $post_id . '&action=elementor&solace-extra-archive=1');
+                                    } else if ( in_array( $solace_extra_part, array( 'cart', 'checkout', 'myaccount' ), true ) ) {
+                                        // Their widgets live in solace-extra-woocommerce; the cart and
+                                        // checkout categories are registered but empty.
+                                        $solace_extra_link_preview = admin_url('post.php?post=' . $post_id . '&action=elementor&solace-extra-woocommerce=1');
                                     } else {
                                         $solace_extra_link_preview = admin_url('post.php?post=' . $post_id . '&action=elementor');
                                     }
@@ -544,6 +601,9 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                             'blogsinglepost'   => __( 'Blog Single Post', 'solace-extra' ),
                             'blogarchive'      => __( 'Blog Archive', 'solace-extra' ),
                             '404'              => __( '404', 'solace-extra' ),
+                            'cart'             => __( 'Cart', 'solace-extra' ),
+                            'checkout'         => __( 'Checkout', 'solace-extra' ),
+                            'myaccount'        => __( 'My Account', 'solace-extra' ),
                         );
 
                         $solace_extra_part_label = isset( $solace_extra_part_labels[ $solace_extra_part ] ) ? $solace_extra_part_labels[ $solace_extra_part ] : ucfirst( $solace_extra_part );
@@ -620,6 +680,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
 
                                     <?php if ( class_exists( 'WooCommerce' ) ) : ?>
                                         <optgroup label="<?php esc_attr_e( 'Products', 'solace-extra' ); ?>" class="counts-undefined">
+                                            <option value="special-shop"><?php esc_html_e( 'Shop Page', 'solace-extra' ); ?></option>
                                             <option value="product|all"><?php esc_html_e( 'All Products', 'solace-extra' ); ?></option>
                                             <!-- <option value="product|all|archive"><?php esc_html_e( 'All Products Archive', 'solace-extra' ); ?></option> -->
                                             <option value="product|all|taxarchive|product_cat"><?php esc_html_e( 'All Product Categories Archive', 'solace-extra' ); ?></option>
@@ -698,6 +759,11 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                 <div class="card-body"></div>
                                 <div class="card-footer <?php echo esc_attr($solace_extra_status_header['active_blue']);?>">
                                     <span class='title'><?php esc_html_e( 'Header', 'solace-extra' ); ?></span>
+                                    <?php
+                                    if ( function_exists( 'solace_sitebuilder_elementor_pro_card_badge' ) ) {
+                                        solace_sitebuilder_elementor_pro_card_badge( 'header' );
+                                    }
+                                    ?>
                                     <label class="switch layout">
                                         <input type="checkbox" class="all-status-switch <?php echo $solace_extra_status_header['is_disabled'] ? 'disabled-checkbox' : ''; ?>" data-part-global="header" <?php echo $solace_extra_status_header['is_checked'] ? 'checked' : ''; ?> />
                                         <span class="slider round"></span>
@@ -712,6 +778,11 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                 <div class="card-body"></div>
                                 <div class="card-footer <?php echo esc_attr($solace_extra_status_footer['active_blue']);?>">
                                     <span class='title'><?php esc_html_e( 'Footer', 'solace-extra' ); ?></span>
+                                    <?php
+                                    if ( function_exists( 'solace_sitebuilder_elementor_pro_card_badge' ) ) {
+                                        solace_sitebuilder_elementor_pro_card_badge( 'footer' );
+                                    }
+                                    ?>
                                     <label class="switch layout">
                                         <input type="checkbox" class="all-status-switch <?php echo $solace_extra_status_footer['is_disabled'] ? 'disabled-checkbox' : ''; ?>" data-part-global="footer" <?php echo $solace_extra_status_footer['is_checked'] ? 'checked' : ''; ?> />
                                         <span class="slider round"></span>
@@ -770,6 +841,50 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                     </div>
                                 </div>
                             </a>
+                            <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts are hidden for now. ?>
+                            <a class="part-cart lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
+                            <div class="card" style="background-image: url('<?php 
+                                    $solace_extra_image = 'purchase-summary.svg';
+                                    echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $solace_extra_image ); 
+                                ?>');">
+                                    <div class="card-body"> <span class="dashicons dashicons-lock"></span> 
+                                        <button type="button">
+                                            <?php esc_html_e( 'Upgrade', 'solace-extra' ); ?>
+                                        </button></div>
+                                    <div class="card-footer">
+                                        <span class='title'><?php esc_html_e( 'Cart', 'solace-extra' ); ?></span>
+                                    </div>
+                                </div>
+                            </a>
+                            <a class="part-checkout lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
+                            <div class="card" style="background-image: url('<?php 
+                                    $solace_extra_image = 'purchase-summary.svg';
+                                    echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $solace_extra_image ); 
+                                ?>');">
+                                    <div class="card-body"> <span class="dashicons dashicons-lock"></span> 
+                                        <button type="button">
+                                            <?php esc_html_e( 'Upgrade', 'solace-extra' ); ?>
+                                        </button></div>
+                                    <div class="card-footer">
+                                        <span class='title'><?php esc_html_e( 'Checkout', 'solace-extra' ); ?></span>
+                                    </div>
+                                </div>
+                            </a>
+                            <a class="part-myaccount lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
+                            <div class="card" style="background-image: url('<?php 
+                                    $solace_extra_image = 'purchase-summary.svg';
+                                    echo esc_url( SOLACE_EXTRA_ASSETS_URL . 'images/' . $solace_extra_image ); 
+                                ?>');">
+                                    <div class="card-body"> <span class="dashicons dashicons-lock"></span> 
+                                        <button type="button">
+                                            <?php esc_html_e( 'Upgrade', 'solace-extra' ); ?>
+                                        </button></div>
+                                    <div class="card-footer">
+                                        <span class='title'><?php esc_html_e( 'My Account', 'solace-extra' ); ?></span>
+                                    </div>
+                                </div>
+                            </a>
+                            <?php endif; ?>
                             <?php endif; ?>
                             <a class="part-blogsinglepost lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
                             <div class="card" style="background-image: url('<?php 
@@ -891,6 +1006,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
 
                                     <?php if ( class_exists('WooCommerce') ) : ?>
                                         <optgroup label="<?php esc_attr_e( 'Products', 'solace-extra' ); ?>" class="counts-undefined">
+                                            <option value="special-shop"><?php esc_html_e( 'Shop Page', 'solace-extra' ); ?></option>
                                             <option value="product|all"><?php esc_html_e( 'All Products', 'solace-extra' ); ?></option>
                                             <!-- <option value="product|all|archive"><?php esc_html_e( 'All Products Archive', 'solace-extra' ); ?></option> -->
                                             <option value="product|all|taxarchive|product_cat"><?php esc_html_e( 'All Product Categories Archive', 'solace-extra' ); ?></option>

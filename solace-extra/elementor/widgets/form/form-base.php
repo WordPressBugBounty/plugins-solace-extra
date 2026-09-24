@@ -29,6 +29,14 @@ abstract class SolaceFormBase extends WidgetBase {
 		$is_mark        = $params['is_mark'] ? $params['is_mark'] : '';
 		$is_label       = $params['is_label'] ? $params['is_label'] : '';
 
+		// Each file field posts under its own name, so the handler can check a
+		// file against the rule of the field it was actually chosen in. Without
+		// a key -- the handler class missing -- fall back to the shared name the
+		// handler still understands.
+		$file_input_name = ! empty( $params['file_key'] ) && class_exists( '\Solace_Extra_Form\FormHandler' )
+			? \Solace_Extra_Form\FormHandler::FILE_INPUT_PREFIX . $params['file_key'] . '[]'
+			: 'solaceFile[]';
+
 		if ( $is_label ) {
 			$this->label( $label );
 		}
@@ -40,7 +48,7 @@ abstract class SolaceFormBase extends WidgetBase {
 			<input
 				<?php if ( 'file' === $type ) { ?>
 					<?php echo esc_attr( $file_types ); ?>
-					name="<?php echo esc_attr( 'solaceFile[]' ); ?>"
+					name="<?php echo esc_attr( $file_input_name ); ?>"
 				<?php } else { ?>
 						name="<?php echo esc_attr( $name ); ?>"
 				<?php } ?>

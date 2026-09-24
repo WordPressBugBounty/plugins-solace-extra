@@ -14,7 +14,7 @@
  * Plugin Name:       Solace Extra
  * Plugin URI:        https://solacewp.com/
  * Description:       Additional features for Solace Theme
- * Version:           1.7.1
+ * Version:           1.7.2
  * Requires PHP:      7.4
  * Author:            Solace
  * Author URI:        https://solacewp.com/
@@ -38,7 +38,16 @@ defined( 'ABSPATH' ) || exit;
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SOLACE_EXTRA_VERSION', '1.7.1' );
+define( 'SOLACE_EXTRA_VERSION', '1.7.2' );
+
+/**
+ * Bumped whenever a change affects the rewrite rules this plugin contributes.
+ *
+ * Activation flushes on a fresh install, but updating an already-active plugin
+ * does not re-run activation, so existing sites need their own trigger. Raising
+ * this makes each site flush exactly once on its next request.
+ */
+define( 'SOLACE_EXTRA_REWRITE_VERSION', '1' );
 define( 'SOLACE_EXTRA_DIR', plugin_dir_url( __FILE__ ) );
 define( 'SOLACE_EXTRA_DIR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SOLACE_EXTRA_ASSETS_URL', plugin_dir_url( __FILE__ ) . 'assets/' );
@@ -95,6 +104,14 @@ function solace_extra_activate() {
     add_option( 'solace_extra_redirect_after_activation_option', true );
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-solace-extra-activator.php';
 	Solace_Extra_Activator::activate();
+
+	// init has already fired by the time activation runs, and this plugin was
+	// not loaded when it did, so the post type has to be registered by hand
+	// here or its rules are missing from the set that gets written.
+	solace_register_sitebuilder_post_type();
+	flush_rewrite_rules();
+
+	update_option( 'solace_extra_rewrite_version', SOLACE_EXTRA_REWRITE_VERSION, true );
 }
 
 /**
@@ -111,6 +128,11 @@ function solace_extra_deactivate() {
 
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-solace-extra-deactivator.php';
 	Solace_Extra_Deactivator::deactivate();
+
+	// Drop the Site Builder rules; the post type will not be registered on the
+	// next request. The version marker goes too, so re-activating rebuilds them.
+	flush_rewrite_rules();
+	delete_option( 'solace_extra_rewrite_version' );
 }
 
 register_activation_hook( __FILE__, 'solace_extra_activate' );
@@ -156,6 +178,7 @@ if (class_exists('Elementor\Plugin')) {
     require_once( __DIR__ . '/elementor/widgets/woocommerce/functions.php' );
     require_once( __DIR__ . '/elementor/widgets/solace-custom-css.php' );
 
+
     /**
      * Registers Elementor widgets for the Solace Extra plugin.
      *
@@ -177,10 +200,8 @@ if (class_exists('Elementor\Plugin')) {
         require_once( __DIR__ . '/elementor/widgets/widget/shop/producttab.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/shop/separator.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/archive-posts/archive-posts.php' );
-        // require_once( __DIR__ . '/elementor/widgets/widget/form-builder/form-builder.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-author/post-author.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-categories/post-categories.php' );
-        // require_once( __DIR__ . '/elementor/widgets/widget/post-date/post-date.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-excerpt/post-excerpt.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-title/post-title.php' );
         require_once( __DIR__ . '/elementor/widgets/widget/post-featuredimage/featuredimage.php' );
@@ -203,7 +224,6 @@ if (class_exists('Elementor\Plugin')) {
 
         $widgets_manager->register( new \Solace_Extra_Nav_Menu() );
         $widgets_manager->register( new \Solace_Extra_Purchase_Summary() );
-        // $widgets_manager->register( new \Solace_Extra_Navigation_Menu() );
         $widgets_manager->register( new \Solace_Extra_Site_Logo() );
         $widgets_manager->register( new \Solace_Extra_WooCommerce_Shop() );
         $widgets_manager->register( new \Solace_Extra_WooCommerce_Cart() );
@@ -217,10 +237,8 @@ if (class_exists('Elementor\Plugin')) {
         $widgets_manager->register( new \Solace_Extra_WooCommerce_Separator() );
 
         $widgets_manager->register( new \Solace_Extra_Post_Archive() );
-        // $widgets_manager->register( new \Solace_Form_Builder() );
         $widgets_manager->register( new \Solace_Extra_Post_Author() );
         $widgets_manager->register( new \Solace_Extra_Post_Categories() );
-        // $widgets_manager->register( new \Solace_Extra_Post_Date() );
         $widgets_manager->register( new \Solace_Extra_Post_Excerpt() );
         $widgets_manager->register( new \Solace_Extra_Post_Title() );
         $widgets_manager->register( new \Solace_Extra_Post_Featured_Image() );
@@ -280,76 +298,28 @@ function solace_extra_run() {
     $plugin = new Solace_Extra();
 	$plugin->run();
 
-    // Include the dynamic tags functionality file located in the 'dynamic-tags' directory.
-    // require plugin_dir_path( __FILE__ ) . 'admin/dynamic-tags/dynamic-tags.php';
-
 }
 solace_extra_run();
 
-add_action('init', 'solace_extra_handle_logo_upload');
-
-function solace_extra_handle_logo_upload() {
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
-    if (isset($_POST['action']) && $_POST['action'] === 'upload_logo_image') {
-
-        // Verify the nonce to ensure the request is legitimate
-        if (!isset($_POST['solace_conditions_nonce']) || !wp_verify_nonce(sanitize_key(wp_unslash($_POST['solace_conditions_nonce'])), 'solace_conditions_nonce_action')) {
-            wp_send_json_error('Invalid nonce.');
-            return;
-        }
-
-        // Check user capability.
-        if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( 'Unauthorized.' );
-        }
-        $method = !empty($_SERVER['REQUEST_METHOD']) ? sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'])) : '';
-        
-        if ($method === 'POST') {
-            $image_url = ! empty( $_POST['logo_image_url'] ) ? esc_url_raw( wp_unslash( $_POST['logo_image_url'] ) ) : '';
-
-            // Use wp_remote_get() instead of file_get_contents()
-            $response = wp_remote_get($image_url);
-
-            if (is_wp_error($response)) {
-                // Handle request error
-                wp_die(esc_html('Logo download failed. Error: ' . $response->get_error_message()));
-            }
-
-            $body = wp_remote_retrieve_body($response);
-
-            // Upload the image to media library
-            $upload = wp_upload_bits(basename($image_url), null, $body);
-
-            if (!$upload['error']) {
-                // Attach the image to the media library
-                $attachment = array(
-                    'post_mime_type' => wp_remote_retrieve_header($response, 'content-type'), // Use content-type from response
-                    'post_title' => sanitize_file_name(basename($image_url)),
-                    'post_content' => '',
-                    'post_status' => 'inherit'
-                );
-
-                $attach_id = wp_insert_attachment($attachment, $upload['file']);
-
-                require_once ABSPATH . 'wp-admin/includes/image.php';
-                $attach_data = wp_generate_attachment_metadata($attach_id, $upload['file']);
-                wp_update_attachment_metadata($attach_id, $attach_data);
-
-                // Set the logo setting in Customizer
-                set_theme_mod('custom_logo', $attach_id);
-
-                // Redirect back to the page where the form was submitted
-                $referer = ! empty( $_SERVER['HTTP_REFERER'] ) ? esc_url_raw( wp_unslash( $_SERVER['HTTP_REFERER'] ) ) : '';
-                wp_safe_redirect( $referer );
-                exit();
-            } else {
-                // Handle upload error
-                wp_die(esc_html('Logo upload failed. Error: ' . $upload['error']));
-            }
-        }
-    }
-}
-add_action('wp_ajax_solace_extra_upload_logo', 'solace_extra_upload_logo');
+// Two logo-upload leftovers were removed here.
+//
+// solace_extra_handle_logo_upload() ran on init and, for a POST carrying
+// action=upload_logo_image, fetched whatever URL the request named with
+// wp_remote_get() and stored the response in the media library. Nothing in the
+// plugin, the theme or Solace Extra Pro ever sent that request. The URL was
+// unrestricted, so it also reached addresses only the server can see --
+// 127.0.0.1, a database admin panel, a cloud metadata endpoint -- and put the
+// answer where it could be read back. It also trusted the remote
+// Content-Type header as the attachment's MIME type. Deleting it closes that
+// rather than hardening a feature nobody calls.
+//
+// add_action( 'wp_ajax_solace_extra_upload_logo', 'solace_extra_upload_logo' )
+// pointed at a function defined inside admin/partials/submenu-dashboardstep5.php,
+// which is only loaded while that admin page renders -- never during an
+// admin-ajax request. Any logged-in user calling that action got a PHP fatal:
+// "call_user_func_array(): Argument #1 ($callback) must be a valid callback".
+// No caller existed for it either. The function itself is left where it is,
+// inert, for the dead-code pass.
 
 if ( ! function_exists( 'solace_is_run_in_shortcode' ) ) {
 
@@ -404,10 +374,38 @@ function solace_register_sitebuilder_post_type() {
     solace_add_elementor_cpt_support();
 
     register_post_type( 'solace-sitebuilder', $args );
-    flush_rewrite_rules();
 
 }
 add_action( 'init', 'solace_register_sitebuilder_post_type' );
+
+/**
+ * Persist the rewrite rules once, instead of on every single request.
+ *
+ * register_post_type() only adds its rules to the in-memory set; they are not
+ * written to the rewrite_rules option until something flushes. That used to be
+ * handled by calling flush_rewrite_rules() directly from this init callback,
+ * which regenerated every rule on the site and rewrote that option -- routinely
+ * tens of kilobytes -- on *every* request, front end and admin alike, while
+ * also invalidating the alloptions cache each time.
+ *
+ * Flushing is now driven by SOLACE_EXTRA_REWRITE_VERSION: a site whose stored
+ * value already matches does nothing at all. Runs at priority 20 so the post
+ * type registered above at the default priority is part of what gets written.
+ *
+ * The marker option is autoloaded on purpose. It is read on every request, so
+ * riding along in the single alloptions query costs nothing, whereas an
+ * autoload=false option would add a SELECT of its own each time.
+ */
+function solace_extra_maybe_flush_rewrite_rules() {
+    if ( SOLACE_EXTRA_REWRITE_VERSION === get_option( 'solace_extra_rewrite_version' ) ) {
+        return;
+    }
+
+    flush_rewrite_rules();
+
+    update_option( 'solace_extra_rewrite_version', SOLACE_EXTRA_REWRITE_VERSION, true );
+}
+add_action( 'init', 'solace_extra_maybe_flush_rewrite_rules', 20 );
 
 function solace_add_admin_menus() {
 
@@ -450,6 +448,10 @@ function solace_add_elementor_support_for_sitebuilder() {
 }
 add_action( 'elementor/elements/categories_registered', 'solace_add_elementor_support_for_sitebuilder' );
 
+// Shared Site Builder helpers. Must load BEFORE sitebuilder.php so the
+// resolver, the status writer and the page classifier are available to it.
+require plugin_dir_path( __FILE__ ) . 'sitebuilder/helpers.php';
+
 require plugin_dir_path( __FILE__ ) . 'sitebuilder/sitebuilder.php';
 
 // add_action('wp_head', 'solace_display_custom_header');
@@ -477,7 +479,7 @@ function solace_disable_image_processing() {
     if (defined('DOING_AJAX') && DOING_AJAX) {
         // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped,WordPress.Security.NonceVerification.Recommended,WordPress.Security.NonceVerification.Missing
         $action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : 
-                (isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : 'tidak_terdeteksi');
+                (isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : 'not_detected');
         // phpcs:enable
         if ($action === 'wp_import_posts_process') {
             add_filter('intermediate_image_sizes_advanced', 'solace_disable_sizes');
@@ -498,30 +500,6 @@ function solace_disable_sizes($sizes) {
 
 solace_disable_image_processing();
 
-// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Used as cron callback, name kept for compatibility
-function generate_all_thumbnails_for_all_images() {
-    $args = array(
-        'post_type'      => 'attachment',
-        'post_mime_type' => 'image',
-        'posts_per_page' => -1,
-        'post_status'    => 'any',
-    );
-
-    $query = new WP_Query( $args );
-
-    if ( $query->have_posts() ) {
-
-        while ( $query->have_posts() ) {
-            $query->the_post();
-            $image_id = get_the_ID();
-            generate_thumbnails_for_single_image( $image_id );
-        }
-
-        wp_reset_postdata();
-
-    } else {
-    }
-}
 
 // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- Used as cron callback, name kept for compatibility
 function generate_thumbnails_for_single_image( $image_id ) {
@@ -667,9 +645,10 @@ add_action('admin_init', function() {
     // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped,WordPress.Security.NonceVerification.Recommended
     if (isset($_GET['page']) && $_GET['page'] === 'dashboard-congratulations') {
 
-        $cron_url = admin_url('admin-ajax.php?action=run_generate_thumbnails_cron');
-        wp_remote_post($cron_url, array('blocking' => false));
-
+        // A loopback POST to admin-ajax.php carries no auth cookie, so the
+        // wp_ajax_ (logged-in only) handler never fires for it -- WordPress just
+        // answers "0". The scheduled event below is what actually does the work,
+        // so the request was pure waste and has been dropped.
         if (!wp_next_scheduled('generate_thumbnails_cron')) {
             wp_schedule_single_event(time(), 'generate_thumbnails_cron');
         }
@@ -679,8 +658,16 @@ add_action('admin_init', function() {
 
 
 add_action('wp_ajax_run_generate_thumbnails_cron', function() {
+    // Regenerating every thumbnail is expensive. Without these checks any
+    // logged-in user, a subscriber included, could fire it in a loop.
+    check_ajax_referer('solace_generate_thumbnails', 'nonce');
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized.');
+    }
+
     if (get_transient('thumbnails_cron_running')) {
-        wp_send_json_error('Proses sudah berjalan.');
+        wp_send_json_error( 'Process already running.' );
         return;
     }
 
@@ -689,7 +676,7 @@ add_action('wp_ajax_run_generate_thumbnails_cron', function() {
     // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound -- Plugin cron hook, name kept for compatibility
     do_action('generate_thumbnails_cron');
 
-    wp_send_json_success('Proses generate thumbnail dimulai di background.');
+    wp_send_json_success( 'Thumbnail generation started in the background.' );
 });
 
 add_action('wp_ajax_woocommerce_ajax_add_to_cart', 'solace_custom_ajax_add_to_cart');

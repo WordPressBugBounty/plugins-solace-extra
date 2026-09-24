@@ -329,6 +329,31 @@ class Solace_Extra_Starter_Templates {
 	 * @since    1.0.0
 	 */
 	public function action_ajax_search_server() {
+		$this->render_filtered_demos();
+	}
+
+	/**
+	 * Ajax checkbox
+	 *
+	 * @since    1.0.0
+	 */
+	public function action_ajax_checkbox() {
+		$this->render_filtered_demos();
+	}
+
+	/**
+	 * Verify the request, filter the demo list by the posted criteria and echo
+	 * the page of results the Starter Templates screen expects.
+	 *
+	 * Search and checkbox filtering post the same four fields and want the same
+	 * markup back, so they share this body. The two public methods above stay
+	 * separate because includes/class-solace-extra.php registers
+	 * wp_ajax_action_ajax_search and wp_ajax_action_ajax_checkbox against those
+	 * names, and starter-templates.js calls both.
+	 *
+	 * @since    1.0.0
+	 */
+	private function render_filtered_demos() {
 		// Verify nonce
 		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
 			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
@@ -357,6 +382,7 @@ class Solace_Extra_Starter_Templates {
 			return;
 		}
 
+		// Apply all filters together
 		$filtered_demos = $this->filter_demos( $demos, $getType, $filter_license, $keyword, $list_checkbox );
 		$total_filtered = count( $filtered_demos );
 
@@ -364,81 +390,14 @@ class Solace_Extra_Starter_Templates {
 		if ( empty( $filtered_demos ) ) {
 			echo '<span class="not-found" style="font-size:17px;">No demo found...</span>';
 		} else {
-			// Use pagination based on page number
-			// Display all items from page 1 to current page
-			$current_page = $this->get_current_page();
-			$limit = $current_page * $this->posts_per_page;
+			// Display all items from page 1 up to the current page.
+			$current_page    = $this->get_current_page();
+			$limit           = $current_page * $this->posts_per_page;
 			$index_all_demos = 1;
-			$rendered_count  = 0;
 
 			foreach ( $filtered_demos as $demo ) {
 				if ( $index_all_demos <= $limit ) {
 					$this->render_demo_item( $demo, $index_all_demos );
-					$rendered_count++;
-				}
-				$index_all_demos++;
-			}
-
-			// Output total count for JavaScript to check if load more should be shown
-			echo '<span class="total-filtered-count" style="display:none;">' . absint( $total_filtered ) . '</span>';
-		}
-
-		wp_die();
-	}
-
-	/**
-	 * Ajax checkbox
-	 *
-	 * @since    1.0.0
-	 */
-	public function action_ajax_checkbox() {
-		// Verify nonce
-		if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ajax-nonce' ) ) {
-			wp_send_json_error( array( 'error' => 'Invalid nonce!' ) );
-			return;
-		}
-
-		// Check user capability — admin-only operation.
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'error' => 'Unauthorized' ) );
-			return;
-		}
-
-		$getType         = ! empty( $_POST['getType'] ) ? sanitize_text_field( wp_unslash( $_POST['getType'] ) ) : '';
-		$checked         = ! empty( $_POST['checked'] ) ? sanitize_text_field( wp_unslash( $_POST['checked'] ) ) : '';
-		$filter_license  = ! empty( $_POST['filter_license'] ) ? sanitize_text_field( wp_unslash( $_POST['filter_license'] ) ) : 'all';
-		$keyword         = ! empty( $_POST['keyword'] ) ? sanitize_text_field( wp_unslash( $_POST['keyword'] ) ) : '';
-		$list_checkbox   = ! empty( $checked ) && 'show-all-demos' !== $checked ? explode( ', ', $checked ) : array();
-
-		if ( empty( $keyword ) ) {
-			$keyword = 'empty';
-		}
-
-		$demos = $this->get_demo_data();
-		if ( false === $demos ) {
-			wp_send_json_error( array( 'error' => 'Failed to fetch demo data' ) );
-			return;
-		}
-
-		// Apply all filters together
-		$filtered_demos = $this->filter_demos( $demos, $getType, $filter_license, $keyword, $list_checkbox );
-		$total_filtered = count( $filtered_demos );
-
-		// Render results with pagination support
-		if ( empty( $filtered_demos ) ) {
-			echo '<span class="not-found" style="font-size:17px;">No demo found...</span>';
-		} else {
-			// Use pagination based on page number
-			// Display all items from page 1 to current page
-			$current_page = $this->get_current_page();
-			$limit = $current_page * $this->posts_per_page;
-			$index_all_demos = 1;
-			$rendered_count  = 0;
-
-			foreach ( $filtered_demos as $demo ) {
-				if ( $index_all_demos <= $limit ) {
-					$this->render_demo_item( $demo, $index_all_demos );
-					$rendered_count++;
 				}
 				$index_all_demos++;
 			}

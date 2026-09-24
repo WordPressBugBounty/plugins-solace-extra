@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); 
     }
 
-    // Mengambil semua tombol yang mengubah warna
+    // Get all the buttons that change color.
     const changeStylesButtons = document.querySelectorAll('.change-styles-btn');
     changeStylesButtons.forEach(function(button) {
         button.addEventListener('click', function(e) {
@@ -19,15 +19,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Mengambil semua tombol yang mengubah font
+    // Get all the buttons that change font.
     const changeFontStylesButtons = document.querySelectorAll('.change-font-styles-btn');
     changeFontStylesButtons.forEach(function(button) {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            // Hapus kelas 'active' dari semua tombol
+            // Remove the 'active' class from all buttons.
             changeFontStylesButtons.forEach(btn => btn.classList.remove('active'));
 
-            // Tambahkan kelas 'active' ke tombol yang diklik
+            // Add the 'active' class to the clicked button.
             button.classList.add('active');
             const fontstyles = button.getAttribute('data-font-styles');
             console.log(fontstyles);
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-    // Mengirim gaya default ketika iframe pertama kali dimuat
+    // Send the default styles when the iframe loads for the first time.
     iframe.onload = function() {
         const defaultStyles = '';
         postMessageToIframe({ type: 'styles', value: defaultStyles });
@@ -52,16 +52,16 @@ jQuery(document).ready(function($) {
     function clearStoredStyles() {
         localStorage.removeItem('appliedStyles');
         localStorage.removeItem('appliedFontStyles');
-        document.body.style.cssText = ''; // Reset style di elemen body
+        document.body.style.cssText = ''; // Reset styles on the body element.
         console.log('Stored styles cleared from LocalStorage');
     }
 
     const iframex = document.getElementById('solaceIframe');
 
     function postMessageToIframex(data) {
-        // Mengirim pesan ke iframe dengan data yang ditentukan
-        iframex.contentWindow.postMessage(data, 'https://solacewp.com'); // Sesuaikan URL sesuai dengan domain iframe
-        // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); // Sesuaikan URL sesuai dengan domain iframe
+        // Send a message to the iframe with the specified data.
+        iframex.contentWindow.postMessage(data, 'https://solacewp.com'); // Adjust the URL to match the iframe domain.
+        // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); // Adjust the URL to match the iframe domain.
         console.log('Post message sent to iframe:', data);
 
     }
@@ -81,9 +81,9 @@ jQuery(document).ready(function($) {
         document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=/";
 
         if (document.cookie.indexOf('solace_step5_logoid') === -1) {
-            // alert('Cookie solace_step5_logoid berhasil dihapus!');
+            // alert('Cookie solace_step5_logoid removed successfully!');
         } else {
-            // alert('Cookie solace_step5_logoid masih ada!');
+            // alert('Cookie solace_step5_logoid still exists!');
         }
     });
 
@@ -94,7 +94,7 @@ jQuery(document).ready(function($) {
     // postMessageToIframex(datax);
     setTimeout(() => {
         postMessageToIframex(datax);
-    }, 5000); // 3000 milidetik = 3 detik
+    }, 5000); // 3000 milliseconds = 3 seconds
     
     var attachment_id;  
 
@@ -103,7 +103,7 @@ jQuery(document).ready(function($) {
     //     e.preventDefault();
     //     console.log('Upload Media button clicked!'); // Debugging log
 
-    //     // Jika media uploader sudah ada, buka kembali.
+    //     // If the media uploader already exists, reopen it.
     //     if (mediaUploader) {
     //         console.log('Opening existing media uploader...');
     //         mediaUploader.open();
@@ -111,7 +111,7 @@ jQuery(document).ready(function($) {
     //     }
 
     //     console.log('Creating new media uploader...');
-    //     // Buat instance baru wp.media
+    //     // Create a new wp.media instance
     //     mediaUploader = wp.media({
     //         title: 'Choose Image',
     //         button: {
@@ -120,7 +120,7 @@ jQuery(document).ready(function($) {
     //         multiple: false
     //     });
 
-    //     // Ketika sebuah gambar dipilih, dapatkan URL-nya
+    //     // When an image is selected, get its URL
     //     mediaUploader.on('select', function() {
     //         const attachment = mediaUploader.state().get('selection').first().toJSON();
     //         const imageUrl = attachment.url;
@@ -133,15 +133,15 @@ jQuery(document).ready(function($) {
     //         $(".logo-buttons input[type='submit']").val("Change Your Logo");
     //         $(".palette-buttons img.logo").css("display", "block");
 
-    //         // Kirim URL gambar ke iframe untuk memperbarui src
+    //         // Send the image URL to the iframe to update src
     //         const iframe = document.getElementById('solaceIframe');
     //         iframe.contentWindow.postMessage({
     //             action: 'updateImageSrc',
     //             url: imageUrl
-    //         }, '*'); // Ganti '*' dengan 'https://solacewp.com' untuk keamanan
+    //         }, '*'); // Replace '*' with 'https://solacewp.com' for security.
     //     });
 
-    //     // Buka uploader media
+    //     // Open the media uploader
     //     mediaUploader.open();
     // });
 
@@ -169,12 +169,12 @@ jQuery(document).ready(function($) {
                 console.log('setlogourl');
             }
 
-            // Kirim URL gambar ke iframe untuk memperbarui src
+            // Send the image URL to the iframe to update src.
             const iframe = document.getElementById('solaceIframe');
             iframe.contentWindow.postMessage({
                 action: 'updateImageSrc',
                 url: image_url
-            }, '*'); // Ganti '*' dengan 'https://solacewp.com' untuk keamanan
+            }, '*'); // Replace '*' with 'https://solacewp.com' for security.
 
             
         });
@@ -196,6 +196,9 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'update_logo2',
+                // The handler verifies this; without it the request was always
+                // rejected and the logo was never stored.
+                nonce: ajax_object.nonce,
                 logo_url: logo_url
             },
             success: function(response) {
@@ -207,14 +210,14 @@ jQuery(document).ready(function($) {
         });
     }
 
-    // Tangani postMessage di dalam iframe
+    // Handle postMessage inside the iframe.
     window.addEventListener('message', function(event) {
-        // Hanya jika pengirim adalah sumber yang sah
-        // if (event.origin === 'https://localhost') { // Ganti dengan domain asal yang benar
+        // Only if the sender is a trusted source.
+        // if (event.origin === 'https://localhost') { // Replace with the correct origin domain.
             const message = event.data;
             if (message.action === 'updateImageSrc' && message.url) {
                 console.log('Updating image src in iframe to:', message.url); // Debugging log
-                // Hapus elemen gambar lama
+                // Remove the old image element.
                 const oldLogo = document.querySelector('.site-logo .brand img.solace-site-logo');
                 if (oldLogo) {
                     oldLogo.remove();

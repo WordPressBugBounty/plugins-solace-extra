@@ -510,7 +510,7 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'products_per_page',
             [
                 'label' => __('Products to Show', 'solace-extra'),
@@ -518,16 +518,22 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
                 'min' => 1,
                 'max' => 20,
                 'default' => 4,
+                'desktop_default' => 4,
+                'tablet_default' => 4,
+                'mobile_default' => 4,
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'columns',
             [
                 'label' => __('Columns', 'solace-extra'),
                 'type' => Controls_Manager::SELECT,
                 'default' => '4',
+                'tablet_default' => '3',
+                'mobile_default' => '2',
                 'options' => [
+                    '1' => '1 Column',
                     '2' => '2 Columns',
                     '3' => '3 Columns',
                     '4' => '4 Columns',
@@ -926,10 +932,25 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
     }
 
     public function get_style(){
+		$settings  = $this->get_settings_for_display();
+
+		$columns_desktop = ! empty( $settings['columns'] ) ? absint( $settings['columns'] ) : 4;
+		$columns_tablet  = ! empty( $settings['columns_tablet'] ) ? absint( $settings['columns_tablet'] ) : $columns_desktop;
+		$columns_mobile  = ! empty( $settings['columns_mobile'] ) ? absint( $settings['columns_mobile'] ) : $columns_tablet;
+
+		$limits = $this->get_products_per_page_limits();
+		$show_desktop = max( 1, $limits['desktop'] );
+		$show_tablet  = max( 1, $limits['tablet'] );
+		$show_mobile  = max( 1, $limits['mobile'] );
+
 		echo '<style>
             .upsells.products.woocommerce ul.products li.product {
                 display: flex;
                 flex-direction: column;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0;
+                margin: 0 !important;
             }
             .upsells.products.woocommerce ul.products li.product .woocommerce-loop-product__title {
                 display: flex;
@@ -942,6 +963,60 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
             body.theme-solace .woocommerce ul.products li.product .onsale {
 				background-color: var(--sol-color-selection-high);
 				color: var(--sol-color-selection-initial);
+			}
+
+			/* Responsive columns (grid) */
+			.upsells.products.woocommerce ul.products {
+				display: grid;
+				grid-template-columns: repeat(' . absint( $columns_desktop ) . ', 1fr);
+				gap: 20px;
+				list-style: none;
+				padding: 0;
+				margin: 0 0 1em;
+			}
+			/* WC float-clearing pseudo-elements become grid items — disable them */
+			.upsells.products.woocommerce ul.products::before,
+			.upsells.products.woocommerce ul.products::after {
+				content: none;
+				display: none;
+			}
+			@media (max-width: 1024px) {
+				.upsells.products.woocommerce ul.products {
+					grid-template-columns: repeat(' . absint( $columns_tablet ) . ', 1fr);
+				}
+			}
+			@media (max-width: 767px) {
+				.upsells.products.woocommerce ul.products {
+					grid-template-columns: repeat(' . absint( $columns_mobile ) . ', 1fr);
+				}
+			}
+
+			/* Products to show per breakpoint */
+			@media (min-width: 1025px) {
+				.upsells.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_desktop ) + 1 ) . ') {
+					display: none;
+				}
+			}
+			@media (max-width: 1024px) {
+				.upsells.products.woocommerce ul.products li.product {
+					display: flex;
+				}
+				.upsells.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_tablet ) + 1 ) . ') {
+					display: none;
+				}
+			}
+			@media (max-width: 767px) {
+				.upsells.products.woocommerce ul.products li.product {
+					display: flex;
+				}
+				/* Re-show the items the tablet limit hid: same specificity, later
+				   in the cascade, so mobile can exceed the tablet count. */
+				.upsells.products.woocommerce ul.products li.product:nth-child(-n+' . absint( $show_mobile ) . ') {
+					display: flex;
+				}
+				.upsells.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_mobile ) + 1 ) . ') {
+					display: none;
+				}
 			}
 		</style>';
 	}
@@ -981,11 +1056,12 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
         // in the Site Builder editor.
         if ( empty( $upsell_ids ) ) {
             if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'solace_extra_is_placeholder_product' ) && solace_extra_is_placeholder_product( $product ) ) {
+                $limits  = $this->get_products_per_page_limits();
+                $limit   = $limits['max'];
+                $columns = isset( $settings['columns'] ) ? intval( $settings['columns'] ) : 4;
+                $columns = ( $columns >= 1 && $columns <= 6 ) ? $columns : 4;
                 $heading = $settings['heading'];
-                $limit   = intval( $settings['products_per_page'] );
                 $tag     = ! empty( $settings['upsells_heading_tag'] ) ? $settings['upsells_heading_tag'] : 'h2';
-                $columns = intval( $settings['columns'] );
-                $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
 
                 if ( function_exists( 'WC' ) ) {
                     wp_enqueue_style( 'woocommerce-general' );
@@ -1034,10 +1110,14 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
         }
     
         $heading = $settings['heading'];
-        $limit = intval($settings['products_per_page']);
-        $columns = intval($settings['columns']);
-        $columns = ($columns >= 2 && $columns <= 6) ? $columns : 4;
-    
+        // Responsive controls: query the max of desktop/tablet/mobile so every
+        // breakpoint has enough items; get_style() hides the surplus per
+        // breakpoint via nth-child rules.
+        $limits  = $this->get_products_per_page_limits();
+        $limit   = $limits['max'];
+        $columns = isset( $settings['columns'] ) ? intval( $settings['columns'] ) : 4;
+        $columns = ( $columns >= 1 && $columns <= 6 ) ? $columns : 4;
+
         $args = apply_filters('woocommerce_upsell_display_args', [
             'post_type'           => 'product',
             'ignore_sticky_posts' => 1,
@@ -1130,4 +1210,31 @@ class Solace_Extra_Product_Upsells extends Widget_Base {
         wp_reset_postdata();
     }
 
+    /**
+     * Per-breakpoint "Products to Show" limits from the responsive control.
+     *
+     * Tablet/mobile fall back to the desktop value when left empty. `max` is
+     * the largest of the three — the server query renders that many items and
+     * get_style() hides the surplus per breakpoint.
+     *
+     * @return array{desktop:int,tablet:int,mobile:int,max:int}
+     */
+    private function get_products_per_page_limits() {
+        $settings = $this->get_settings_for_display();
+
+        $desktop = isset( $settings['products_per_page'] ) ? intval( $settings['products_per_page'] ) : 4;
+        $tablet  = isset( $settings['products_per_page_tablet'] ) && '' !== $settings['products_per_page_tablet'] ? intval( $settings['products_per_page_tablet'] ) : $desktop;
+        $mobile  = isset( $settings['products_per_page_mobile'] ) && '' !== $settings['products_per_page_mobile'] ? intval( $settings['products_per_page_mobile'] ) : $tablet;
+
+        $desktop = max( 1, $desktop );
+        $tablet  = max( 1, $tablet );
+        $mobile  = max( 1, $mobile );
+
+        return [
+            'desktop' => $desktop,
+            'tablet'  => $tablet,
+            'mobile'  => $mobile,
+            'max'     => max( $desktop, $tablet, $mobile ),
+        ];
+    }
 }

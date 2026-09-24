@@ -804,7 +804,7 @@ class Solace_Extra_WP_Import extends WP_Importer {
 
 				// Append post ID to post_title if it contains " - Duplicate:".
 				if ( strpos( $postdata['post_title'], esc_html__( ' - Duplicate:', 'solace-extra' ) ) !== false ) {
-					// Update post_title dengan ID post yang baru dibuat
+					// Update post_title with the newly created post ID.
 					$new_title = $postdata['post_title'] . ' #' . $post_id;
 
 					// Perbarui post dengan judul baru

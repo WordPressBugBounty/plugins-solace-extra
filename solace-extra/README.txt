@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,18 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.7.2 - 14 September 2026 =
+
+* fix(widget): let the Related Products / Upsells "Products to Show" mobile value exceed the tablet value instead of being capped by it.
+* feat(sitebuilder): add display conditions to the Shop Product Archive part with Elementor-style options (Shop Page, Search Results, Product Brand, Product Category, Product Tag) and a searchable term dropdown per taxonomy.
+* fix(sitebuilder): wrap Elementor "WordPress Widgets" in the shop archive sidebar with the standard `.widget` classes so the theme's WooCommerce widget styling (price slider, category/rating/brand lists, tag pills, search) applies.
+* fix(widget): make the Shop widget honour active WooCommerce URL filters (min_price/max_price, rating_filter, layered nav attributes) and the product search keyword (?s=…&post_type=product) in its product query.
+* feat(sitebuilder): add display conditions to the Shop Single Product part (Products, In Brand, In Child Product Brand, In Category, In Child Product Category, In Tag, Product by Author) with searchable term/author dropdowns.
+* fix(sitebuilder): use the captured site-builder post ID for the Edit Conditions button so Single Product templates save conditions to the right post.
+* fix(sitebuilder): allow multiple Shop Single Product and Shop Product Archive templates to be active at once (each with its own conditions).
+* fix(sitebuilder): make the Shop Product Archive "Shop Page" condition cover the whole shop archive surface (shop page, all product taxonomy archives incl. attributes and shipping class, and the product post-type archive) so filtered browsing keeps showing the template.
+* fix(sitebuilder): stop the blog archive override from clobbering product taxonomy archives, and scope the Shop widget to the current term on every product taxonomy.
 
 = 1.7.1 - 2 September 2026 =
 * fix(elementor): resolve Plugin Check issues.

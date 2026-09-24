@@ -1,0 +1,104 @@
+/* ==========================================================================
+   Solace Extra — Site Builder condition dropdowns, unified styling
+   --------------------------------------------------------------------------
+   Standalone override sheet loaded AFTER admin-style.css so it wins the
+   cascade. Fixes inconsistent option padding across parts:
+
+   - header / footer / shop product archive / shop single product
+   - both popups: Add New (#new-conditions-container) and Edit
+     (#edit-conditions-container), rendered as native <select> or Select2.
+
+   Every option row gets the same 10px 16px padding, 12px font, 38px
+   height and a consistent optgroup label so all parts look identical.
+   ========================================================================== */
+
+/* ---------- Native <select> dropdown (Add New popup, every part) ---------- */
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #add-new-popup select.condition-select,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-popup select.condition-select {
+	height: 44px;
+}
+
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #add-new-popup select.condition-select option,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-popup select.condition-select option {
+	padding: 10px 30px !important;
+	font-size: 12px !important;
+	line-height: 18px !important;
+	color: #374661 !important;
+	background: #ffffff !important;
+}
+
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #add-new-popup select.condition-select optgroup,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-popup select.condition-select optgroup {
+	padding: 8px 30px 4px !important;
+	font-size: 12px !important;
+	font-weight: 600 !important;
+	color: #0e305f !important;
+	background: #f7f8ff !important;
+}
+
+/* ---------- Select2 dropdown (both popups, every part) ---------- */
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-dropdown,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-dropdown {
+	min-width: 260px;
+	max-height: 280px;
+	overflow-y: auto;
+	border: 0;
+	border-radius: 16px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results__option,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results__option {
+	padding: 10px 30px !important;
+	font-size: 12px !important;
+	line-height: 18px !important;
+	color: #374661 !important;
+}
+
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option--highlighted[aria-selected],
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results__option--highlighted[aria-selected],
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option--highlighted[aria-selected],
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results__option--highlighted[aria-selected] {
+	background-color: #f0f3ff !important;
+	color: #0e305f !important;
+}
+
+
+/* Optgroup wrapper <li role="group"> must NOT add horizontal padding,
+   otherwise the nested options lose full-width hover background. */
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option[role="group"],
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option--group,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option[role="group"],
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__option--group {
+	padding: 0 !important;
+}
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__group,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-results__group,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results > ul > li.select2-results__group,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-results__group {
+	padding: 8px 30px 4px !important;
+	font-size: 12px !important;
+	font-weight: 600 !important;
+	color: #0e305f !important;
+	background: #f7f8ff !important;
+}
+
+/* Select2 rendered selection keeps the pill look of the native field. */
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-selection--single,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-selection--single {
+	border: 0;
+	background-color: #f0f3ff;
+	border-radius: 30px;
+	height: 44px;
+	outline: none;
+}
+
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #edit-conditions-container .condition-item .select2-container .select2-selection--single .select2-selection__rendered,
+body.solace_page_dashboard-sitebuilder .solace-sitebuilder #new-conditions-container .condition-item .select2-container .select2-selection--single .select2-selection__rendered {
+	padding: 0 39px 0 34px;
+	font-size: 12px;
+	line-height: 44px;
+	color: inherit;
+}

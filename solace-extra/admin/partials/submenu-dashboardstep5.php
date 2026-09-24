@@ -314,7 +314,7 @@ $solace_extra_colors_data_from_palette = "
                             $solace_extra_font1 = solace_extra_getGoogleFontsFamilyName( $solace_extra_font_pair[0] );
                             $solace_extra_font2 = solace_extra_getGoogleFontsFamilyName( $solace_extra_font_pair[1] );
 
-                            // Membuat CSS untuk font styles
+                            // Build the CSS for the font styles.
                             $solace_extra_font_data_from_scheme = "
 --bodyfontfamily: '$solace_extra_font1';
 --e-global-typography-primary-font-family: '$solace_extra_font1';
@@ -329,14 +329,14 @@ p:'$solace_extra_font1';
 --e-global-typography-solace_h5_font_family_general-font-family: '$solace_extra_font2';
 --e-global-typography-solace_h6_font_family_general-font-family: '$solace_extra_font2';";
 
-                            // Membuat URL untuk Google Fonts
+                            // Build the URL for Google Fonts.
                             $solace_extra_google_fonts_url = "https://fonts.googleapis.com/css?family=" . urlencode( $solace_extra_font1 ) . "|" . urlencode( $solace_extra_font2 );
 
-                            // Memuat Google Fonts ke halaman WordPress
+                            // Load Google Fonts into the WordPress page.
                             wp_enqueue_style( 'solace-google-fonts-' . $solace_extra_index, esc_url( $solace_extra_google_fonts_url ), array(), $this->version, false );
                             ?>
 
-                            <!-- Link untuk mengubah font styles -->
+                            <!-- Link to change font styles -->
                             <a href="#" class="font tooltip change-font-styles-btn" data-font-styles="<?php echo esc_attr( $solace_extra_font_data_from_scheme ); ?>">
                                 <span class="font tooltip" id="font-<?php echo esc_html( $solace_extra_index ); ?>" fontname="<?php echo esc_html( $solace_extra_font1 ) . ' & '. esc_html( $solace_extra_font2 ); ?>">
                                     <div class="f_group">
@@ -574,14 +574,14 @@ p:'$solace_extra_font1';
 
     setTimeout(() => {
         postMessageToIframex(datax);
-    }, 5000); // 3000 milidetik = 3 detik
+    }, 5000); // 3000 milliseconds = 3 seconds
     
     const iframex = document.getElementById('solaceIframe');
 
     function postMessageToIframex(data) {
-        // Mengirim pesan ke iframe dengan data yang ditentukan
-        iframex.contentWindow.postMessage(data, '<?php echo esc_js( untrailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) ); ?>'); // Sesuaikan URL sesuai dengan domain iframe
-        // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); // Sesuaikan URL sesuai dengan domain iframe
+        // Send a message to the iframe with the specified data.
+        iframex.contentWindow.postMessage(data, '<?php echo esc_js( untrailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) ); ?>'); // Adjust the URL to match the iframe domain.
+        // iframe.contentWindow.postMessage(data, 'https://stagging-solace.djavaweb.com'); // Adjust the URL to match the iframe domain.
         console.log('Post message sent to iframe:', data);
     }
     
@@ -595,7 +595,7 @@ p:'$solace_extra_font1';
     function clearStoredStyles() {
         localStorage.removeItem('appliedStyles');
         localStorage.removeItem('appliedFontStyles');
-        document.body.style.cssText = ''; // Reset style di elemen body
+        document.body.style.cssText = ''; // Reset styles on the body element.
         console.log('Stored styles cleared from LocalStorage');
     }
 

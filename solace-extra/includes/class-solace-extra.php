@@ -194,20 +194,15 @@ class Solace_Extra {
 		$this->loader->add_action( 'admin_menu', $plugin_admin, 'solace_register_theme_parentmenu' );
 
 		$this->loader->add_action( 'wp_ajax_update_logo2', $plugin_admin, 'update_logo_url_callback');
-		$this->loader->add_action( 'wp_ajax_nopriv_update_logo2', $plugin_admin, 'update_logo_url_callback'); 
 
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'hide_notifications_for_solace_page', 999 );
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'solace_register_settings' );
 		
-		$this->loader->add_action( 'wp_ajax_update_sol_color_base_font_elementor_system_color', $plugin_admin, 'update_sol_color_base_font_elementor_system_color');
-		$this->loader->add_action( 'wp_ajax_nopriv_update_sol_color_base_font_elementor_system_color', $plugin_admin, 'update_sol_color_base_font_elementor_system_color'); 
 		$this->loader->add_action( 'wp_ajax_update_solace_font_and_color', $plugin_admin, 'update_solace_font_and_color');
-		$this->loader->add_action( 'wp_ajax_nopriv_update_solace_font_and_color', $plugin_admin, 'update_solace_font_and_color'); 
 		$this->loader->add_action( 'wp_ajax_solace_run_pagespeed_test', $plugin_admin, 'solace_run_pagespeed_test' );
 
 		// Remove cookies
 		$this->loader->add_action( 'wp_ajax_remove-cookie-continue-page-access', $plugin_admin, 'remove_cookies_continue_page_access');
-		$this->loader->add_action( 'wp_ajax_nopriv_remove-cookie-continue-page-access', $plugin_admin, 'remove_cookies_continue_page_access'); 
 
 		// Redirects user after plugin solace extra activation if option is set.
 		$this->loader->add_action( 'admin_init', $plugin_admin, 'activation_redirect', 999999 );
@@ -358,6 +353,9 @@ class Solace_Extra {
 		
 		// Enqueue style for frontend.
 		$this->loader->add_action( 'elementor/frontend/after_enqueue_styles', $plugin_public, 'enqueue_styles_elementor_front_end' );
+		// Print the anti-FOUC guard before any other head output so the
+		// Elementor header is hidden until its (late-enqueued) css loads.
+		$this->loader->add_action( 'wp_head', $plugin_public, 'prevent_elementor_fouc', 0 );
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'register_elementor_widget_assets' );
 

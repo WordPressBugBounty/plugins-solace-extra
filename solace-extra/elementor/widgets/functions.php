@@ -9,18 +9,9 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 
     $document_type_name = $document::get_type();
     $template_type = get_post_meta( $post_id, '_solace_template', true );
-    $template_part = is_string( $template_type ) ? str_replace( array( '_solace_', '_status' ), '', $template_type ) : '';
-
-    if ( '' === $template_part ) {
-        $preview_parts = array( 'blogarchive', 'blogsinglepost', 'singleproduct', 'shopproduct' );
-
-        foreach ( $preview_parts as $preview_part ) {
-            if ( metadata_exists( 'post', $post_id, '_solace_' . $preview_part . '_status' ) ) {
-                $template_part = $preview_part;
-                break;
-            }
-        }
-    }
+    // Only these four parts have preview controls. The shared helper reads
+    // _solace_template first and keeps its status-meta guess inside this set.
+    $template_part = solace_get_part_for_post( $post_id, array( 'blogarchive', 'blogsinglepost', 'singleproduct', 'shopproduct' ) );
 
     $settings = $document->get_settings();
     $target_post_type = isset( $settings['post_type'] ) ? $settings['post_type'] : 'not set';
@@ -364,23 +355,59 @@ add_action('pre_get_posts', function($query) {
 // }
 // add_filter( 'option_posts_per_page', 'solace_custom_blog_posts_per_pagex' );
 
+if ( ! function_exists( 'solace_extra_can_edit_preview_target' ) ) {
+    /**
+     * Whether the current user may write preview settings onto this part.
+     *
+     * The three preview handlers below all write post meta onto an ID the
+     * caller chooses, so that ID has to be authorised on its own. A bare
+     * `edit_posts` check is not enough: every Contributor has it, and it says
+     * nothing about the post actually being targeted. The post-type check keeps
+     * the `_elementor_preview_settings*` meta keys from landing on an unrelated
+     * post -- the controls that drive these requests are only ever registered
+     * on a solace-sitebuilder document (see the register_controls handler at the
+     * top of this file), so nothing legitimate is turned away by it.
+     *
+     * @since 1.7.3
+     * @param int $post_id Site Builder part the request wants to write to.
+     * @return bool
+     */
+    function solace_extra_can_edit_preview_target( $post_id ) {
+        $post_id = absint( $post_id );
+
+        return $post_id
+            && 'solace-sitebuilder' === get_post_type( $post_id )
+            && current_user_can( 'edit_post', $post_id );
+    }
+}
+
 add_action('wp_ajax_solace_save_custom_preview_id', function() {
 
-    if ( ! current_user_can('edit_posts') ) {
-        wp_send_json_error('Unauthorized');
-    }
+    check_ajax_referer( 'solace_save_preview', 'nonce' );
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $template_product_id = isset($_POST['product_id']) ? absint( wp_unslash($_POST['product_id']) ) : 0;
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $preview_product_id = isset($_POST['previewproduct_id']) ? absint( wp_unslash($_POST['previewproduct_id']) ): 0;
-    
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
     $template_post_id = isset($_POST['post_id']) ? absint( wp_unslash($_POST['post_id']) ) : 0;
-    
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+
     $preview_post_id = isset($_POST['previewpostId']) ? absint( wp_unslash($_POST['previewpostId']) ) : 0;
+
+    // One click on #custom-preview-apply fires this action twice -- once with
+    // product_id, once with post_id -- and only one of the two carries a
+    // template. Authorise whichever arrived; refuse the request outright when
+    // neither did, so a bare nonce can never reach the writes below.
+    if ( ! $template_product_id && ! $template_post_id ) {
+        wp_send_json_error( 'Invalid data.', 400 );
+    }
+
+    if ( $template_product_id && ! solace_extra_can_edit_preview_target( $template_product_id ) ) {
+        wp_send_json_error( 'Unauthorized.', 403 );
+    }
+
+    if ( $template_post_id && ! solace_extra_can_edit_preview_target( $template_post_id ) ) {
+        wp_send_json_error( 'Unauthorized.', 403 );
+    }
 
     if ( $template_product_id && $preview_product_id ) {
 
@@ -404,18 +431,19 @@ add_action('wp_ajax_solace_save_custom_preview_id', function() {
 });
 
 add_action('wp_ajax_solace_save_blogarchive_preview_category', function() {
-    if ( ! current_user_can('edit_posts') ) {
-        wp_send_json_error('Unauthorized');
-    }
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    check_ajax_referer( 'solace_save_preview', 'nonce' );
+
     $post_id                = isset($_POST['post_id']) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $preview_blog_category  = isset($_POST['preview_blog_category']) ? absint( wp_unslash( $_POST['preview_blog_category'] ) ) : 0;
 
     if ( ! $post_id  ) {
         wp_send_json_error('Invalid data');
+    }
+
+    if ( ! solace_extra_can_edit_preview_target( $post_id ) ) {
+        wp_send_json_error( 'Unauthorized.', 403 );
     }
 
     // error_log('preview_blog_category: ' . $preview_blog_category);
@@ -433,18 +461,19 @@ add_action('wp_ajax_solace_save_blogarchive_preview_category', function() {
 });
 
 add_action('wp_ajax_solace_save_shopproduct_preview_category', function() {
-    if ( ! current_user_can('edit_posts') ) {
-        wp_send_json_error('Unauthorized');
-    }
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
+    check_ajax_referer( 'solace_save_preview', 'nonce' );
+
     $post_id                = isset($_POST['post_id']) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
 
-    // phpcs:ignore WordPress.Security.NonceVerification.Missing
     $preview_shop_category  = isset($_POST['preview_shop_category']) ? absint( wp_unslash( $_POST['preview_shop_category'] ) ) : 0;
 
     if ( ! $post_id  ) {
         wp_send_json_error('Invalid data');
+    }
+
+    if ( ! solace_extra_can_edit_preview_target( $post_id ) ) {
+        wp_send_json_error( 'Unauthorized.', 403 );
     }
     // error_log('preview_shop_category:'.$preview_shop_category);
     
@@ -483,8 +512,19 @@ add_action('elementor/editor/after_enqueue_scripts', function() {
         'solace-preview-button',
         plugin_dir_url(__FILE__) . 'assets/js/admin-preview-button.js',
         ['jquery'],
-        '1.0',
+        SOLACE_EXTRA_VERSION,
         true
+    );
+
+    // The nonce the three preview handlers verify. This hook only fires inside
+    // the Elementor editor, which a user cannot open without edit access to the
+    // document, so issuing it here does not widen who can reach those handlers.
+    wp_localize_script(
+        'solace-preview-button',
+        'solaceExtraPreview',
+        array(
+            'nonce' => wp_create_nonce( 'solace_save_preview' ),
+        )
     );
 });
 
@@ -761,19 +801,35 @@ if ( ! function_exists( 'solace_get_preview_post' ) ) {
             $template_id = get_the_ID();
 
             $preview_settings = get_post_meta( $template_id, '_elementor_preview_settings_post', true );
+            $post_id          = 0;
 
+            // A saved preview is only honoured while it still points at a
+            // published post; one left pointing at a deleted post used to be
+            // returned as-is.
             if ( ! empty( $preview_settings['preview_id'] ) ) {
-                $post_id = absint( $preview_settings['preview_id'] );
-            } else {
-                $random_post = get_posts( [
+                $saved_id = absint( $preview_settings['preview_id'] );
+
+                if ( $saved_id && 'publish' === get_post_status( $saved_id ) ) {
+                    $post_id = $saved_id;
+                }
+            }
+
+            // Otherwise default to the newest post. This used to be
+            // orderby => rand, saved permanently on first open, so each template
+            // ended up previewing an arbitrary post nobody had chosen. Newest is
+            // predictable, and the Preview Post control still picks any other.
+            if ( ! $post_id ) {
+                $latest = get_posts( [
                     'numberposts' => 1,
                     'post_type'   => 'post',
                     'post_status' => 'publish',
-                    'orderby'     => 'rand',
+                    'orderby'     => 'date',
+                    'order'       => 'DESC',
+                    'fields'      => 'ids',
                 ] );
 
-                if ( ! empty( $random_post ) ) {
-                    $post_id = $random_post[0]->ID;
+                if ( ! empty( $latest ) ) {
+                    $post_id = (int) $latest[0];
 
                     update_post_meta( $template_id, '_elementor_preview_settings_post', [
                         'preview_id' => $post_id,
@@ -939,41 +995,6 @@ add_filter( 'woocommerce_add_to_cart_fragments', function( $fragments ) {
     return $fragments;
 });
 
-function solace_render_minicart_html2() {
-
-    if ( function_exists( 'wc_load_cart' ) && ! WC()->cart ) {
-        wc_load_cart();
-    }
-
-    if ( ! WC()->cart || WC()->cart->is_empty() ) {
-        echo '<p class="woocommerce-mini-cart__empty-message">No products in the cart.</p>';
-        return;
-    }
-
-    echo '<div class="elementor-menu-cart__products woocommerce-mini-cart">';
-
-    foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-        $product = $cart_item['data'];
-
-        if ( ! $product || ! $product->exists() ) {
-            continue;
-        }
-
-        echo '<div class="elementor-menu-cart__product">';
-        echo '<span class="name">' . esc_html( $product->get_name() ) . '</span>';
-        echo '<span class="qty">' . esc_html( $cart_item['quantity'] ) . '</span>';
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce price HTML is safe
-        echo '<span class="price">' . WC()->cart->get_product_price( $product ) . '</span>';
-        echo '</div>';
-    }
-
-    echo '</div>';
-
-    echo '<div class="elementor-menu-cart__subtotal">';
-    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- WooCommerce subtotal HTML is safe
-    echo '<strong>Subtotal:</strong> ' . WC()->cart->get_cart_subtotal();
-    echo '</div>';
-}
 
 
 function solace_render_minicart_html( $settings = []) {

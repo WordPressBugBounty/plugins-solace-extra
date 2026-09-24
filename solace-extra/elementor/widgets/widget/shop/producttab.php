@@ -1292,6 +1292,76 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
     }
 
 
+    /**
+     * Print the field and label styles this widget takes from the Elementor Kit.
+     *
+     * Lives in its own method on purpose. The same code used to sit inline in
+     * render(), guarded by four conditions whose `return` statements were all
+     * commented out -- and with good reason: render() carries on for another two
+     * hundred lines after this, so returning from there would have dropped the
+     * whole widget, not just its <style> block. Commenting them out left the
+     * guards as empty shells instead:
+     *
+     *  - a missing kit still reached get_post_meta(), and non-array settings
+     *    still reached generate_field_style(), which indexes them as an array;
+     *  - the static de-duplication never fired, so a second render of the same
+     *    widget printed the block again;
+     *  - an empty result still printed a bare <style></style> on every page.
+     *
+     * Moved here, each guard can return for real and only skips the styles.
+     *
+     * @since 1.7.3
+     * @param int $kit_id Active Elementor Kit ID.
+     * @return void
+     */
+    private function print_field_styles( $kit_id ) {
+        if ( ! $kit_id ) {
+            return;
+        }
+
+        $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
+
+        if ( ! is_array( $kit_settings ) ) {
+            return;
+        }
+
+        static $style_printed = [];
+        $widget_id = $this->get_id();
+
+        if ( isset( $style_printed[ $widget_id ] ) ) {
+            return;
+        }
+
+        $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
+        $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
+        $label_styles  = $this->generate_label_style( $kit_settings );
+
+        if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
+            return;
+        }
+
+        echo '<style>';
+
+        if ( ! empty( $label_styles ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $this->get_label_selectors( $widget_id ) . ' { ' . $label_styles . ' }';
+        }
+
+        if ( ! empty( $normal_styles ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $this->get_myaccount_field_selectors( $widget_id, false ) . ' { ' . $normal_styles . ' }';
+        }
+
+        if ( ! empty( $focus_styles ) ) {
+            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo $this->get_myaccount_field_selectors( $widget_id, true ) . ' { ' . $focus_styles . ' }';
+        }
+
+        echo '</style>';
+
+        $style_printed[ $widget_id ] = true;
+    }
+
     protected function render() {
 
 		$settings = $this->get_settings_for_display();
@@ -1301,68 +1371,7 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
         $this->solace_custom_additional_info_empty_style();
         $kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
 
-		if ( ! $kit_id ) {
-            // error_log('DEBUG: Kit ID tidak ditemukan');
-            // return;
-        }
-
-        if ( $kit_id ) {
-            $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
-        }
-
-        $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
-        if ( ! is_array( $kit_settings ) ) {
-            // error_log('DEBUG: Kit Settings bukan array atau kosong');
-            // return;
-        }
-
-        static $style_printed = [];
-        $widget_id = $this->get_id();
-        if ( isset( $style_printed[ $widget_id ] ) ) {
-            // error_log('DEBUG: Style untuk widget ' . $widget_id . ' sudah pernah diprint sebelumnya');
-            // return;
-        }
-
-        // error_log('DEBUG: Mengecek normal_styles...');
-        $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
-        
-        // error_log('DEBUG: Mengecek focus_styles...');
-        $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
-        
-        // error_log('DEBUG: Mengecek label_styles...');
-        $label_styles  = $this->generate_label_style( $kit_settings );
-        
-        // error_log('DEBUG: Hasil Normal Style: ' . $normal_styles);
-        // error_log('DEBUG: Hasil Label Style: ' . $label_styles);
-
-        if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
-            // error_log('DEBUG: Semua styles kosong, membatalkan render <style>');
-            // return;
-        }
-
-        // error_log('DEBUG: Mencetak <style> ke frontend untuk widget: ' . $widget_id);
-
-        echo '<style>';
-        if ( ! empty( $label_styles ) ) {
-            $label_selectors = $this->get_label_selectors( $widget_id );
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo $label_selectors . ' { ' . $label_styles . ' }';
-            // error_log('DEBUG: Label selectors printed: ' . $label_selectors);
-        }
-        if ( ! empty( $normal_styles ) ) {
-            $field_selectors = $this->get_myaccount_field_selectors( $widget_id, false );
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo $field_selectors . ' { ' . $normal_styles . ' }';
-            // error_log('DEBUG: Field selectors printed: ' . $field_selectors);
-        }
-        if ( ! empty( $focus_styles ) ) {
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            echo $this->get_myaccount_field_selectors( $widget_id, true ) . ' { ' . $focus_styles . ' }';
-        }
-        echo '</style>';
-
-
-        $style_printed[ $widget_id ] = true;
+		$this->print_field_styles( $kit_id );
 		
         $checkempty = solace_check_empty_product( $product );
 		if ( $checkempty ) {

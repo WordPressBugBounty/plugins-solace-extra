@@ -6,8 +6,18 @@ if ( empty( $_COOKIE['solace_page_access'] ) ) {
     exit;
 }
 
-// Flush rewrite rules to ensure the changes take effect
-flush_rewrite_rules();
+// This is the wizard's last screen, the first page load after an import has
+// finished, and by now every plugin the import activated has registered its post
+// types -- so it is the right moment to persist the rewrite rules.
+//
+// It used to run unconditionally, which meant a full rule regeneration plus an
+// option write on every visit and every refresh of this page, long after there
+// was anything new to pick up. The flag the importer raises on completion makes
+// it fire exactly once per import.
+if ( get_option( 'solace_extra_flush_rewrite_after_import' ) ) {
+    flush_rewrite_rules();
+    delete_option( 'solace_extra_flush_rewrite_after_import' );
+}
 
 $solace_extra_customizer_link = admin_url( 'customize.php' ); 
 ?>
@@ -80,7 +90,7 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
             nonce: ajax_object.nonce,
         };
 
-        // Hanya menambahkan nilai yang tidak null ke dalam objek ajaxData
+        // Only add values that are not null to the ajaxData object.
         if (new_solace_body_font) ajaxData.new_solace_body_font_family = new_solace_body_font;
         if (new_solace_heading_font) ajaxData.new_solace_heading_font_family_general = new_solace_heading_font;
         if (new_base_color) ajaxData.new_base_color = new_base_color;
@@ -134,10 +144,10 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
                 // Calculate and display minutes and remaining seconds
                 var minutes = Math.floor(timeDifferenceInSeconds / 60);
                 var seconds = Math.floor(timeDifferenceInSeconds % 60);
-                console.log(minutes + " menit " + seconds + " detik");
+                console.log(minutes + " minutes " + seconds + " seconds");
             } else {
                 // Display the time difference in seconds
-                console.log(timeDifferenceInSeconds + " detik");
+                console.log(timeDifferenceInSeconds + " seconds");
             }
 
             // Remove information imported

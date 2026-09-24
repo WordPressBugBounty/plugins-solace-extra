@@ -493,7 +493,7 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'products_per_page',
             [
                 'label' => __('Products to Show', 'solace-extra'),
@@ -501,16 +501,22 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
                 'min' => 1,
                 'max' => 20,
                 'default' => 4,
+                'desktop_default' => 4,
+                'tablet_default' => 4,
+                'mobile_default' => 4,
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'columns',
             [
                 'label' => __('Columns', 'solace-extra'),
                 'type' => Controls_Manager::SELECT,
                 'default' => '4',
+                'tablet_default' => '3',
+                'mobile_default' => '2',
                 'options' => [
+                    '1' => '1 Column',
                     '2' => '2 Columns',
                     '3' => '3 Columns',
                     '4' => '4 Columns',
@@ -905,7 +911,6 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
         $this->end_controls_section();
     }
 
-
     public function solace_related_products_empty() {
         $settings = $this->get_settings_for_display();
 
@@ -913,10 +918,10 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
 
         $heading = $settings['heading'];
         $tag     = ! empty( $settings['related_heading_tag'] ) ? $settings['related_heading_tag'] : 'h2';
-        $limit   = intval( $settings['products_per_page'] );
-        $columns = intval( $settings['columns'] );
-        $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
-
+        $limits  = $this->get_products_per_page_limits();
+        $limit   = $limits['max'];
+        $columns = isset( $settings['columns'] ) ? intval( $settings['columns'] ) : 4;
+        $columns = ( $columns >= 1 && $columns <= 6 ) ? $columns : 4;
         $hover_animation = ! empty( $settings['hover_animation'] ) ? $settings['hover_animation'] : '';
         $hover_class     = $hover_animation ? ' elementor-animation-' . $hover_animation : '';
 
@@ -951,17 +956,28 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
             }
         }
 
-        woocommerce_product_loop_end();
-        remove_all_filters( 'loop_shop_columns' );
-
-        echo '</section>';
     }
 
     public function get_style(){
+		$settings  = $this->get_settings_for_display();
+
+		$columns_desktop = ! empty( $settings['columns'] ) ? absint( $settings['columns'] ) : 4;
+		$columns_tablet  = ! empty( $settings['columns_tablet'] ) ? absint( $settings['columns_tablet'] ) : $columns_desktop;
+		$columns_mobile  = ! empty( $settings['columns_mobile'] ) ? absint( $settings['columns_mobile'] ) : $columns_tablet;
+
+		$limits = $this->get_products_per_page_limits();
+		$show_desktop = max( 1, $limits['desktop'] );
+		$show_tablet  = max( 1, $limits['tablet'] );
+		$show_mobile  = max( 1, $limits['mobile'] );
+
 		echo '<style>
             .related.products.woocommerce ul.products li.product {
                 display: flex;
                 flex-direction: column;
+                width: 100% !important;
+                max-width: none !important;
+                min-width: 0;
+                margin: 0 !important;
             }
             .related.products.woocommerce ul.products li.product .woocommerce-loop-product__title {
                 display: flex;
@@ -975,6 +991,60 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
 				background-color: var(--sol-color-selection-high);
 				color: var(--sol-color-selection-initial);
 			}
+
+			/* Responsive columns (grid) */
+			.related.products.woocommerce ul.products {
+				display: grid;
+				grid-template-columns: repeat(' . absint( $columns_desktop ) . ', 1fr);
+				gap: 20px;
+				list-style: none;
+				padding: 0;
+				margin: 0 0 1em;
+			}
+			/* WC float-clearing pseudo-elements become grid items — disable them */
+			.related.products.woocommerce ul.products::before,
+			.related.products.woocommerce ul.products::after {
+				content: none;
+				display: none;
+			}
+			@media (max-width: 1024px) {
+				.related.products.woocommerce ul.products {
+					grid-template-columns: repeat(' . absint( $columns_tablet ) . ', 1fr);
+				}
+			}
+			@media (max-width: 767px) {
+				.related.products.woocommerce ul.products {
+					grid-template-columns: repeat(' . absint( $columns_mobile ) . ', 1fr);
+				}
+			}
+
+			/* Products to show per breakpoint */
+			@media (min-width: 1025px) {
+				.related.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_desktop ) + 1 ) . ') {
+					display: none;
+				}
+			}
+			@media (max-width: 1024px) {
+				.related.products.woocommerce ul.products li.product {
+					display: flex;
+				}
+				.related.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_tablet ) + 1 ) . ') {
+					display: none;
+				}
+			}
+			@media (max-width: 767px) {
+				.related.products.woocommerce ul.products li.product {
+					display: flex;
+				}
+				/* Re-show the items the tablet limit hid: same specificity, later
+				   in the cascade, so mobile can exceed the tablet count. */
+				.related.products.woocommerce ul.products li.product:nth-child(-n+' . absint( $show_mobile ) . ') {
+					display: flex;
+				}
+				.related.products.woocommerce ul.products li.product:nth-child(n+' . ( absint( $show_mobile ) + 1 ) . ') {
+					display: none;
+				}
+			}
 		</style>';
 	}
 
@@ -987,9 +1057,22 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
         //  - Site Builder "Single Product" template (editor)
         //  - Site Builder "Shop" / product archive template (editor)
         // Everywhere else render nothing to avoid a misleading preview.
+        // Editor context: the Elementor admin editor AND its preview iframe both
+        // count (the preview iframe runs the front-end render where
+        // editor->is_edit_mode() is false and only preview->is_preview_mode()
+        // is true).
+        $is_elementor_editor = false;
+        if ( class_exists( '\Elementor\Plugin' ) ) {
+            $elementor_instance = \Elementor\Plugin::$instance;
+            $is_elementor_editor = (
+                ( isset( $elementor_instance->editor ) && method_exists( $elementor_instance->editor, 'is_edit_mode' ) && $elementor_instance->editor->is_edit_mode() )
+                || ( isset( $elementor_instance->preview ) && method_exists( $elementor_instance->preview, 'is_preview_mode' ) && $elementor_instance->preview->is_preview_mode() )
+            );
+        }
+
         $is_single_product_template = false;
         $is_shop_archive_template   = false;
-        if ( function_exists( 'solace_is_elementor_editor' ) && solace_is_elementor_editor() ) {
+        if ( $is_elementor_editor ) {
             $editing_id = get_the_ID();
             $is_single_product_template = (
                 $editing_id
@@ -1029,8 +1112,11 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
         } elseif ( $is_shop_archive_template ) {
             // Site Builder Shop (product archive) template editor/preview.
             $tax_args = $this->solace_related_shop_archive_tax_args( get_the_ID() );
-        } elseif ( $is_single_product_template ) {
-            // Site Builder Single Product template editor/preview.
+        } elseif ( $is_elementor_editor ) {
+            // Elementor editor/preview — Site Builder "Single Product" template
+            // or any other post/page: mirror the upsells widget and resolve the
+            // preview product (lorem-ipsum placeholder when the store has no
+            // products), so the section isn't a blank grey box while designing.
             $product = function_exists( 'solace_get_preview_product' ) ? solace_get_preview_product() : false;
         } else {
             return;
@@ -1058,10 +1144,15 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
             wp_enqueue_style('woocommerce-smallscreen');
         }
 
+
         $heading = $settings['heading'];
-        $limit = intval($settings['products_per_page']);
-        $columns = intval($settings['columns']);
-        $columns = ($columns >= 2 && $columns <= 6) ? $columns : 4;
+        // Responsive controls: query the max of desktop/tablet/mobile so every
+        // breakpoint has enough items; get_style() hides the surplus per
+        // breakpoint via nth-child rules.
+        $limits  = $this->get_products_per_page_limits();
+        $limit   = $limits['max'];
+        $columns = isset( $settings['columns'] ) ? intval( $settings['columns'] ) : 4;
+        $columns = ( $columns >= 1 && $columns <= 6 ) ? $columns : 4;
 
         if ( $tax_args ) {
             // Archive context: products sharing the current/preview term.
@@ -1086,7 +1177,6 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
                 if ( $product && is_a( $product, 'WC_Product' ) && function_exists( 'solace_extra_is_placeholder_product' ) && solace_extra_is_placeholder_product( $product ) ) {
                     $heading = $settings['heading'];
                     $tag     = ! empty( $settings['related_heading_tag'] ) ? $settings['related_heading_tag'] : 'h2';
-                    $columns = ( $columns >= 2 && $columns <= 6 ) ? $columns : 4;
 
                     if ( function_exists( 'WC' ) ) {
                         wp_enqueue_style( 'woocommerce-general' );
@@ -1264,5 +1354,33 @@ class Solace_Extra_WooCommerce_Related_Products extends Widget_Base {
         }
 
         return absint( $terms[0]->term_id );
+    }
+
+    /**
+     * Per-breakpoint "Products to Show" limits from the responsive control.
+     *
+     * Tablet/mobile fall back to the desktop value when left empty. `max` is
+     * the largest of the three — the server query renders that many items and
+     * get_style() hides the surplus per breakpoint.
+     *
+     * @return array{desktop:int,tablet:int,mobile:int,max:int}
+     */
+    private function get_products_per_page_limits() {
+        $settings = $this->get_settings_for_display();
+
+        $desktop = isset( $settings['products_per_page'] ) ? intval( $settings['products_per_page'] ) : 4;
+        $tablet  = isset( $settings['products_per_page_tablet'] ) && '' !== $settings['products_per_page_tablet'] ? intval( $settings['products_per_page_tablet'] ) : $desktop;
+        $mobile  = isset( $settings['products_per_page_mobile'] ) && '' !== $settings['products_per_page_mobile'] ? intval( $settings['products_per_page_mobile'] ) : $tablet;
+
+        $desktop = max( 1, $desktop );
+        $tablet  = max( 1, $tablet );
+        $mobile  = max( 1, $mobile );
+
+        return [
+            'desktop' => $desktop,
+            'tablet'  => $tablet,
+            'mobile'  => $mobile,
+            'max'     => max( $desktop, $tablet, $mobile ),
+        ];
     }
 }

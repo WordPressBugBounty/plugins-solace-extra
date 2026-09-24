@@ -192,6 +192,30 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
         parent::complete();
         update_option('solace_extra_import_zip_complete', true);
         set_theme_mod('solace_extra_import_zip_complete', true);
+
+        // An import activates plugins that register post types of their own, and
+        // those only register on init in a *later* request than this one -- so any
+        // flush performed during the import itself is too early to capture them.
+        // Raise a one-shot flag instead; the wizard's last screen consumes it on
+        // the next page load, by which point every new rule exists.
+        update_option('solace_extra_flush_rewrite_after_import', true, false);
+
+        // Demo imports create products directly as WXR posts, bypassing the
+        // WooCommerce data-store sync. Without a lookup-table rebuild the
+        // "Filter by price" widget computes stale min/max ranges (e.g. capped
+        // at $80) or hides entirely when a category's products have no lookup
+        // rows. Rebuild after every import that included products.
+        if (get_option('solace_extra_imported_products') && class_exists('WooCommerce') && function_exists('wc_update_product_lookup_tables')) {
+            wc_update_product_lookup_tables();
+            // Column population is normally queued through the Action Scheduler;
+            // run the same updates synchronously so prices are ready immediately.
+            if (function_exists('wc_update_product_lookup_tables_column')) {
+                foreach (array('min_max_price', 'stock_quantity', 'sku', 'global_unique_id', 'stock_status', 'average_rating', 'total_sales', 'downloadable', 'virtual', 'onsale', 'tax_class', 'tax_status') as $column) {
+                    wc_update_product_lookup_tables_column($column);
+                }
+            }
+            delete_option('solace_extra_imported_products');
+        }
     }
 
     /**
@@ -319,6 +343,9 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
 
         if ($post['post_type'] === 'product') {
             update_post_meta($post_id, 'solace_import_products', true);
+            // Remember that this import contained products so complete() can
+            // rebuild the WooCommerce product lookup table afterwards.
+            update_option('solace_extra_imported_products', true);
         }
     }
     /**
@@ -399,7 +426,7 @@ class Thumbnail_Generator extends XWP_Background_Process {
     protected $action = 'generate_thumbnails';
 
     /**
-     * Proses setiap item
+     * Process each item.
      *
      * @param mixed $item Data attachment ID.
      * @return mixed
@@ -440,7 +467,7 @@ class Thumbnail_Generator extends XWP_Background_Process {
     }
 
     /**
-     * Selesai proses
+     * Finish processing.
      *
      * @return void
      */
@@ -753,7 +780,7 @@ class Solace_Extra_Import {
         $plugin = 'litespeed-cache/litespeed-cache.php';
         $status_plugin_litespeed = get_option( 'solace_extra_deactivate_litespeed', false );
 
-        // Check status plugin litespeed.
+        // Check the LiteSpeed plugin status.
         if ( $status_plugin_litespeed ) {
             // Check if the plugin is already active.
             if ( ! is_plugin_active( $plugin ) ) {
@@ -2453,8 +2480,14 @@ class Solace_Extra_Import {
             activate_plugin( "$plugin_slug/$plugin_slug.php" );
         }
 
-        update_option( 'permalink_structure', '/%postname%/' );
-        flush_rewrite_rules();          
+        // update_option() alone leaves the already-instantiated $wp_rewrite holding
+        // the previous structure, so the flush below would regenerate the rules for
+        // the structure we just replaced. set_permalink_structure() writes the
+        // option and re-inits the object; the flush then has the right input.
+        // This one runs once per import, not per page load, so it stays.
+        global $wp_rewrite;
+        $wp_rewrite->set_permalink_structure( '/%postname%/' );
+        flush_rewrite_rules();
 
         $url = admin_url( 'admin.php?page=elementor-app#onboarding' );
         
@@ -2518,7 +2551,7 @@ class Solace_Extra_Import {
             wp_die();
         }
 
-        set_theme_mod('solace_extra_import_zip_complete', false); // Menyimpan status impor sebagai false
+        set_theme_mod('solace_extra_import_zip_complete', false); // Save the import status as false.
 
         // Delete menu items.
         $this->delete_imported_menu_items();
@@ -2881,19 +2914,19 @@ class Solace_Extra_Import {
             if ( $is_shop_title && $is_shop_slug ) {
                 $local_shop_id = 0;
 
-                // 1) Coba cari page lokal dengan slug 'shop' terlebih dahulu.
+                // 1) Try to find a local page with the slug 'shop' first.
                 if ( ! $local_shop_id ) {
                     $shop_page = get_page_by_path( 'shop', OBJECT, 'page' );
                     if ( $shop_page && ! is_wp_error( $shop_page ) && $shop_page->ID ) {
-                        // Pastikan memang slug-nya 'shop', bukan page lain seperti 'hello-world'.
+                        // Make sure the slug is really 'shop', not some other page like 'hello-world'.
                         if ( isset( $shop_page->post_name ) && strtolower( $shop_page->post_name ) === 'shop' ) {
                             $local_shop_id = (int) $shop_page->ID;
                         }
                     }
                 }
 
-                // 2) Jika belum ada, coba dari WooCommerce shop page setting
-                //    tapi validasi bahwa judul/slug memang berhubungan dengan "shop".
+                // 2) If it does not exist yet, try the WooCommerce shop page setting
+                //    but validate that the title/slug actually relates to "shop".
                 if ( ! $local_shop_id && function_exists( 'wc_get_page_id' ) ) {
                     $candidate_id = absint( wc_get_page_id( 'shop' ) );
                     if ( $candidate_id ) {
@@ -2912,7 +2945,7 @@ class Solace_Extra_Import {
                 if ( $local_shop_id ) {
                     $local_url = get_permalink( $local_shop_id );
                     if ( ! $local_url || is_wp_error( $local_url ) ) {
-                        $local_url = $menu_item->url; // fallback ke URL dari JSON.
+                        $local_url = $menu_item->url; // Fallback to the URL from the JSON.
                     }
 
                     $shop_args = $common_args;
@@ -3039,7 +3072,7 @@ class Solace_Extra_Import {
 
                 if ( $page_shop ) {
 
-                    // Check dan ganti "pages" dengan "page"
+                    // Check and replace "pages" with "page".
                     $clean_slug = str_replace( 'pages', 'page', $clean_slug );
 
                     $unique_posts = absint( $this->get_unique_posts_by_title( $clean_slug, $demo_name ) );              
@@ -3155,7 +3188,7 @@ class Solace_Extra_Import {
             }
 
             if ( $resolved_object_id ) {
-                // Target content found secara umum (bukan kasus khusus Shop).
+                // Target content found in general (not the Shop-specific case).
                 $args = array_merge(
                     $common_args,
                     array(

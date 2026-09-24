@@ -1,5 +1,5 @@
-.solace-extra-button,
-a.solace-extra-button {
+.solace-extra-button:not(.elementor-widget-woocommerce-products *),
+a.solace-extra-button:not(.elementor-widget-woocommerce-products *) {
   background: var(--sol-color-button-initial);
   color: var(--sol-color-page-title-text);
   border-radius: 0;
@@ -63,4 +63,47 @@ body .elementor-woo-meta--view-stacked.elementor-widget-solace-extra-product-met
 body .elementor-woo-meta--view-stacked.elementor-widget-solace-extra-product-meta .solace_extra_product_meta span.detail-container:not(:last-child)::after {
   left: 0;
   position: absolute !important;
-}/*# sourceMappingURL=elementor-front-end.css.map */
+}
+
+/*
+ * Elementor Pro Cart widget - let its own color controls win.
+ *
+ * The theme's checkout override (body.woocommerce-checkout h2 { color:
+ * var(--sol-checkout-title-color) !important }) beats the widget's
+ * --sections-title-color on Elementor-built pages, and Elementor Pro's
+ * generic a:not(...) rule beats its own .product-name a rule, so colors
+ * chosen in the widget panel (Cart Totals title, product link, remove
+ * icon, order-summary labels) do not render. Scope to .elementor-page so
+ * the native theme checkout/cart styling is untouched.
+ */
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .cart_totals h2,
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .cart_totals h3 {
+  color: var(--sections-title-color, #000) !important;
+}
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .cart th {
+  color: var(--order-summary-title-color, #000) !important;
+}
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .product-name a,
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .product-name a:visited {
+  color: var(--product-link-normal-color, #000) !important;
+}
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .product-name a:hover {
+  color: var(--product-link-hover-color, #000) !important;
+}
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .remove {
+  color: var(--order-summary-remove-icon-normal-color, #000) !important;
+}
+body.elementor-page .elementor-widget-woocommerce-cart .woocommerce .remove:hover {
+  color: var(--order-summary-remove-icon-hover-color, var(--order-summary-remove-icon-normal-color, #000)) !important;
+}
+
+/* Site Builder header logo: cap the image so it never paints at its
+   natural size (e.g. 1587x404) before Elementor's width:150px rule from
+   the header template css loads late in the head. Prevents the logo
+   "grows then shrinks" flash on page reload. */
+body .elementor-widget-solace-extra-site-logo .elementor-site-logo img,
+body .elementor-widget-solace-extra-site-logo .elementor-site-logo a img {
+  max-width: 100%;
+  height: auto;
+}
+/*# sourceMappingURL=elementor-front-end.css.map */

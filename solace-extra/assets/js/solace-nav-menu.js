@@ -33,18 +33,18 @@
                 const $menuItem = $(this);
                 const $subMenu = $menuItem.find('ul.sub-menu').first();
                 
-                // Tutup semua submenu dari menu item lain yang sedang terbuka
+                // Close all submenus of other menu items that are currently open.
                 $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal li.menu-item-has-children, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical li.menu-item-has-children').not($menuItem).each(function() {
                     const $otherMenuItem = $(this);
                     const $otherSubMenu = $otherMenuItem.find('ul.sub-menu').first();
                     
-                    // Clear timeout dari menu item lain
+                    // Clear timeout from other menu items
                     if ($otherMenuItem.data('hover-timeout')) {
                         clearTimeout($otherMenuItem.data('hover-timeout'));
                         $otherMenuItem.removeData('hover-timeout');
                     }
                     
-                    // Reset flag dan tutup submenu
+                    // Reset flags and close the submenu.
                     $otherMenuItem.data('li-hovering', false);
                     $otherSubMenu.data('submenu-hovering', false);
                     removeStyleProperty($otherSubMenu, 'display');
@@ -56,12 +56,12 @@
                     $menuItem.removeData('hover-timeout');
                 }
 
-                // Jika sub-menu sedang di-hover, jangan lakukan apa-apa
+                // If a sub-menu is being hovered, do nothing.
                 if ($subMenu.data('submenu-hovering')) {
                     return;
                 }
 
-                // Tambahkan display block !important ke sub-menu
+                // Add display block !important to the sub-menu.
                 setStyleImportant($subMenu, 'display', 'block');
                 $menuItem.data('li-hovering', true);
             });
@@ -76,18 +76,18 @@
                     clearTimeout($menuItem.data('hover-timeout'));
                 }
 
-                // Jika sub-menu sedang di-hover, jangan hapus display block
+                // If the sub-menu is being hovered, do not remove display block.
                 if ($subMenu.data('submenu-hovering')) {
                     $menuItem.data('li-hovering', false);
                     return;
                 }
 
-                // Set flag bahwa li tidak lagi di-hover
+                // Set the flag that the li is no longer hovered.
                 $menuItem.data('li-hovering', false);
 
-                // Tahan selama 200 milidetik sebelum menghapus display block
+                // Hold for 200 milliseconds before removing display block.
                 const timeoutId = setTimeout(function() {
-                    // Cek lagi apakah sub-menu sedang di-hover
+                    // Check again whether the sub-menu is being hovered.
                     if (!$subMenu.data('submenu-hovering') && !$menuItem.data('li-hovering')) {
                         removeStyleProperty($subMenu, 'display');
                     }
@@ -103,7 +103,7 @@
                 const $subMenu = $(this);
                 const $menuItem = $subMenu.closest('li.menu-item-has-children');
                 
-                // Set flag bahwa sub-menu sedang di-hover
+                // Set the flag that the sub-menu is being hovered.
                 $subMenu.data('submenu-hovering', true);
                 
                 // Clear timeout dari li jika ada
@@ -112,7 +112,7 @@
                     $menuItem.removeData('hover-timeout');
                 }
 
-                // Pastikan display block tetap ada
+                // Ensure display block stays in place.
                 setStyleImportant($subMenu, 'display', 'block');
             });
 
@@ -121,13 +121,13 @@
                 const $subMenu = $(this);
                 const $menuItem = $subMenu.closest('li.menu-item-has-children');
                 
-                // Set flag bahwa sub-menu tidak lagi di-hover
+                // Set the flag that the sub-menu is no longer hovered.
                 $subMenu.data('submenu-hovering', false);
 
-                // Jika li juga tidak di-hover, hapus display block setelah 200 milidetik
+                // If the li is also not hovered, remove display block after 200 milliseconds.
                 if (!$menuItem.data('li-hovering')) {
                     const timeoutId = setTimeout(function() {
-                        // Cek lagi apakah sub-menu atau li sedang di-hover
+                        // Check again whether the sub-menu or li is being hovered.
                         if (!$subMenu.data('submenu-hovering') && !$menuItem.data('li-hovering')) {
                             removeStyleProperty($subMenu, 'display');
                         }
@@ -138,7 +138,7 @@
                 }
             });
         } else {
-            // Jika resolusi < 1024px, hapus semua style inline yang ditambahkan
+            // If the resolution is below 1024px, remove all added inline styles.
             $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal ul.sub-menu, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical ul.sub-menu').each(function() {
                 const $subMenu = $(this);
                 removeStyleProperty($subMenu, 'display');
@@ -213,22 +213,22 @@
             const isExpanded = $toggle.attr('aria-expanded') === 'true';
             $toggle.attr('aria-expanded', !isExpanded);
 
-            // Atur lebar dan posisi dropdown nav ketika menu dibuka
-            // Cari nav dropdown di dalam widget yang sama
+            // Set the width and position of the nav dropdown when the menu opens.
+            // Find the nav dropdown inside the same widget.
             const $widget   = $toggle.closest('.elementor-widget-solace-extra-nav-menu');
             const $dropdown = $widget.find('.elementor-nav-menu--dropdown.solace-elementor-nav-menu--dropdown.elementor-nav-menu__container');
 
-            // Tambahkan class khusus untuk state terbuka (beda dari class active)
+            // Add a special class for the open state (different from the active class).
             $dropdown.toggleClass('solace-dropdown-open');
             
-            // Set padding-top dari topPosition saat dropdown terbuka
+            // Set padding-top from topPosition when the dropdown is open.
             if ($dropdown.length) {
                 if ($dropdown.hasClass('solace-dropdown-open') && topPosition !== undefined) {
                     $dropdown.css({
                         'paddingTop': topPosition + 55 + 'px'
                     });
                 } else {
-                    // Reset padding-top saat dropdown ditutup
+                    // Reset padding-top when the dropdown is closed.
                     $dropdown.css({
                         'paddingTop': '115px'
                     });

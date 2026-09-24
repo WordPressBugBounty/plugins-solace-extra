@@ -78,7 +78,91 @@ class Solace_Extra_Public {
 
 		wp_enqueue_style( 'solace-extra-elementor-front-end', SOLACE_EXTRA_ASSETS_URL . 'css/elementor-front-end.min.css', array(), $this->version, 'all' );
 
-	}	
+		// Elementor Pro "WooCommerce Pages" widget (wc-elements): follow the
+		// Elementor kit's global colors instead of WooCommerce defaults when the
+		// widget is placed on a regular page.
+		wp_enqueue_style( 'solace-extra-wc-elements-global', plugin_dir_url( __FILE__ ) . 'css/wc-elements-global-colors.css', array(), $this->version, 'all' );
+
+	}
+
+	/**
+	 * Hold rendering of the Elementor site header until its stylesheets have
+	 * finished loading.
+	 *
+	 * Elementor enqueues the header template css (post-N.css) very late in
+	 * the head, so the browser can paint the header/content before that css
+	 * arrives - the header then visibly "pops" / shifts when the styling
+	 * finally applies. This prints a tiny inline style + script in the very
+	 * first wp_head action that keeps the header hidden until every
+	 * stylesheet is loaded, then fades it in.
+	 *
+	 * @since    1.7.0
+	 */
+	public function prevent_elementor_fouc() {
+
+		if ( is_admin() || ! class_exists( '\Elementor\Plugin' ) ) {
+			return;
+		}
+
+		?>
+		<style id="solace-extra-anti-fouc">
+		html.solace-fouc-loading .solace-fouc-header,
+		html.solace-fouc-loading .solace-fouc-header * {
+			opacity: 0 !important;
+			transition: none !important;
+		}
+		html.solace-fouc-ready .solace-fouc-header,
+		html.solace-fouc-ready .solace-fouc-header * {
+			opacity: 1;
+			transition: opacity 0.18s ease-out;
+		}
+		</style>
+		<script>
+		(function () {
+			var root = document.documentElement;
+			var header = document.querySelector( '.elementor-location-header, .elementor-header, [data-elementor-type="header"]' );
+			if ( ! header ) {
+				return;
+			}
+			header.classList.add( 'solace-fouc-header' );
+			root.classList.add( 'solace-fouc-loading' );
+
+			// Reveal when all stylesheets are done loading.
+			var waitCss = function () {
+				var sheets = document.styleSheets;
+				for ( var i = 0; i < sheets.length; i++ ) {
+					try {
+						var rules = sheets[ i ].cssRules;
+						// same-origin sheet not loaded yet -> cssRules null.
+						if ( rules === null ) {
+							setTimeout( waitCss, 30 );
+							return;
+						}
+					} catch ( e ) {
+						// Cross-origin stylesheet (CDN) - cannot inspect, treat as ready.
+					}
+				}
+				// Give the browser one more frame to apply the css, then reveal.
+				requestAnimationFrame( function () {
+					requestAnimationFrame( function () {
+						root.classList.remove( 'solace-fouc-loading' );
+						root.classList.add( 'solace-fouc-ready' );
+					} );
+				} );
+			};
+
+			// Fallback: never hold the header longer than 3s.
+			setTimeout( waitCss, 0 );
+			setTimeout( function () {
+				if ( root.classList.contains( 'solace-fouc-loading' ) ) {
+					root.classList.remove( 'solace-fouc-loading' );
+					root.classList.add( 'solace-fouc-ready' );
+				}
+			}, 3000 );
+		})();
+		</script>
+		<?php
+	}
 
 	/**
 	 * Register the JavaScript for the public-facing side of the site.
@@ -743,6 +827,13 @@ class Solace_Extra_Public {
 			return 0;
 		}
 
+		// Cart, checkout and account only take over when the part carries the
+		// widget the page depends on. Ask the same resolver the template override
+		// asks, so the bridge enqueues exactly what will render.
+		if ( function_exists( 'solace_woo_page_parts' ) && in_array( $part, solace_woo_page_parts(), true ) ) {
+			return function_exists( 'solace_get_woo_page_part_id' ) ? (int) solace_get_woo_page_part_id( $part ) : 0;
+		}
+
 		$status = $this->solace_get_part_status( $part );
 		if ( empty( $status['is_checked'] ) ) {
 			return 0;
@@ -770,219 +861,25 @@ class Solace_Extra_Public {
 	 * @return int[]
 	 */
 	private function resolve_conditioned_sitebuilder_post_ids( $part ) {
-		$status = $this->solace_get_part_status( $part );
-		if ( empty( $status['is_checked'] ) ) {
+		// Ask the renderer's own resolver rather than deciding again here. This
+		// class used to carry its own copy of the page classifier and the
+		// condition matcher, and the two had drifted: its basic-singulars list
+		// left out product|all, its product|all case was a strict comparison
+		// rather than the whole WooCommerce surface, its basic-archives list
+		// omitted the product taxonomy archives, and it never applied the
+		// implicit basic-global that an exclude-only rule relies on. The result
+		// was a header that rendered on a product page while its Elementor CSS
+		// was never enqueued.
+		if ( ! function_exists( 'solace_resolve_conditions_part' ) ) {
 			return array();
 		}
 
-		$post_ids = get_posts( array(
-			'post_type'      => 'solace-sitebuilder',
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-			'meta_key'       => '_solace_' . $part . '_status',
-			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key,WordPress.DB.SlowDBQuery.slow_db_query_meta_value
-			'meta_value'     => '1',
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-			'no_found_rows'  => true,
-			'orderby'        => 'ID',
-			'order'          => 'DESC',
-		) );
+		// Issue #1: the renderer now shows exactly one part (the most specific
+		// match), so only that part's assets need enqueuing. Enqueuing every
+		// matching part leaked CSS from parts that never render.
+		$part_id = (int) solace_resolve_conditions_part( $part );
 
-		return array_values( array_filter( $post_ids, function ( $post_id ) use ( $part ) {
-			return $this->sitebuilder_part_conditions_match_request( $post_id, $part );
-		} ) );
-	}
-
-	/**
-	 * Match a header/footer document against the current request.
-	 *
-	 * @param int    $post_id Site-builder post ID.
-	 * @param string $part    Site-builder part.
-	 * @return bool
-	 */
-	private function sitebuilder_part_conditions_match_request( $post_id, $part ) {
-		$conditions = maybe_unserialize( get_post_meta( $post_id, '_solace_' . $part . '_conditions', true ) );
-		$page_type  = $this->resolve_current_sitebuilder_page_type();
-
-		if ( 'publish' !== get_post_status( $post_id ) || empty( $conditions ) || ! is_array( $conditions ) || '' === $page_type ) {
-			return false;
-		}
-
-		foreach ( $conditions as $condition ) {
-			if ( ! is_array( $condition ) ) {
-				continue;
-			}
-
-			if (
-				isset( $condition['type'], $condition['value'] ) &&
-				'exclude' === $condition['type'] &&
-				$page_type === $condition['value']
-			) {
-				return false;
-			}
-		}
-
-		foreach ( $conditions as $condition ) {
-			if ( ! is_array( $condition ) ) {
-				continue;
-			}
-
-			if (
-				isset( $condition['type'], $condition['value'] ) &&
-				'include' === $condition['type'] &&
-				$this->sitebuilder_condition_value_matches_request( $condition['value'], $page_type )
-			) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * Resolve the request into the page-type tokens used by the free plugin.
-	 *
-	 * @return string
-	 */
-	private function resolve_current_sitebuilder_page_type() {
-		if ( function_exists( 'check_current_page_type' ) ) {
-			$page_type = check_current_page_type();
-
-			return is_string( $page_type ) ? $page_type : '';
-		}
-
-		if ( class_exists( 'WooCommerce' ) ) {
-			if ( function_exists( 'is_shop' ) && is_shop() ) {
-				return 'product|all';
-			} elseif ( function_exists( 'is_product' ) && is_product() ) {
-				return 'product|all';
-			} elseif ( function_exists( 'is_cart' ) && is_cart() ) {
-				return 'product|all';
-			} elseif ( function_exists( 'is_checkout' ) && is_checkout() ) {
-				return 'product|all';
-			} elseif ( function_exists( 'is_account_page' ) && is_account_page() ) {
-				return 'product|all';
-			} elseif ( function_exists( 'is_product_category' ) && is_product_category() ) {
-				return 'product|all|taxarchive|product_cat';
-			} elseif ( function_exists( 'is_product_tag' ) && is_product_tag() ) {
-				return 'product|all|taxarchive|product_tag';
-			} elseif ( is_search() && 'product' === get_query_var( 'post_type' ) ) {
-				return 'product|all|archive';
-			} elseif ( function_exists( 'is_order_received_page' ) && is_order_received_page() ) {
-				return 'product|all';
-			}
-		}
-
-		if ( is_front_page() ) {
-			return 'special-front';
-		} elseif ( is_home() ) {
-			return 'special-blog';
-		} elseif ( is_404() ) {
-			return 'special-404';
-		} elseif ( is_author() ) {
-			return 'special-author';
-		} elseif ( is_search() ) {
-			return 'special-search';
-		} elseif ( is_date() ) {
-			return 'special-date';
-		}
-
-		if ( is_archive() ) {
-			if ( is_category() ) {
-				return 'post|all|taxarchive|category';
-			} elseif ( is_tag() ) {
-				return 'post|all|taxarchive|post_tag';
-			} elseif ( is_post_type_archive() ) {
-				return 'post|all|archives';
-			} elseif ( is_tax() ) {
-				return 'basic-archives';
-			}
-
-			return 'basic-archives';
-		}
-
-		if ( is_singular() ) {
-			if ( is_page() ) {
-				return 'page|all';
-			} elseif ( is_attachment() ) {
-				return 'basic-archives';
-			} elseif ( is_single() ) {
-				return 'post|all';
-			}
-
-			return 'basic-singulars';
-		}
-
-		if ( is_feed() || is_trackback() || is_embed() || is_privacy_policy() ) {
-			return 'basic-archives';
-		}
-
-		return 'basic-archives';
-	}
-
-	/**
-	 * Check whether an include condition matches the current page type.
-	 *
-	 * @param string $condition_value Stored include condition.
-	 * @param string $page_type       Current request page type.
-	 * @return bool
-	 */
-	private function sitebuilder_condition_value_matches_request( $condition_value, $page_type ) {
-		$valid_archive_types = array(
-			'post|all|taxarchive|post_tag',
-			'post|all|taxarchive|category',
-			'post|all|archives',
-			'basic-archives',
-			'special-author',
-			'special-date',
-			'special-search',
-			'author',
-		);
-
-		$valid_singular_types = array(
-			'post',
-			'attachment',
-			'page',
-			'basic-singulars',
-			'page|all',
-			'post|all',
-			'author',
-		);
-
-		switch ( $condition_value ) {
-			case 'basic-global':
-				return true;
-
-			case 'page|all':
-				if ( 'special-front' === $page_type && is_home() ) {
-					return false;
-				}
-
-				return ! in_array(
-					$page_type,
-					array(
-						'basic-singular',
-						'basic-archive',
-						'special-author',
-						'post|all|taxarchive|category',
-						'post|all|taxarchive|post_tag',
-						'post|all',
-						'special-date',
-						'special-search',
-						'special-404',
-					),
-					true
-				);
-
-			case 'basic-archives':
-				return in_array( $page_type, $valid_archive_types, true );
-
-			case 'basic-singulars':
-				return in_array( $page_type, $valid_singular_types, true );
-
-			default:
-				return $condition_value === $page_type;
-		}
+		return $part_id ? array( $part_id ) : array();
 	}
 
 	/**
@@ -1002,8 +899,9 @@ class Solace_Extra_Public {
 				return 'singleproduct';
 			}
 
-			if ( ( function_exists( 'is_product_category' ) && is_product_category() ) ||
-				( function_exists( 'is_product_tag' ) && is_product_tag() ) ) {
+			if ( ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) ||
+				( function_exists( 'is_shop' ) && is_shop() ) ||
+				( is_search() && 'product' === get_query_var( 'post_type' ) ) ) {
 				return 'shopproduct';
 			}
 
@@ -1013,6 +911,21 @@ class Solace_Extra_Public {
 				wc_get_order( intval( $wp->query_vars['order-received'] ) ) ) {
 				return 'purchase-summary';
 			}
+
+			// Deliberately after order-received: that endpoint is is_checkout()
+			// too, and it belongs to Purchase Summary, never to the Checkout part.
+			if ( function_exists( 'is_cart' ) && is_cart() ) {
+				return 'cart';
+			}
+
+			if ( function_exists( 'is_checkout' ) && is_checkout() &&
+				! ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) ) {
+				return 'checkout';
+			}
+
+			if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+				return 'myaccount';
+			}
 		}
 
 		if ( is_404() ) {
@@ -1021,11 +934,6 @@ class Solace_Extra_Public {
 
 		if ( is_singular( 'post' ) ) {
 			return 'blogsinglepost';
-		}
-
-		$is_woo_shop = $has_woocommerce && function_exists( 'is_shop' ) && is_shop();
-		if ( $is_woo_shop ) {
-			return null;
 		}
 
 		$posts_page_id = absint( get_option( 'page_for_posts' ) );

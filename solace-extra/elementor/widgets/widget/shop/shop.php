@@ -1722,7 +1722,6 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				align-items: center;
 				line-height: inherit;
 				padding: 8px 16px;
-				fill: currentColor;
 			}
 
 			.solace-extra-pagination .page-numbers.current {
@@ -1817,22 +1816,29 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
             esc_attr($columns_mobile)
         );
 
-        if ( is_product_category() || is_product_tag() || is_tax('product_brand') ) {
+        // Archive context: restrict the widget to the current term. Covers every
+        // public product taxonomy (category, tag, brand, attributes, shipping
+        // class) — other taxonomies are applied via $context_tax_query below.
+        $context_tax_query = [];
+        if ( function_exists( 'is_product_taxonomy' ) && is_product_taxonomy() ) {
 
 			$queried_object = get_queried_object();
 
-			if ( $queried_object && isset( $queried_object->term_id ) ) {
+			if ( $queried_object && isset( $queried_object->term_id, $queried_object->taxonomy ) ) {
 
 				if ( $queried_object->taxonomy === 'product_cat' ) {
 					$include_categories = [ absint( $queried_object->term_id ) ];
-				}
-
-				if ( $queried_object->taxonomy === 'product_tag' ) {
+				} elseif ( $queried_object->taxonomy === 'product_tag' ) {
 					$include_tags = [ absint( $queried_object->term_id ) ];
-				}
-
-				if ( $queried_object->taxonomy === 'product_brand' ) {
+				} elseif ( $queried_object->taxonomy === 'product_brand' ) {
 					$include_brands = [ absint( $queried_object->term_id ) ];
+				} else {
+					$context_tax_query[] = [
+						'taxonomy' => $queried_object->taxonomy,
+						'field'    => 'term_id',
+						'terms'    => [ absint( $queried_object->term_id ) ],
+						'operator' => 'IN',
+					];
 				}
 			}
 		}
@@ -1881,7 +1887,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
             $args['author'] = intval($query_author);
         }
 
-        $tax_query = [];
+        $tax_query = $context_tax_query;
         if (!empty($include_categories)) {
             $tax_query[] = [
                 'taxonomy' => 'product_cat',
@@ -1934,6 +1940,70 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
                 'terms'    => $exclude_brands,
                 'operator' => 'NOT IN',
             ];
+        }
+
+        if (!empty($tax_query)) {
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query -- Widget filtering by taxonomy requires tax_query.
+            $args['tax_query'] = $tax_query;
+        }
+
+        // Apply active WooCommerce URL filters (price / rating / layered nav) so
+        // the Shop widget honours the same parameters as the main shop archive.
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- Frontend filters use public GET params.
+        $min_price = isset( $_GET['min_price'] ) ? floatval( wp_unslash( $_GET['min_price'] ) ) : null;
+        $max_price = isset( $_GET['max_price'] ) ? floatval( wp_unslash( $_GET['max_price'] ) ) : null;
+        if ( null !== $min_price || null !== $max_price ) {
+            $args['meta_query'][] = array(
+                'key'     => '_price',
+                'value'   => array( null !== $min_price ? $min_price : 0, null !== $max_price ? $max_price : PHP_INT_MAX ),
+                'type'    => 'NUMERIC',
+                'compare' => 'BETWEEN',
+            );
+        }
+
+        // Rating filter (?rating_filter=4,5) — mirrors WC_Query::get_tax_query().
+        if ( isset( $_GET['rating_filter'] ) && '' !== $_GET['rating_filter'] ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized via array_map( 'absint' ) below.
+            $rating_filter   = array_filter( array_map( 'absint', explode( ',', wp_unslash( $_GET['rating_filter'] ) ) ) );
+            $visibility_terms = function_exists( 'wc_get_product_visibility_term_ids' ) ? wc_get_product_visibility_term_ids() : array();
+            $rating_terms     = array();
+            for ( $i = 1; $i <= 5; $i++ ) {
+                if ( in_array( $i, $rating_filter, true ) && isset( $visibility_terms[ 'rated-' . $i ] ) ) {
+                    $rating_terms[] = $visibility_terms[ 'rated-' . $i ];
+                }
+            }
+            if ( ! empty( $rating_terms ) ) {
+                $tax_query[] = array(
+                    'taxonomy'      => 'product_visibility',
+                    'field'         => 'term_taxonomy_id',
+                    'terms'         => $rating_terms,
+                    'operator'      => 'IN',
+                    'rating_filter' => true,
+                );
+            }
+        }
+
+        // Layered navigation attributes (?filter_pa_<attr>=…) — mirrors
+        // WC_Query::layered_navigation_post_clauses().
+        if ( isset( WC()->query ) && method_exists( WC()->query, 'get_layered_nav_chosen_attributes' ) ) {
+            $chosen_attributes = WC()->query->get_layered_nav_chosen_attributes();
+            if ( ! empty( $chosen_attributes ) ) {
+                foreach ( $chosen_attributes as $taxonomy => $data ) {
+                    $tax_query[] = array(
+                        'taxonomy' => $taxonomy,
+                        'field'    => 'slug',
+                        'terms'    => isset( $data['terms'] ) ? $data['terms'] : array(),
+                        'operator' => isset( $data['query_type'] ) && 'and' === $data['query_type'] ? 'AND' : 'IN',
+                    );
+                }
+            }
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+        // Respect the WooCommerce product search (?s=…&post_type=product) so the
+        // widget only lists products matching the search keyword.
+        if ( is_search() && 'product' === get_query_var( 'post_type' ) && get_search_query() ) {
+            $args['s'] = get_search_query();
         }
 
         if (!empty($tax_query)) {

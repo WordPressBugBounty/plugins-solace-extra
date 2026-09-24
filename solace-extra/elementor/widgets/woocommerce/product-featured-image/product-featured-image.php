@@ -69,51 +69,6 @@ class Solace_Extra_Product_Featured_Image extends Widget_Base {
 		);
 
 		$this->add_control(
-			'featured_image_sizing',
-			[
-				'label'       => __( 'Image Sizing', 'solace-extra' ),
-				'type'        => Controls_Manager::SELECT,
-				'default'     => 'default',
-				'description' => __( 'Constrain the displayed image size. The Image Size above controls which source file is loaded.', 'solace-extra' ),
-				'options'     => [
-					'default' => __( 'Default (no constraint)', 'solace-extra' ),
-					'small'   => __( 'Small', 'solace-extra' ),
-					'medium'  => __( 'Medium', 'solace-extra' ),
-					'large'   => __( 'Large', 'solace-extra' ),
-					'custom'  => __( 'Custom', 'solace-extra' ),
-				],
-			]
-		);
-
-		$this->add_control(
-			'featured_image_custom_width',
-			[
-				'label'       => __( 'Custom Width (px)', 'solace-extra' ),
-				'type'        => Controls_Manager::NUMBER,
-				'default'     => 800,
-				'min'         => 1,
-				'max'         => 4000,
-				'condition'   => [
-					'featured_image_sizing' => 'custom',
-				],
-			]
-		);
-
-		$this->add_control(
-			'featured_image_custom_height',
-			[
-				'label'       => __( 'Custom Height (px)', 'solace-extra' ),
-				'type'        => Controls_Manager::NUMBER,
-				'default'     => 450,
-				'min'         => 1,
-				'max'         => 4000,
-				'condition'   => [
-					'featured_image_sizing' => 'custom',
-				],
-			]
-		);
-
-		$this->add_control(
 			'link_to',
 			[
 				'label'   => __( 'Link', 'solace-extra' ),
@@ -214,6 +169,86 @@ class Solace_Extra_Product_Featured_Image extends Widget_Base {
 				],
 				'selectors'  => [
 					'{{WRAPPER}} .solace-product-featured-image__main' => 'width: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'image_max_width',
+			[
+				'label'      => __( 'Max Width', 'solace-extra' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px', '%', 'em', 'rem', 'vw' ],
+				'range'      => [
+					'px' => [ 'min' => 0, 'max' => 2000 ],
+					'%'  => [ 'min' => 0, 'max' => 100 ],
+				],
+				'selectors'  => [
+					'{{WRAPPER}} .solace-product-featured-image__main' => 'max-width: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'image_height',
+			[
+				'label'      => __( 'Height', 'solace-extra' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px', 'em', 'rem', 'vh', 'vw' ],
+				'range'      => [
+					'px' => [ 'min' => 0, 'max' => 2000 ],
+				],
+				'selectors'  => [
+					'{{WRAPPER}} .solace-product-featured-image__main img' => 'height: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'image_object_fit',
+			[
+				'label'     => __( 'Object Fit', 'solace-extra' ),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => '',
+				'options'   => [
+					''          => __( 'Default', 'solace-extra' ),
+					'fill'      => __( 'Fill', 'solace-extra' ),
+					'cover'     => __( 'Cover', 'solace-extra' ),
+					'contain'   => __( 'Contain', 'solace-extra' ),
+					'scale-down' => __( 'Scale Down', 'solace-extra' ),
+				],
+				'condition' => [
+					'image_height[size]!' => '',
+				],
+				'selectors' => [
+					'{{WRAPPER}} .solace-product-featured-image__main img' => 'object-fit: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'image_object_position',
+			[
+				'label'     => __( 'Object Position', 'solace-extra' ),
+				'type'      => Controls_Manager::SELECT,
+				'default'   => 'center center',
+				'options'   => [
+					'center center' => __( 'Center Center', 'solace-extra' ),
+					'center left'   => __( 'Center Left', 'solace-extra' ),
+					'center right'  => __( 'Center Right', 'solace-extra' ),
+					'top center'    => __( 'Top Center', 'solace-extra' ),
+					'top left'      => __( 'Top Left', 'solace-extra' ),
+					'top right'     => __( 'Top Right', 'solace-extra' ),
+					'bottom center' => __( 'Bottom Center', 'solace-extra' ),
+					'bottom left'   => __( 'Bottom Left', 'solace-extra' ),
+					'bottom right'  => __( 'Bottom Right', 'solace-extra' ),
+				],
+				'condition' => [
+					'image_height[size]!' => '',
+					'image_object_fit'    => [ 'cover', 'contain', 'scale-down' ],
+				],
+				'selectors' => [
+					'{{WRAPPER}} .solace-product-featured-image__main img' => 'object-position: {{VALUE}};',
 				],
 			]
 		);
@@ -353,32 +388,6 @@ class Solace_Extra_Product_Featured_Image extends Widget_Base {
 		$image_id   = $product->get_image_id();
 		$image_size = ! empty( $settings['image_size'] ) ? $settings['image_size'] : 'full';
 
-		// Image Sizing constraints (Small / Medium / Large / Custom).
-		$sizing        = isset( $settings['featured_image_sizing'] ) ? $settings['featured_image_sizing'] : 'default';
-		$preset_widths = [
-			'small'  => 480,
-			'medium' => 768,
-			'large'  => 1200,
-		];
-		$sizing_style   = '';
-		$sizing_img_css = '';
-
-		if ( isset( $preset_widths[ $sizing ] ) ) {
-			$max_width      = $preset_widths[ $sizing ];
-			$sizing_style   = sprintf( 'max-width:%dpx;', $max_width );
-			$sizing_img_css = 'max-width:100%;height:auto;';
-		} elseif ( 'custom' === $sizing ) {
-			$width  = isset( $settings['featured_image_custom_width'] ) ? absint( $settings['featured_image_custom_width'] ) : 800;
-			$height = isset( $settings['featured_image_custom_height'] ) ? absint( $settings['featured_image_custom_height'] ) : 450;
-			$width  = max( 1, $width );
-			$height = max( 1, $height );
-
-			$sizing_style   = sprintf( 'max-width:%1$dpx;aspect-ratio:%1$d/%2$d;overflow:hidden;', $width, $height );
-			$sizing_img_css = 'width:100%;height:100%;object-fit:cover;';
-		}
-
-		$sizing_class = 'default' !== $sizing ? ' solace-featured-img--' . esc_attr( $sizing ) : '';
-
 		if ( $image_id ) {
 			$image_html = wp_get_attachment_image( $image_id, $image_size, false, [ 'class' => 'solace-product-featured-image__img' ] );
 		} elseif ( ! empty( $settings['fallback_image']['url'] ) ) {
@@ -405,8 +414,8 @@ class Solace_Extra_Product_Featured_Image extends Widget_Base {
 		$show_sale = ( 'yes' === $settings['sale_flash'] ) && $product->is_on_sale();
 
 		?>
-		<div class="solace-product-featured-image<?php echo esc_attr( $sizing_class ); ?>">
-			<div class="solace-product-featured-image__main" style="position: relative; display: inline-block;<?php echo esc_attr( $sizing_style ); ?>">
+		<div class="solace-product-featured-image">
+			<div class="solace-product-featured-image__main" style="position: relative; display: inline-block;">
 				<?php if ( $show_sale ) : ?>
 					<span class="onsale"><?php esc_html_e( 'Sale!', 'solace-extra' ); ?></span>
 				<?php endif; ?>
@@ -419,7 +428,7 @@ class Solace_Extra_Product_Featured_Image extends Widget_Base {
 			.solace-product-featured-image .solace-product-featured-image__main img {
 				display: block;
 				width: 100%;
-				<?php echo $sizing_img_css; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+				height: auto;
 			}
 			.solace-product-featured-image .onsale {
 				position: absolute;

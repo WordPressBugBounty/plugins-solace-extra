@@ -99,6 +99,18 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
         );
 
         $this->add_control(
+            'inherit_archive_query',
+            [
+                'label'       => esc_html__( 'Inherit Archive Query', 'solace-extra' ),
+                'type'        => \Elementor\Controls_Manager::SWITCHER,
+                'label_on'    => esc_html__( 'Yes', 'solace-extra' ),
+                'label_off'   => esc_html__( 'No', 'solace-extra' ),
+                'default'     => 'yes',
+                'description' => esc_html__( 'Follow the archive being viewed, so a category page lists that category, a search page lists the search results, and so on. Turn off to always list every post.', 'solace-extra' ),
+            ]
+        );
+
+        $this->add_control(
             'posts_per_page',
             [
                 'label'   => esc_html__( 'Posts Per Page', 'solace-extra' ),
@@ -1529,8 +1541,22 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
             layout-column-mobile-<?php echo esc_attr( $columns_mobile ); ?>">
             <div class="data-post">
                 <?php
-                // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Pagination from URL, value sanitized with intval().
-                $paged = isset($_GET['page_' . $this->get_id()]) ? intval($_GET['page_' . $this->get_id()]) : 1;
+                $is_edit_mode = \Elementor\Plugin::$instance->editor->is_edit_mode();
+
+                // Inherit the archive being viewed unless the user turned it off.
+                // Without this every category, tag, author, date and search URL
+                // rendered the exact same unfiltered list of posts.
+                $inherit = ( ! isset( $settings['inherit_archive_query'] ) || 'yes' === $settings['inherit_archive_query'] )
+                    && ! $is_edit_mode;
+
+                if ( $inherit ) {
+                    // Core pagination: /page/2/ on a pretty permalink, ?paged=2
+                    // on an archive, ?page=2 on a static front page.
+                    $paged = max( 1, (int) get_query_var( 'paged' ), (int) get_query_var( 'page' ) );
+                } else {
+                    // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Pagination from URL, value sanitized with intval().
+                    $paged = isset($_GET[ $paged_key ]) ? max( 1, intval($_GET[ $paged_key ]) ) : 1;
+                }
 
                 $query_args = [
                     'post_type' => 'post',
@@ -1538,7 +1564,37 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                     'paged' => $paged,
                 ];
 
-                if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) {
+                if ( $inherit ) {
+                    if ( is_category() ) {
+                        $query_args['cat'] = get_queried_object_id();
+                    } elseif ( is_tag() ) {
+                        $query_args['tag_id'] = get_queried_object_id();
+                    } elseif ( is_author() ) {
+                        $query_args['author'] = get_queried_object_id();
+                    } elseif ( is_search() ) {
+                        $query_args['s'] = get_search_query();
+                    } elseif ( is_date() ) {
+                        foreach ( [ 'year', 'monthnum', 'day' ] as $date_part ) {
+                            $date_value = (int) get_query_var( $date_part );
+                            if ( $date_value ) {
+                                $query_args[ $date_part ] = $date_value;
+                            }
+                        }
+                    } elseif ( is_tax() ) {
+                        $queried = get_queried_object();
+                        if ( $queried instanceof WP_Term ) {
+                            $query_args['tax_query'] = [
+                                [
+                                    'taxonomy' => $queried->taxonomy,
+                                    'field'    => 'term_id',
+                                    'terms'    => $queried->term_id,
+                                ],
+                            ];
+                        }
+                    }
+                }
+
+                if ( $is_edit_mode ) {
                     $template_id = get_the_ID(); 
 
 
@@ -1645,7 +1701,7 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                             $has_prev_next = in_array( $pagination_type, [ 'prev_next', 'numbers_and_prev_next' ], true );
                             $has_numbers   = in_array( $pagination_type, [ 'numbers', 'numbers_and_prev_next' ], true );
 
-                            // Definisikan prev/next text SEBELUM paginate_links
+                            // Define the prev/next text BEFORE paginate_links
                             if ( $has_prev_next ) {
                                 $prev_text = wp_kses_post( $prev_label );
                                 $next_text = wp_kses_post( $next_label );
@@ -1663,10 +1719,9 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                                 $start_page = max( 1, $end_page - $page_limit + 1 );
                             }
 
-                            $all_links = paginate_links( [
+                            $paginate_args = [
                                 'total'     => $custom_query->max_num_pages,
                                 'current'   => $paged,
-                                'format'    => '?' . $paged_key . '=%#%',
                                 'prev_text' => $has_prev_next ? $prev_text : false,
                                 'next_text' => $has_prev_next ? $next_text : false,
                                 'prev_next' => $has_prev_next,
@@ -1674,7 +1729,17 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                                 'mid_size'  => 0,
                                 'show_all'  => true,
                                 'type'      => 'array',
-                            ] );
+                            ];
+
+                            if ( ! $inherit ) {
+                                // Standalone mode keeps the widget-scoped query arg so
+                                // several archive widgets can paginate independently.
+                                $paginate_args['format'] = '?' . $paged_key . '=%#%';
+                            }
+                            // When inheriting, paginate_links() defaults produce the
+                            // canonical /page/2/ links the archive already responds to.
+
+                            $all_links = paginate_links( $paginate_args );
 
                             if ( ! empty( $all_links ) ) :
                                 ?>
@@ -1698,14 +1763,22 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                                             continue;
                                         }
 
-                                        preg_match( '/[?&]' . preg_quote( $paged_key, '/' ) . '=(\d+)/', $link, $matches );
+                                        // The page number has to be read back out of the
+                                        // markup to apply the page-limit window. Inherited
+                                        // links are /page/2/ or ?paged=2; standalone links
+                                        // carry the widget-scoped query arg.
+                                        $link_page = 0;
 
-                                        if ( ! empty( $matches[1] ) ) {
+                                        if ( preg_match( '/[?&]' . preg_quote( $paged_key, '/' ) . '=(\d+)/', $link, $matches ) ) {
                                             $link_page = (int) $matches[1];
-                                        } elseif ( strpos( $link, 'current' ) !== false ) {
-                                            $link_page = $paged;
-                                        } else {
-                                            $link_page = 1;
+                                        } elseif ( preg_match( '#/page/(\d+)#', $link, $matches ) ) {
+                                            $link_page = (int) $matches[1];
+                                        } elseif ( preg_match( '/[?&]paged?=(\d+)/', $link, $matches ) ) {
+                                            $link_page = (int) $matches[1];
+                                        }
+
+                                        if ( ! $link_page ) {
+                                            $link_page = ( strpos( $link, 'current' ) !== false ) ? $paged : 1;
                                         }
 
                                         if ( $link_page >= $start_page && $link_page <= $end_page ) {

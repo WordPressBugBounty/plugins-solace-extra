@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Elementor Post Categories Widget.
  *
- * Widget Elementor yang menampilkan daftar kategori yang terkait dengan pos atau halaman.
+ * Elementor widget that displays the list of categories related to a post or page.
  *
  * @since 1.0.0
  */

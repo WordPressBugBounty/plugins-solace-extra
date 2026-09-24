@@ -47,9 +47,11 @@
         var part = $(this).data('part').toString();
         var status = $(this).is(':checked') ? 1 : 0;
 
-        if (part !== 'header' && part !== 'footer') {
+                // singleproduct / shopproduct templates each have their own conditions,
+        // so multiple may stay active at once — don't uncheck siblings.
+        if (part !== 'header' && part !== 'footer' && part !== 'singleproduct' && part !== 'shopproduct') {
             
-            const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct'];
+            const parts = ['singleproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'shopproduct', 'cart', 'checkout', 'myaccount'];
 
             parts.forEach(p => {
                 if (p === part) {
@@ -166,7 +168,395 @@
         });
     });
 
-    function generateOptionsHtml(selectedValue) {
+    /**
+     * Condition options for the Shop Product Archive part, mirroring the
+     * Elementor Theme Builder "Products Archive" conditions.
+     *
+     * @param {string} selectedValue Currently saved condition value.
+     * @return {string} <optgroup>/<option> HTML.
+     */
+    function generateProductArchiveOptionsHtml(selectedValue) {
+        // Normalize a saved value like `product|brand|37` down to its type so
+        // the type select marks the right option; the actual term is handled
+        // by the separate term dropdown (see buildProductArchiveTermSelect).
+        var type = selectedValue || '';
+        if (type.indexOf('product|brand|') === 0) {
+            type = 'product|brand';
+        } else if (type.indexOf('product|cat|') === 0) {
+            type = 'product|cat';
+        } else if (type.indexOf('product|tag|') === 0) {
+            type = 'product|tag';
+        }
+
+        var html = '';
+        html += '<optgroup label="' + (typeof solaceConditions !== 'undefined' && solaceConditions.shopArchive ? solaceConditions.shopArchive : 'Product Archive') + '">';
+        html += '<option value="product|shop" ' + (type === 'product|shop' ? 'selected' : '') + '>Shop Page</option>';
+        html += '<option value="product|all|archive" ' + (type === 'product|all|archive' ? 'selected' : '') + '>All Product Archive</option>';
+        html += '<option value="product|search" ' + (type === 'product|search' ? 'selected' : '') + '>Search Results</option>';
+        html += '<option value="product|brand" ' + (type === 'product|brand' ? 'selected' : '') + '>Product Brand</option>';
+        html += '<option value="product|cat" ' + (type === 'product|cat' ? 'selected' : '') + '>Product Category</option>';
+        html += '<option value="product|tag" ' + (type === 'product|tag' ? 'selected' : '') + '>Product Tag</option>';
+        html += '</optgroup>';
+        return html;
+    }
+
+    /**
+     * Condition options for the Shop Single Product part, mirroring the
+     * Elementor Theme Builder "Product Single" conditions.
+     *
+     * @param {string} selectedValue Currently saved condition value.
+     * @return {string} <option> HTML.
+     */
+    function generateSingleProductOptionsHtml(selectedValue) {
+        var type = selectedValue || '';
+        var prefixes = ['product|product|', 'product|brandchild|', 'product|catchild|', 'product|brand|', 'product|cat|', 'product|tag|', 'product|author|'];
+        for (var i = 0; i < prefixes.length; i++) {
+            if (type.indexOf(prefixes[i]) === 0) {
+                type = prefixes[i].slice(0, -1);
+                break;
+            }
+        }
+
+        var html = '';
+        html += '<option value="product|all" ' + (type === 'product|all' ? 'selected' : '') + '>All Products</option>';
+        html += '<option value="product|brand" ' + (type === 'product|brand' ? 'selected' : '') + '>In Brand</option>';
+        html += '<option value="product|brandchild" ' + (type === 'product|brandchild' ? 'selected' : '') + '>In Child Product Brand</option>';
+        html += '<option value="product|cat" ' + (type === 'product|cat' ? 'selected' : '') + '>In Category</option>';
+        html += '<option value="product|catchild" ' + (type === 'product|catchild' ? 'selected' : '') + '>In Child Product Category</option>';
+        html += '<option value="product|tag" ' + (type === 'product|tag' ? 'selected' : '') + '>In Tag</option>';
+        html += '<option value="product|author" ' + (type === 'product|author' ? 'selected' : '') + '>Product by Author</option>';
+        return html;
+    }
+
+    /**
+     * Whether a condition type value requires a term or product picker.
+     *
+     * @param {string} typeVal Condition type select value.
+     * @return {string|null} The type value when it needs a picker, else null.
+     */
+    function getProductArchiveTermType(typeVal) {
+        if (typeVal === 'product|brand' || typeVal === 'product|brandchild' || typeVal === 'product|cat' || typeVal === 'product|catchild' || typeVal === 'product|tag' || typeVal === 'product|author' || typeVal === 'product|product') {
+            return typeVal;
+        }
+        return null;
+    }
+
+    /**
+     * Term list for a condition type (id => name map from PHP localize).
+     *
+     * @param {string} typeVal Condition type select value.
+     * @return {object} id => name map, possibly empty.
+     */
+    function getProductArchiveTermListForType(typeVal) {
+        var map = {
+            'product|brand': 'product_brands',
+            'product|brandchild': 'product_brands',
+            'product|cat': 'product_categories',
+            'product|catchild': 'product_categories',
+            'product|tag': 'product_tags',
+            'product|author': 'product_authors',
+            'product|product': 'product_products'
+        };
+        var key = map[typeVal];
+        return key && typeof solaceSitebuilderParams !== 'undefined' && solaceSitebuilderParams[key]
+            ? solaceSitebuilderParams[key]
+            : {};
+    }
+
+    /**
+     * "All" option label for a term type on the Shop Product Archive part.
+     *
+     * A bare brand/category/tag type matches every archive of that kind, so the
+     * term dropdown's first option is "All <Type>" instead of "— Select —".
+     *
+     * @param {string} termType Condition type (product|brand, product|cat, product|tag).
+     * @return {string} Empty when the type has no ALL option.
+     */
+    function productArchiveAllLabel(termType) {
+        if (termType === 'product|brand') {
+            return 'All Brands';
+        }
+        if (termType === 'product|brandchild') {
+            return 'All Child Brands';
+        }
+        if (termType === 'product|cat') {
+            return 'All Categories';
+        }
+        if (termType === 'product|catchild') {
+            return 'All Child Categories';
+        }
+        if (termType === 'product|tag') {
+            return 'All Tags';
+        }
+        return '';
+    }
+
+    /**
+     * Build the searchable term dropdown for the Shop Product Archive condition
+     * row. Hidden until a term-type condition is selected.
+     *
+     * @param {string} savedValue Saved condition value (e.g. product|brand|37).
+     * @param {string} part       Current part (shopproduct / singleproduct).
+     * @return {string} <select> HTML.
+     */
+    function buildProductArchiveTermSelect(savedValue, part) {
+        var type = '';
+        var termId = '';
+        ['product|brand|', 'product|brandchild|', 'product|cat|', 'product|catchild|', 'product|tag|', 'product|author|', 'product|product|'].forEach(function (prefix) {
+            if ((savedValue || '').indexOf(prefix) === 0) {
+                type = prefix.slice(0, -1);
+                termId = savedValue.slice(prefix.length);
+            }
+        });
+        // A bare term type (e.g. "product|cat") = "ALL" archives of that kind.
+        if (!type && ['product|brand', 'product|brandchild', 'product|cat', 'product|catchild', 'product|tag', 'product|author', 'product|product'].indexOf(savedValue || '') !== -1) {
+            type = savedValue;
+        }
+
+        var allLabel = (part === 'shopproduct' || part === 'singleproduct') ? productArchiveAllLabel(type) : '';
+        var list = getProductArchiveTermListForType(type);
+        var html = '<select name="condition_term" class="condition-select condition-term-select" style="display:none;" data-condition-type="' + type + '">';
+        // The ALL option uses a non-empty value: an empty value would be
+        // treated by Select2 as its placeholder and hidden from the open
+        // dropdown, so the user could never switch back to "All <Type>".
+        if (allLabel) {
+            html += '<option value="all"' + (termId === '' || termId === 'all' ? ' selected' : '') + '>' + allLabel + '</option>';
+        } else {
+            html += '<option value="">' + (typeof solaceConditions !== 'undefined' && solaceConditions.selectTerm ? solaceConditions.selectTerm : '— Select —') + '</option>';
+        }
+        Object.keys(list).forEach(function (id) {
+            html += '<option value="' + id + '"' + (termId === id ? ' selected' : '') + '>' + list[id] + '</option>';
+        });
+        html += '</select>';
+        return html;
+    }
+
+    /**
+     * Recompute the composed condition value into the row's hidden input.
+     *
+     * @param {jQuery} $item The .condition-item row.
+     */
+    function updateConditionValue($item) {
+        var type = $item.find('.condition-select').first().val();
+        var termType = getProductArchiveTermType(type);
+        var value = type;
+        if (termType) {
+            var termId = $item.find('.condition-term-select').val();
+            // "all" (the ALL option) composes back to the bare type, which the
+            // matcher treats as "every archive of this kind".
+            value = (termId && termId !== 'all') ? type + '|' + termId : type;
+        }
+        $item.find('.condition-value').val(value);
+    }
+
+    /**
+     * Read the composed condition value of a row.
+     *
+     * Shop Product Archive rows keep the composed value in a hidden
+     * `.condition-value` input; every other part reads the value select
+     * directly.
+     *
+     * @param {jQuery} $item The .condition-item row.
+     * @return {string} Condition value.
+     */
+    function solaceGetConditionRowValue($item) {
+        var $value = $item.find('.condition-value');
+        if ($value.length) {
+            return $value.val();
+        }
+        return $item.find('.condition-select').val();
+    }
+
+    /**
+     * Validate a composed condition value before saving.
+     *
+     * On the Shop Product Archive part a bare brand/category/tag type means
+     * "ALL" (matches every brand/category/tag archive), so it is savable. On
+     * every other part a bare term type would never match on the frontend, so
+     * it stays blocked.
+     *
+     * @param {string} value Condition value.
+     * @return {boolean} True when the value is savable.
+     */
+    function solaceValidateConditionValue(value) {
+        var part = getParameterByName('part');
+        if (part === 'shopproduct') {
+            if (value === 'product|brand' || value === 'product|cat' || value === 'product|tag') {
+                return true;
+            }
+        }
+        // Shop Single Product: a bare brand/brandchild/category/child-category/tag
+        // type = "ALL" (any brand/child brand/category/child-category/tag).
+        if (part === 'singleproduct') {
+            if (value === 'product|brand' || value === 'product|brandchild' || value === 'product|cat' || value === 'product|catchild' || value === 'product|tag') {
+                return true;
+            }
+        }
+        return value !== 'product|brand' && value !== 'product|brandchild' && value !== 'product|cat' && value !== 'product|catchild' && value !== 'product|tag' && value !== 'product|author' && value !== 'product|product';
+    }
+
+    /**
+     * Build a condition row for the conditions popup.
+     *
+     * @param {object} condition Saved condition {type, value}.
+     * @param {number} index     Row index (for name attributes).
+     * @return {jQuery} The row element.
+     */
+    function solaceBuildConditionItem(condition, index) {
+        var assetsUrl = solaceSitebuilderParams.assetsUrl;
+        var hideClass = index === 0 ? ' hide' : '';
+        var part = getParameterByName('part');
+        var value = condition && condition.value ? condition.value : '';
+        var type = condition && condition.type ? condition.type : 'include';
+
+        var $item = $(
+            '<div class="condition-item">' +
+                '<span class="icon-container"><img src="' + assetsUrl + 'images/plus-include.svg" /></span>' +
+                '<select name="condition_' + (index + 1) + '_exclude_include" class="condition-exclude-include-select">' +
+                    '<option value="include"' + (type === 'include' ? ' selected' : '') + '>Include</option>' +
+                    '<option value="exclude"' + (type === 'exclude' ? ' selected' : '') + '>Exclude</option>' +
+                '</select>' +
+                '<select name="condition_' + (index + 1) + '_value" class="condition-select">' +
+                    generateOptionsHtml(value, part) +
+                '</select>' +
+                (part === 'shopproduct' || part === 'singleproduct' ? buildProductArchiveTermSelect(value, part) : '') +
+                // Only the product-archive parts get this hidden input, because only
+                // they have something keeping it in sync: their value is composed from
+                // two selects and initProductArchiveConditionRow rewrites it on every
+                // change. Nothing maintained it for the other parts, so it kept the
+                // value the row was built with while the visible select moved on --
+                // and solaceGetConditionRowValue prefers the input, so editing a
+                // header or footer condition saved the value the user had replaced.
+                (part === 'shopproduct' || part === 'singleproduct'
+                    ? '<input type="hidden" class="condition-value" value="' + $('<div>').text(value).html() + '" />'
+                    : '') +
+                '<a href="#" class="delete-condition dashicons dashicons-trash' + hideClass + '" title="Delete Condition"></a>' +
+            '</div>'
+        );
+
+        if (part === 'shopproduct' || part === 'singleproduct') {
+            initProductArchiveConditionRow($item);
+        }
+
+        return $item;
+    }
+
+    /**
+     * Wire the type -> term dropdown behaviour for one Shop Product Archive row
+     * and initialise its searchable term select.
+     *
+     * @param {jQuery} $item The .condition-item row.
+     */
+    function initProductArchiveConditionRow($item) {
+        var $type = $item.find('.condition-select').first();
+        var $term = $item.find('.condition-term-select');
+        var $value = $item.find('.condition-value');
+
+        var refreshTermOptions = function () {
+            var termType = getProductArchiveTermType($type.val());
+            if (termType) {
+                var part = getParameterByName('part');
+                var allLabel = (part === 'shopproduct' || part === 'singleproduct') ? productArchiveAllLabel(termType) : '';
+                var placeholder = allLabel || '— Select —';
+                var list = getProductArchiveTermListForType(termType);
+                // Shop Product Archive: the first option is "All <Type>" and is
+                // selected by default, so choosing just the type matches every
+                // brand/category/tag archive. Non-empty value so Select2 lists
+                // it in the open dropdown (an empty value becomes its hidden
+                // placeholder).
+                var opts = allLabel
+                    ? '<option value="all" selected>' + allLabel + '</option>'
+                    : '<option value="">— Select —</option>';
+                Object.keys(list).forEach(function (id) {
+                    opts += '<option value="' + id + '">' + list[id] + '</option>';
+                });
+                $term.html(opts);
+                if (typeof $term.select2 === 'function' && $term.data('select2')) {
+                    $term.select2('destroy');
+                }
+                if (typeof $term.select2 === 'function') {
+                    $term.select2({ placeholder: placeholder, minimumResultsForSearch: 1, dropdownParent: $term.parent() });
+                }
+                $term.show();
+            } else {
+                if (typeof $term.select2 === 'function' && $term.data('select2')) {
+                    $term.select2('destroy');
+                }
+                $term.hide().val('');
+            }
+            updateConditionValue($item);
+        };
+
+        $type.on('change', refreshTermOptions);
+        $term.on('change', function () { updateConditionValue($item); });
+
+        // Show the term dropdown immediately when an existing saved value is a term type.
+        if (getProductArchiveTermType($type.val())) {
+            $term.show();
+            if (typeof $term.select2 === 'function') {
+                var termType = getProductArchiveTermType($type.val());
+                var part = getParameterByName('part');
+                var placeholder = ((part === 'shopproduct' || part === 'singleproduct') ? productArchiveAllLabel(termType) : '') || '— Select —';
+                $term.select2({ placeholder: placeholder, minimumResultsForSearch: 1, dropdownParent: $term.parent() });
+            }
+        }
+
+        updateConditionValue($item);
+    }
+
+    /**
+     * Initialise every term-dropdown condition row after the popup content is
+     * inserted into the DOM (Shop Product Archive and Shop Single Product).
+     */
+    function initProductArchiveConditionRows() {
+        var part = getParameterByName('part');
+        if (part !== 'shopproduct' && part !== 'singleproduct') {
+            return;
+        }
+        $('#edit-conditions-container .condition-item').each(function () {
+            initProductArchiveConditionRow($(this));
+        });
+    }
+
+    /**
+     * Convert the Include/Exclude and condition-type selects of a row to
+     * Select2 so every dropdown in the condition form shares the same styling
+     * (pill box, caret, and dropdown panel) as the searchable term dropdown.
+     *
+     * @param {jQuery} $item The .condition-item row.
+     */
+    function initConditionSelect2s($item) {
+        if (typeof window.jQuery === 'undefined' || typeof window.jQuery.fn.select2 !== 'function') {
+            return;
+        }
+
+        var $exclude = $item.find('.condition-exclude-include-select');
+        var $type = $item.find('.condition-select').first();
+
+        [$exclude, $type].forEach(function ($sel) {
+            if (!$sel.length || $sel.data('select2')) {
+                return;
+            }
+            $sel.select2({
+                dropdownParent: $item,
+                minimumResultsForSearch: Infinity
+            });
+        });
+    }
+
+    function generateOptionsHtml(selectedValue, part) {
+        if (typeof part === 'undefined' || part === null || part === '') {
+            part = getParameterByName('part');
+        }
+
+        if (part === 'shopproduct') {
+            return generateProductArchiveOptionsHtml(selectedValue || '');
+        }
+
+        if (part === 'singleproduct') {
+            return generateSingleProductOptionsHtml(selectedValue || '');
+        }
+
         // Debugging: Check if solaceSitebuilderParams is defined
         console.log('solaceSitebuilderParams:', solaceSitebuilderParams);
 
@@ -203,6 +593,7 @@
             console.log('Adding WooCommerce options...');
                 options += `
                     <optgroup label="Products">
+                        <option value="special-shop" ${selectedValue === 'special-shop' ? 'selected' : ''}>Shop Page</option>
                         <option value="product|all" ${selectedValue === 'product|all' ? 'selected' : ''}>All Products</option>
                         <option value="product|all|taxarchive|product_cat" ${selectedValue === 'product|all|taxarchive|product_cat' ? 'selected' : ''}>All Product Categories Archive</option>
                         <option value="product|all|taxarchive|product_tag" ${selectedValue === 'product|all|taxarchive|product_tag' ? 'selected' : ''}>All Product Tags Archive</option>
@@ -217,7 +608,7 @@
         }
     }
 
-    function generateConditionPopup(postId, conditionsData) {
+                function generateConditionPopup(postId, conditionsData) {
 
         var conditionsContainer = $('<div class="conditions-container rico1" data-post-id="' + postId + '" ></div>');
         var assetsUrl = solaceSitebuilderParams.assetsUrl;
@@ -230,28 +621,14 @@
         }
 
         conditionsData.forEach(function(condition, index) {
-            var hideClass = index === 0 ? ' hide' : '';  
-
-            var conditionItem = `
-                <div class="condition-item">
-                    <span class="icon-container">
-                        <img src="${assetsUrl}images/plus-include.svg" />
-                    </span>
-                    <select name="condition_${index + 1}_exclude_include" class="condition-exclude-include-select">
-                        <option value="include" ${condition.type === 'include' ? 'selected' : ''}>Include</option>
-                        <option value="exclude" ${condition.type === 'exclude' ? 'selected' : ''}>Exclude</option>
-                    </select>
-                    <select name="condition_${index + 1}_value" class="condition-select">
-                        ${generateOptionsHtml(condition.value)}
-                    </select>
-                    <a href="#" class="delete-condition dashicons dashicons-trash${hideClass}" title="Delete Condition"></a>
-
-                </div>`;
-            
-            conditionsContainer.append(conditionItem);
+            conditionsContainer.append(solaceBuildConditionItem(condition, index));
         });
 
         $('#edit-conditions-container').append(conditionsContainer);
+        $('#edit-conditions-container .condition-item').each(function () {
+            initConditionSelect2s($(this));
+        });
+        initProductArchiveConditionRows();
     }
 
     $('.condition-part-select').change(function() {
@@ -319,7 +696,7 @@
 
         const part = String($(this).data('part')).trim();
         // Allowed page types for creation
-        const allowedTypes = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404'];
+        const allowedTypes = ['header', 'footer', 'singleproduct', 'shopproduct', 'purchase-summary', 'blogsinglepost', 'blogarchive', '404', 'cart', 'checkout', 'myaccount'];
 
         // Validate if the provided type is allowed
         if ( ! allowedTypes.includes(part) ) {
@@ -372,6 +749,10 @@
                         editUrl += '&solace-extra-single-post=1';
                     } else if (part === 'blogarchive') {
                         editUrl += '&solace-extra-archive=1';
+                    } else if (part === 'cart' || part === 'checkout' || part === 'myaccount') {
+                        // Their widgets live in solace-extra-woocommerce; the
+                        // cart and checkout categories are registered but empty.
+                        editUrl += '&solace-extra-woocommerce=1';
                     }
 
                     // Append part parameter if not empty
@@ -416,7 +797,9 @@
             .attr('data-part', part)
             .attr('data-popup-type', 'add-new');
 
-        $('#add-new-popup .new-conditions-container').html(`
+        // The markup is id="new-conditions-container"; targeting it as a class
+        // matched nothing, so the popup kept whatever rows were left from last time.
+        $('#add-new-popup #new-conditions-container').html(`
             <div class="condition-item">
                 <select name="condition_1_exclude_include" class="condition-exclude-include-select">
                     <option value="include">${solaceConditions.includeLabel}</option>
@@ -428,6 +811,11 @@
                 <a href="#" class="delete-condition dashicons dashicons-trash" title="Delete Condition"></a>
             </div>
         `);
+
+        // Apply Select2 to the default row so the Add New popup dropdowns
+        // match the Edit Conditions popup styling on every part (header,
+        // footer, shop product archive, shop single product).
+        initConditionSelect2s($('#add-new-popup #new-conditions-container .condition-item'));
 
         $('#add-new-popup, #add-new-overlay').fadeIn(400);
     }
@@ -446,7 +834,7 @@
 
         $('#add-404-popup').attr('data-part', part); 
         $('#add-404-popup').attr('data-popup-type', 'add-new');
-        // $('#add-new-popup .new-conditions-container').html(`
+        // $('#add-new-popup #new-conditions-container').html(`
         //     <div class="condition-item">
         //         <select name="condition_1_exclude_include" class="condition-exclude-include-select">
         //             <option value="include">${solaceConditions.includeLabel}</option>
@@ -533,25 +921,36 @@
         var postId = 0;
         var part = $('#add-new-popup').data('part');
     
-        var hasDuplicate = false; 
-    
+                var hasDuplicate = false;
+        var hasInvalidTerm = false;
+
         $container.find('.condition-item').each(function(index, item) {
             var $item = $(item);
             var conditionType = $item.find('.condition-exclude-include-select').val();
-            var conditionValue = $item.find('.condition-select').val();
-    
+            var conditionValue = solaceGetConditionRowValue($item);
+
+            if (!solaceValidateConditionValue(conditionValue)) {
+                hasInvalidTerm = true;
+                return false;
+            }
+
             if (selectedValues.has(conditionValue)) {
                 hasDuplicate = true;
-                return false; 
+                return false;
             }
-    
-            selectedValues.add(conditionValue); 
+
+            selectedValues.add(conditionValue);
             conditions.push({
                 type: conditionType,
                 value: conditionValue
             });
         });
-    
+
+        if (hasInvalidTerm) {
+            alert('Please choose a brand, category, or tag for the condition.');
+            return;
+        }
+
         if (hasDuplicate) {
             alert('Condition on same instance, please select other conditions');
             return;
@@ -584,7 +983,7 @@
                 if (response.success) {
                     postId = response.data.post_id; 
                     console.log('postID sukses:' + postId);
-                    saveEditConditions(postId, part, conditions);
+                    redirectToPartEditor(postId, part);
                 } else {
                     alert('Failed to save conditions: ' + (response.data || 'Unknown error.'));
                 }
@@ -598,32 +997,22 @@
     
     });
     
-    function saveEditConditions(postId, part, conditions) {
-        $.ajax({
-            url: solaceSitebuilderParams.ajaxurl,
-            method: 'POST',
-            data: {
-                action: 'save_edit_conditions',
-                post_id: postId,
-                conditions: conditions,
-                post_type: 'solace-sitebuilder',
-                nonce: solaceSitebuilderParams.nonce, 
-            },
-            success: function(response) {
-                console.log('AJAX response saveEditConditions:', response);
+    /**
+     * Send the user into Elementor for a freshly created part.
+     *
+     * This used to be reached through a second AJAX call to save_edit_conditions,
+     * which rewrote the conditions save_conditions had already written one call
+     * earlier. Only the redirect was ever needed.
+     *
+     * @param {number} postId
+     * @param {string} part
+     */
+    function redirectToPartEditor(postId, part) {
+        var editUrl = solaceSitebuilderParams.edit_url
+            .replace('{post_id}', postId)
+            .concat('&post_type=solace-sitebuilder&action=elementor&solace-extra=1&part=' + part);
 
-                if (response.success) {
-                    var editUrl = solaceSitebuilderParams.edit_url.replace('{post_id}', postId).concat('&post_type=solace-sitebuilder&action=elementor&solace-extra=1&part=' + part);
-                    window.location.href = editUrl;
-                } else {
-
-                    alert('Failed to save conditions. Please try again.');
-                }
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                alert('An error occurred while saving. Please try again.');
-            }
-        });
+        window.location.href = editUrl;
     }
 
     $('#save-conditions').on('click', function(e) {
@@ -640,25 +1029,36 @@
         var postId = $('.conditions-container').data('post-id');
         var part = $('.addnew').data('part');
         
-        var hasDuplicate = false; 
+                var hasDuplicate = false;
+        var hasInvalidTerm = false;
 
         $container.find('.condition-item').each(function(index, item) {
             var $item = $(item);
             var conditionType = $item.find('.condition-exclude-include-select').val();
-            var conditionValue = $item.find('.condition-select').val();
-    
+            var conditionValue = solaceGetConditionRowValue($item);
+
+            if (!solaceValidateConditionValue(conditionValue)) {
+                hasInvalidTerm = true;
+                return false;
+            }
+
             if (selectedValues.has(conditionValue)) {
                 hasDuplicate = true;
-                return false; 
+                return false;
             }
-    
-            selectedValues.add(conditionValue); 
+
+            selectedValues.add(conditionValue);
             conditions.push({
                 type: conditionType,
                 value: conditionValue
             });
         });
-    
+
+        if (hasInvalidTerm) {
+            alert('Please choose a brand, category, or tag for the condition.');
+            return;
+        }
+
         if (hasDuplicate) {
             alert('Condition on same instance, please select other conditions');
             return;
@@ -717,25 +1117,36 @@
         var part = $('.condition-part-select').val();
         var postId = 0;
     
-        var hasDuplicate = false; 
-    
+                var hasDuplicate = false;
+        var hasInvalidTerm = false;
+
         $container.find('.condition-item').each(function(index, item) {
             var $item = $(item);
             var conditionType = $item.find('.condition-exclude-include-select').val();
-            var conditionValue = $item.find('.condition-select').val();
-    
+            var conditionValue = solaceGetConditionRowValue($item);
+
+            if (!solaceValidateConditionValue(conditionValue)) {
+                hasInvalidTerm = true;
+                return false;
+            }
+
             if (selectedValues.has(conditionValue)) {
                 hasDuplicate = true;
-                return false; 
+                return false;
             }
-    
-            selectedValues.add(conditionValue); 
+
+            selectedValues.add(conditionValue);
             conditions.push({
                 type: conditionType,
                 value: conditionValue
             });
         });
-    
+
+        if (hasInvalidTerm) {
+            alert('Please choose a brand, category, or tag for the condition.');
+            return;
+        }
+
         if (hasDuplicate) {
             alert('Condition on same instance, please select other conditions');
             return;
@@ -768,7 +1179,7 @@
                 if (response.success) {
                     postId = response.data.post_id; 
                     console.log('postID sukses:' + postId);
-                    saveEditConditions(postId, part, conditions);
+                    redirectToPartEditor(postId, part);
                 } else {
                     alert('Failed to save conditions: ' + (response.data || 'Unknown error.'));
                 }
@@ -782,28 +1193,20 @@
 
     });
     
-    $('#add-condition').on('click', function() {
+        $('#add-condition').on('click', function() {
         var conditionsContainer = $('.conditions-container:visible');
+        if (conditionsContainer.length === 0) {
+            return;
+        }
         var conditionCount = conditionsContainer.find('.condition-item').length + 1;
-        var assetsUrl = solaceSitebuilderParams.assetsUrl;
-
-        var conditionItem = $(`
-            <div class="condition-item">
-                <span class="icon-container">
-                    <img src="${assetsUrl}images/plus-include.svg" />
-                </span>
-                <select name="condition_${conditionCount}_exclude_include" class="condition-exclude-include-select">
-                    <option value="include">${solaceConditions.includeLabel}</option>
-                    <option value="exclude">${solaceConditions.excludeLabel}</option>
-                </select>
-                <select name="condition_${conditionCount}_value" class="condition-select">
-                    ${generateOptionsHtml()}
-                </select>
-                <a href="#" class="delete-condition dashicons dashicons-trash" title="Delete Condition"></a>
-            </div>
-        `);
+        var part = getParameterByName('part');
+        var conditionItem = solaceBuildConditionItem({ type: 'include', value: '' }, conditionCount);
         conditionsContainer.append(conditionItem);
-        
+        initConditionSelect2s(conditionItem);
+
+        if (part === 'shopproduct' || part === 'singleproduct') {
+            initProductArchiveConditionRow(conditionItem);
+        }
     });
 
     $('#addnew-add-condition').on('click', function() {
@@ -827,7 +1230,7 @@
             </div>
         `);
         conditionsContainer.append(conditionItem);
-        
+        initConditionSelect2s(conditionItem);
     });
 
     $('#partnew-add-condition').on('click', function() {
@@ -851,7 +1254,7 @@
             </div>
         `);
         conditionsContainer.append(conditionItem);
-        
+        initConditionSelect2s(conditionItem);
     });
 
     $('#edit-conditions-popup').on('click', '.delete-condition', function(e) {
@@ -937,15 +1340,35 @@
         const currentTitle = $titleColumn.text().trim();
         $titleColumn.data('original-title', currentTitle);
 
-        // Replace the title text with an input field, save button, and cancel button
-        $titleColumn.html(`
-            <input style="border-radius: 8px; border: 1px solid #f1f1f1;" type="text" class="rename-input" value="${currentTitle}" />
-            <button style="margin-left: 10px; padding: 0 20px;" class="button save-rename" data-post-id="${postId}">Save</button>
-            <button style="margin-left: 5px; padding: 0 20px;" class="button cancel-rename">Cancel</button>
-        `);
+        // Replace the title text with an input field, save button, and cancel button.
+        //
+        // Built with the DOM API, never by interpolating into an HTML string. The
+        // title is stored content: .text() hands back the decoded characters, so a
+        // title such as `"><img src=x onerror=...>` placed inside value="${...}"
+        // closed the attribute and ran script in the browser of whoever clicked
+        // Rename -- an administrator. .val() and .attr() set properties and
+        // attributes directly, so nothing here is ever parsed as markup.
+        const $input = $('<input>', {
+            type: 'text',
+            'class': 'rename-input',
+            style: 'border-radius: 8px; border: 1px solid #f1f1f1;'
+        }).val(currentTitle);
+
+        const $saveButton = $('<button>', {
+            'class': 'button save-rename',
+            style: 'margin-left: 10px; padding: 0 20px;',
+            text: 'Save'
+        }).attr('data-post-id', postId);
+
+        const $cancelButton = $('<button>', {
+            'class': 'button cancel-rename',
+            style: 'margin-left: 5px; padding: 0 20px;',
+            text: 'Cancel'
+        });
+
+        $titleColumn.empty().append($input, $saveButton, $cancelButton);
 
         // Focus the input after it has been added to the DOM
-        const $input = $titleColumn.find('.rename-input');
         $input.focus();
 
         // Move cursor to the end of the text
@@ -1069,7 +1492,7 @@
                 if (response.success) {
                     postId = response.data.post_id; 
                     console.log('postID sukses:'+postId);
-                    saveEditConditions(postId, part, conditions);
+                    redirectToPartEditor(postId, part);
                 } else {
                     alert('Failed to save conditions: ' + (response.data || 'Unknown error.'));
                 }
@@ -1144,16 +1567,16 @@
     $(window).on('elementor/frontend/init', function() {
         console.log("Elementor frontend initialized");
 
-        // Mengecek apakah ada control untuk background-color
+        // Check whether there is a control for background-color.
         if (typeof elementor !== 'undefined' && elementor.settings && elementor.settings.controls) {
             console.log("Elementor settings controls found");
 
-            // Memastikan kontrol button background color ada
+            // Ensure the button background color control exists.
             if (elementor.settings.controls.button_background_color) {
                 elementor.settings.controls.button_background_color.on('change', function(newColor) {
                     console.log("New background color from color picker: ", newColor);
 
-                    // Terapkan warna baru pada elemen .woocommerce ul.products li.product .button
+                    // Apply the new color to the .woocommerce ul.products li.product .button element.
                     if (newColor) {
                         $('.woocommerce ul.products li.product .button').css('background-color', newColor);
                         console.log("New color applied to WooCommerce button:", newColor);

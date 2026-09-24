@@ -40,6 +40,7 @@ $(window).on('elementor:init', function () {
 
         $.post(ajaxurl, {
             action: 'solace_save_custom_preview_id',
+            nonce: solaceExtraPreview.nonce,
             product_id: product_id,
             previewproduct_id: previewproduct_id
         }, function(response){
@@ -73,6 +74,7 @@ $(window).on('elementor:init', function () {
 
             $.post(ajaxurl, {
                 action: 'solace_save_custom_preview_id',
+                nonce: solaceExtraPreview.nonce,
                 post_id: postId,
                 previewpostId: previewIdpostId,
             }, function(response) {
@@ -100,6 +102,7 @@ $(window).on('elementor:init', function () {
 
             $.post(ajaxurl, {
                 action: 'solace_save_blogarchive_preview_category',
+                nonce: solaceExtraPreview.nonce,
                 post_id: postId,
                 preview_blog_category: categoryId,
             }, function(response) {
@@ -125,6 +128,7 @@ $(window).on('elementor:init', function () {
 
             $.post(ajaxurl, {
                 action: 'solace_save_shopproduct_preview_category',
+                nonce: solaceExtraPreview.nonce,
                 post_id: postId,
                 preview_shop_category: categoryId,
             }, function(response) {
