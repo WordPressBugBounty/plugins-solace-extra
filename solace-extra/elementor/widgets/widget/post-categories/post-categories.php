@@ -76,7 +76,7 @@ class Solace_Extra_Post_Categories extends \Elementor\Widget_Base {
 	/**
 	 * Register widget controls.
 	 *
-	 * Add kontrol categories, setting HTML tag, dan layout.
+	 * Add controls for categories, the HTML tag setting, and layout.
 	 *
 	 * @since 1.0.0
 	 */

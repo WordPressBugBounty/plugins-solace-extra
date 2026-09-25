@@ -157,7 +157,6 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
         $document->end_controls_section();
     }
     // elseif ( 'solace-sitebuilder' === get_post_type( $document->get_main_id() ) ) {
-    //     error_log('overview-all');
     //     $document->start_controls_section(
     //         'solace_preview_section',
     //         [
@@ -224,11 +223,7 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 //         wp_send_json_error('Invalid data');
 //     }
 
-//     // error_log('product_id:'.$product_id);
-//     // error_log('previewproduct_id:'.$previewproduct_id);
 
-//     // error_log('post_id:'.$post_id);
-//     // error_log('previewpostId:'.$previewpostId);
 
 //     delete_post_meta($product_id, '_elementor_preview_settings');
 //     delete_post_meta($post_id, '_elementor_preview_settings_post');
@@ -249,9 +244,6 @@ add_action( 'elementor/documents/register_controls', function( $document ) {
 //     $is_applicable = (!is_admin() && (is_product_category() || is_shop() || is_product_tag()));
     
 //     if ($is_applicable) {
-//         error_log('--- OPTION DEBUG ---');
-//         error_log('URL: ' . $_SERVER['REQUEST_URI']);
-//         error_log('Filter pre_option_posts_per_page triggered: Returning 6');
 //         return 6; 
 //     }
     
@@ -304,7 +296,6 @@ add_filter('redirect_canonical', function($redirect_url) {
 //             $wp_query->is_archive = true;
 //             $wp_query->is_tax = ( is_product_category() || is_product_tag() );
             
-//             error_log('Solace Extra: 404 Bypassed for widget: solace-extra-woocommerce-shop');
 //         }
 //     }
 // }, 5); 
@@ -446,10 +437,8 @@ add_action('wp_ajax_solace_save_blogarchive_preview_category', function() {
         wp_send_json_error( 'Unauthorized.', 403 );
     }
 
-    // error_log('preview_blog_category: ' . $preview_blog_category);
     
     if ( ! $preview_blog_category ) {
-        // error_log('delete');
         delete_post_meta( $post_id, '_elementor_preview_settings_category' );
     }else {
         update_post_meta($post_id, '_elementor_preview_settings_category', [
@@ -475,15 +464,12 @@ add_action('wp_ajax_solace_save_shopproduct_preview_category', function() {
     if ( ! solace_extra_can_edit_preview_target( $post_id ) ) {
         wp_send_json_error( 'Unauthorized.', 403 );
     }
-    // error_log('preview_shop_category:'.$preview_shop_category);
     
     if ( ! $preview_shop_category ) {
-        // error_log('delete');
         // delete_post_meta( $post_id, '_solace_template' );
         delete_post_meta( $post_id, '_elementor_preview_settings_category_shop' );
         
     } else {
-        // error_log('update post_id:'.$post_id);
         update_post_meta( $post_id, '_elementor_preview_settings_category_shop', [
             'preview_category' => $preview_shop_category,
         ]);
@@ -850,14 +836,11 @@ if ( ! function_exists( 'solace_get_preview_post' ) ) {
 // if ( ! function_exists( 'solace_get_preview_post' ) ) {
 // 	function solace_get_preview_post() {
 // 		$template_id = get_the_ID();
-// 		error_log( '[solace_get_preview_post] Template ID: ' . $template_id );
 
 // 		$preview_settings = get_post_meta( $template_id, '_elementor_preview_settings_post', true );
-// 		error_log( '[solace_get_preview_post] Preview settings: ' . print_r( $preview_settings, true ) );
 
 // 		if ( ! empty( $preview_settings['preview_id'] ) ) {
 // 			$post_id = absint( $preview_settings['preview_id'] );
-// 			error_log( '[solace_get_preview_post] Using preview_id: ' . $post_id );
 // 		} else {
 // 			$random_post = get_posts( [
 // 				'numberposts' => 1,
@@ -866,7 +849,6 @@ if ( ! function_exists( 'solace_get_preview_post' ) ) {
 // 				'orderby'     => 'rand',
 // 			] );
 
-// 			error_log( '[solace_get_preview_post] Random post query: ' . print_r( $random_post, true ) );
 
 // 			if ( ! empty( $random_post ) ) {
 // 				$post_id = $random_post[0]->ID;
@@ -875,11 +857,8 @@ if ( ! function_exists( 'solace_get_preview_post' ) ) {
 // 					'preview_id' => $post_id,
 // 				] );
 
-// 				error_log( '[solace_get_preview_post] Using random post ID: ' . $post_id );
 // 			} else {
 // 				// $post_id = $template_id;
-// 				// error_log( '[solace_get_preview_post] No random post, fallback to template ID: ' . $post_id );
-//                 error_log( '[solace_get_preview_post] No random post, return false.' );
 // 				return false; 
 // 			}
 // 		}

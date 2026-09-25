@@ -684,7 +684,6 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 	}
 
 	private function get_field_selectors( $widget_id, $is_focus = false ) {
-        // error_log('masuk: get_field_selectors');
 		$prefix = '.elementor-element-' . esc_attr( $widget_id ) . ' .cart';        
 
         $selectors = [
@@ -782,7 +781,6 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 		$kit_id = \Elementor\Plugin::$instance->kits_manager->get_active_id();
 
 		if ( ! $kit_id ) {
-            // error_log( 'DEBUG: Kit ID not found' );
             // return;
         }
 
@@ -792,31 +790,24 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
 
         $kit_settings = get_post_meta( $kit_id, '_elementor_page_settings', true );
         if ( ! is_array( $kit_settings ) ) {
-            // error_log('DEBUG: Kit Settings bukan array atau kosong');
             // return;
         }
 
         static $style_printed = [];
         $widget_id = $this->get_id();
         if ( isset( $style_printed[ $widget_id ] ) ) {
-            // error_log( 'DEBUG: Style for widget ' . $widget_id . ' already printed before' );
             // return;
         }
 
-        // error_log( 'DEBUG: Checking normal_styles...' );
         $normal_styles = $this->generate_field_style( $kit_settings, 'normal' );
         
-        // error_log( 'DEBUG: Checking focus_styles...' );
         $focus_styles  = $this->generate_field_style( $kit_settings, 'focus' );
         
-        // error_log('DEBUG: Hasil Normal Style: ' . $normal_styles);
 
         if ( empty( $normal_styles ) && empty( $focus_styles ) && empty( $label_styles ) ) {
-            // error_log( 'DEBUG: All styles empty, cancelling <style> render' );
             // return;
         }
 
-        // error_log('DEBUG: Mencetak <style> ke frontend untuk widget: ' . $widget_id);
 
         echo '<style>';
 
@@ -824,7 +815,6 @@ class Solace_Extra_WooCommerce_ProductAddToCart extends Widget_Base {
             $field_selectors = $this->get_field_selectors( $widget_id, false );
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo $field_selectors . ' { ' . $normal_styles . ' }';
-            // error_log('DEBUG: Field selectors printed: ' . $field_selectors);
         }
         if ( ! empty( $focus_styles ) ) {
 			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped

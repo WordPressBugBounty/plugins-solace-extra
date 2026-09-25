@@ -160,39 +160,28 @@ class Solace_Extra_Product_Stock extends Widget_Base {
 		$settings  = $this->get_settings_for_display();
 		if ( ! is_woocommerce_activated() ) return;
 
-		// error_log( '=== RENDER START ===' );
 
 		// $product = wc_get_product();
 		$product = solace_get_preview_product();
-		// error_log( 'solace_get_preview_product(): ' . print_r( $product, true ) );
 
 		if ( ! empty( get_the_ID() ) ) {
 			$product_id = solace_extra_sanitize_number( get_the_ID() );
-			// error_log( 'get_the_ID(): ' . get_the_ID() );
-			// error_log( 'sanitized product_id: ' . $product_id );
 			$product 	= wc_get_product( $product_id );
-			// error_log( 'wc_get_product(): ' . print_r( $product, true ) );
 		}
 
 		$checkempty = solace_check_empty_product( $product );
-		// error_log( 'solace_check_empty_product: ' . print_r( $checkempty, true ) );
 		if ( $checkempty ) {
-			// error_log( 'Product is empty. Rendering sorry message.' );
 			echo '<div class="solace-container"><div class="solace-price-amount">' . esc_html( $checkempty ) . '</div></div>';
 			return;
 		}
 
 		if ( empty( $product ) && ( solace_extra_is_edit_mode() || solace_extra_is_preview_mode() ) ) {
-			// error_log( 'Product empty, edit/preview mode active.' );
 			$product_id 	= solace_extra_get_product_id();
 			$product 		= wc_get_product( $product_id );
-			// error_log( 'Product in preview mode: ' . print_r( $product, true ) );
 
 			$stock_status = $product && $product->get_stock_status() ? $product->get_stock_status() : 'no_product';
 			$stock_qty    = $product && $product->get_stock_quantity() ? $product->get_stock_quantity() : 0;
 
-			// error_log( 'stock_status: ' . $stock_status );
-			// error_log( 'stock_qty: ' . $stock_qty );
 
 			if ( $stock_status == 'instock' && is_null( $stock_qty ) ) {
 				echo "<div class='solace-product-stock'><span class='stock' >100 in stock</span></div>";
@@ -200,7 +189,6 @@ class Solace_Extra_Product_Stock extends Widget_Base {
 		}
 
 		if ( empty( $product ) ) {
-			// error_log( 'Product still empty after checks. RETURNING.' );
 			return;
 		}
 
@@ -208,22 +196,16 @@ class Solace_Extra_Product_Stock extends Widget_Base {
 		$outofstock_text 	= $settings['outofstock_text'];
 		$stock_status 		= $product->get_stock_status();
 
-		// error_log( 'Final stock_status: ' . $stock_status );
-		// error_log( 'backorder_text: ' . $backorder_text );
-		// error_log( 'outofstock_text: ' . $outofstock_text );
 
 		if ( $stock_status == 'onbackorder' && $backorder_text ) {
 			$available_date = get_post_meta( $product->get_id(), 'cd_backorder_time', true );
 			$text =  str_replace(  '%%available_date%%', $available_date, $backorder_text );
-			// error_log( 'Render backorder text: ' . $text );
 		}
 		elseif( $stock_status == 'outofstock' && $outofstock_text ){
 			$text = $outofstock_text;
-			// error_log( 'Render outofstock text: ' . $text );
 		}
 		else{
 			$text =  wc_get_stock_html( $product );
-			// error_log( 'Render wc_get_stock_html: ' . $text );
 		}
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		echo "<div class='solace-product-stock'>";
@@ -233,7 +215,6 @@ class Solace_Extra_Product_Stock extends Widget_Base {
 
 		do_action( 'solace_extra_after_main_content', $this );
 
-		// error_log( '=== RENDER END ===' );
 	}
 
 

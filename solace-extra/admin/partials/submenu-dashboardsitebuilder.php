@@ -127,9 +127,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
     $solace_extra_query = new WP_Query( $solace_extra_args );
 
     if ( $solace_extra_query->have_posts() ) {
-        // error_log('Post found: ' . $solace_extra_query->found_posts);
     } else {
-        // error_log('no post for part: ' . $solace_extra_part);
     }
     ?>
 

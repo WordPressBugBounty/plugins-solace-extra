@@ -1182,7 +1182,6 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
     }
 
     private function get_myaccount_field_selectors( $widget_id, $is_focus = false ) {
-        // error_log('masuk: get_myaccount_field_selectors');
         $prefix = '.elementor-element-' . esc_attr( $widget_id ) . ' .solace-woocommerce-tabs-panel';
         
         $selectors = [
@@ -1584,10 +1583,10 @@ class Solace_Extra_WooCommerce_ProductTab extends Widget_Base {
                         });
                     });
                 });
-                // Jalankan saat DOM siap (frontend biasa)
+                // Run when the DOM is ready (regular frontend)
                 document.addEventListener('DOMContentLoaded', initCustomStarRating);
 
-                // Jalankan juga di editor Elementor
+                // Also run in the Elementor editor
                 jQuery(window).on('elementor/frontend/init', function () {
                     elementorFrontend.hooks.addAction('frontend/element_ready/global', function () {
                         initCustomStarRating();

@@ -452,7 +452,7 @@ class Solace_Extra_Admin {
 			
 			$redirect_url = admin_url( 'admin.php?page=solace' );
 
-			// Data untuk JavaScript
+			// Data for JavaScript
 			$solace_conditions = array(
 				'includeLabel' => __('Include', 'solace-extra'),
 				'excludeLabel' => __('Exclude', 'solace-extra'),
@@ -523,7 +523,7 @@ class Solace_Extra_Admin {
 			// Sweetalert
 			wp_enqueue_script( 'solace-extra-preview-sweetalert', plugin_dir_url( __FILE__ ) . 'js/sweetalert.min.js', array(), '1.0.0', true );
 
-			// Register dan enqueue script JavaScript untuk postMessage
+			// Register and enqueue the JavaScript script for postMessage
 			wp_enqueue_script('solace-iframe-loader', plugin_dir_url( __FILE__ ) . 'js/solace-iframe-loader.js', array( 'jquery' ), $this->version, true );
 
 			// Localize preview
@@ -1204,7 +1204,6 @@ class Solace_Extra_Admin {
     }
 
     public function solace_enable_image_processing() {
-		// error_log('re-enabling image processing');
         remove_filter('intermediate_image_sizes_advanced', [$this, 'disable_sizes']);
         remove_filter('wp_image_editors', [$this, 'disable_editors']);
         remove_filter('wp_generate_attachment_metadata', [$this, 'disable_metadata'], 10);

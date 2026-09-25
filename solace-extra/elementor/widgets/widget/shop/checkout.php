@@ -2176,13 +2176,13 @@ class Solace_Extra_WooCommerce_Checkout extends Widget_Base {
             $css .= "font-weight: {$weight};";
         }
 
-        // Transform (Uppercase, Lowercase, dll)
+        // Transform (Uppercase, Lowercase, etc.)
         $transform = $settings[ $prefix . 'typography_text_transform' ] ?? '';
         if ( $transform ) {
             $css .= "text-transform: {$transform};";
         }
 
-        // Font Style (Italic, dll)
+        // Font Style (Italic, etc.)
         $font_style = $settings[ $prefix . 'typography_font_style' ] ?? '';
         if ( $font_style ) {
             $css .= "font-style: {$font_style};";

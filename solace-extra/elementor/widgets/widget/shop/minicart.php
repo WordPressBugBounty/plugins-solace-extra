@@ -1074,7 +1074,7 @@ class Solace_Extra_WooCommerce_MiniCart extends Widget_Base {
         }
 
         .solace-remove-icon:hover {
-            color: #ff0000; /* warna hover */
+            color: #ff0000; /* hover color */
         }
 
         .elementor-menu-cart__product-remove.product-remove {

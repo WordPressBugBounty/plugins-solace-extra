@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,11 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.7.3 - 25 September 2026 =
+
+* fix: activate atomic elementor
+* fix: remove error_log calls and translate remaining Indonesian comments
 
 = 1.7.2 - 14 September 2026 =
 

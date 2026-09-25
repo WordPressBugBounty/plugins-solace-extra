@@ -1388,8 +1388,6 @@ function solace_update_sitebuilder_all_status2() {
     $part = sanitize_text_field(wp_unslash($_POST['part']) );
     $status = (string) sanitize_text_field(wp_unslash($_POST['status']));
 
-    // error_log('part:'.$part);
-    // error_log('status:'.$status);
 
     $meta_key = '_solace_' . $part . '_status';
 
@@ -1405,9 +1403,7 @@ function solace_update_sitebuilder_all_status2() {
 
             if ($current_value !== '0') {
                 update_post_meta($post_id, $meta_key, '0');
-                // error_log("Updated post ID $post_id to 0");
             } else {
-                // error_log("Post ID $post_id already has value 0 or meta key does not exist.");
             }
         }
 
@@ -1418,9 +1414,7 @@ function solace_update_sitebuilder_all_status2() {
 
             if ($current_value !== '1') {
                 update_post_meta($post_id, $meta_key, '1');
-                // error_log("Updated post ID $post_id to 1");
             } else {
-                // error_log("Post ID $post_id already has value 1.");
             }
         }
 
@@ -1493,19 +1487,16 @@ function solace_sitebuilder_save_meta_box_data($post_id) {
 
     // Check if current user has permissions to save data
     if (!current_user_can('edit_post', $post_id)) {
-        // error_log( 'User does not have permission to edit post');
         return;
     }
 
     // Check if it's an autosave and return if true
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-        // error_log( 'Autosave detected');
         return;
     }
 
     // phpcs:ignore WordPress.Security.NonceVerification.Missing -- We need this. 
     if ( ! isset( $_POST['solace_sitebuilder_conditions'] ) || ! is_array( $_POST['solace_sitebuilder_conditions'] ) ) {
-        // error_log( 'No data submitted');
         return;
     }
     // phpcs:ignore WordPress.Security.NonceVerification.Missing --- We need this.
@@ -2262,10 +2253,8 @@ function solace_sitebuilder_custom_template($template) {
 function solace_custom_archive_template($archive_template) {
     $plugin_template = plugin_dir_path(__FILE__) . 'archive.php';
     
-    // error_log('Checking custom archive template from plugin');
 
     if (file_exists($plugin_template)) {
-        // error_log('Using custom archive template from plugin: ' . $plugin_template);
         return $plugin_template;
     }
 
@@ -2829,19 +2818,14 @@ function solace_override_container_var() {
                 '{ "mobile": 748, "tablet": 992, "desktop": 1280 }'
             );
 
-            // error_log('[Solace] RAW customizer value: ' . $container_custom_layout_width);
 
             $arrayDataCustom = json_decode( $container_custom_layout_width, true );
 
-            // error_log('[Solace] Decoded value: ' . print_r($arrayDataCustom, true));
 
             $desktop = intval($arrayDataCustom['desktop'] ?? 1280);
             $tablet  = intval($arrayDataCustom['tablet']  ?? 992);
             $mobile  = intval($arrayDataCustom['mobile']  ?? 748);
 
-            // error_log('[Solace] Desktop: ' . $desktop);
-            // error_log('[Solace] Tablet: ' . $tablet);
-            // error_log('[Solace] Mobile: ' . $mobile);
 
             $css  = "{$selector} { 
                         max-width: {$desktop}px; 
@@ -2858,9 +2842,6 @@ function solace_override_container_var() {
                     }";
         }
 
-        // error_log('[Solace] layout_slug: ' . $layout_slug);
-        // error_log('[Solace] selector: ' . $selector);
-        // error_log('[Solace] CSS: ' . $css);
 
         wp_add_inline_style( 'solace-container-layout', $css );
     }

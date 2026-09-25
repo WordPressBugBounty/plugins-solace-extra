@@ -28,7 +28,7 @@
 
         // Only bind if window width is at least 1024px
         if (isMinWidth1024()) {
-            // Hover event untuk li.menu-item-has-children
+            // Hover event for li.menu-item-has-children
             $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal li.menu-item-has-children, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical li.menu-item-has-children').on('mouseenter.hoverActive', function() {
                 const $menuItem = $(this);
                 const $subMenu = $menuItem.find('ul.sub-menu').first();
@@ -66,7 +66,7 @@
                 $menuItem.data('li-hovering', true);
             });
 
-            // Mouse leave event untuk li.menu-item-has-children
+            // Mouse leave event for li.menu-item-has-children
             $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal li.menu-item-has-children, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical li.menu-item-has-children').on('mouseleave.hoverActive', function() {
                 const $menuItem = $(this);
                 const $subMenu = $menuItem.find('ul.sub-menu').first();
@@ -98,7 +98,7 @@
                 $menuItem.data('hover-timeout', timeoutId);
             });
 
-            // Hover event untuk ul.sub-menu
+            // Hover event for ul.sub-menu
             $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal ul.sub-menu, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical ul.sub-menu').on('mouseenter.subMenuHover', function() {
                 const $subMenu = $(this);
                 const $menuItem = $subMenu.closest('li.menu-item-has-children');
@@ -106,7 +106,7 @@
                 // Set the flag that the sub-menu is being hovered.
                 $subMenu.data('submenu-hovering', true);
                 
-                // Clear timeout dari li jika ada
+                // Clear the timeout from li if any
                 if ($menuItem.data('hover-timeout')) {
                     clearTimeout($menuItem.data('hover-timeout'));
                     $menuItem.removeData('hover-timeout');
@@ -116,7 +116,7 @@
                 setStyleImportant($subMenu, 'display', 'block');
             });
 
-            // Mouse leave event untuk ul.sub-menu
+            // Mouse leave event for ul.sub-menu
             $('.elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-horizontal ul.sub-menu, .elementor-widget-solace-extra-nav-menu .elementor-nav-menu--layout-vertical ul.sub-menu').on('mouseleave.subMenuHover', function() {
                 const $subMenu = $(this);
                 const $menuItem = $subMenu.closest('li.menu-item-has-children');
@@ -235,7 +235,7 @@
                 }
             }
 
-            // Toggle display none untuk #wpadminbar
+            // Toggle display none for #wpadminbar
             const $wpAdminBar = $('#wpadminbar');
             if ($wpAdminBar.length) {
                 if ($toggle.hasClass('elementor-active')) {

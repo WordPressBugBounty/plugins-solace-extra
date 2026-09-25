@@ -807,7 +807,7 @@ class Solace_Extra_WP_Import extends WP_Importer {
 					// Update post_title with the newly created post ID.
 					$new_title = $postdata['post_title'] . ' #' . $post_id;
 
-					// Perbarui post dengan judul baru
+					// Update the post with the new title
 					wp_update_post( array(
 						'ID'         => $post_id,
 						'post_title' => $new_title,

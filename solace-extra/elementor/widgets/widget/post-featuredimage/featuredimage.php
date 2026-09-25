@@ -683,9 +683,6 @@ class Solace_Extra_Post_Featured_Image extends Widget_Base {
         $image_url = get_the_post_thumbnail_url( $post_id, $image_size );
 
         // $image_url = get_the_post_thumbnail_url( $post_id, $settings['image_size'] );
-        // error_log('Post ID: ' . $post_id);
-        // error_log('Image size: ' . $settings['image_size']);
-        // error_log('Featured image: ' . $image_url);
 
         $categories = get_the_category( $post_id );
         $category_output = [];
@@ -752,7 +749,7 @@ class Solace_Extra_Post_Featured_Image extends Widget_Base {
             .solace-cat-cat {
                 display: inline-flex;
                 flex-wrap: wrap;
-                gap: 8px; /* bisa dikontrol dari Elementor */
+                gap: 8px; /* can be controlled from Elementor */
             }
             .solace-cat-cat a::after {
                 content: ",";

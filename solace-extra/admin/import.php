@@ -43,40 +43,30 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 	}
 }
 
-if ( ! function_exists( 'solace_extra_deactivate_atomic_editor' ) ) {
+if ( ! function_exists( 'solace_extra_deactivate_optimized_markup' ) ) {
 	/**
-	 * Keep Elementor's Atomic Editor (Editor V4) experiments inactive while the
-	 * Solace Extra plugin is active.
+	 * Keep Elementor's "Optimized Markup" experiment inactive while the Solace
+	 * Extra plugin is active.
 	 *
-	 * Solace demo kits are built with v3 Elementor elements, so importing with
-	 * the Atomic Editor active is unnecessary: v4 element types written during
-	 * an import (or by editing pages in the Atomic Editor) render blank once the
-	 * Atomic Editor is turned off. Deactivating these experiments on every
-	 * request keeps every imported/edited template independent of the Atomic
-	 * Editor. The user may re-enable it from the Elementor dashboard — the next
-	 * request simply deactivates it again while this plugin is active.
+	 * Solace demo kits are built against Elementor's classic (non-optimized) DOM
+	 * output. The Optimized Markup experiment changes that markup (for example it
+	 * removes the `.elementor-widget-container` wrapper), which can break the
+	 * styling of imported templates. Elementor enables Optimized Markup by default
+	 * on new sites running 3.30.0+, so it is set back to inactive on every request
+	 * while this plugin is active.
 	 *
-	 * Mirrors Elementor's own `opt_out_v4()` list.
+	 * The Atomic Editor (Editor V4) experiments are intentionally left untouched so
+	 * users can opt in and use Editor V4 freely.
 	 *
 	 * @return void
 	 */
-	function solace_extra_deactivate_atomic_editor() {
-		$features = array(
-			'e_opt_in_v4',
-			'e_atomic_elements',
-			'e_global_classes',
-			'e_variables',
-			'e_components',
-		);
-
-		foreach ( $features as $feature ) {
-			update_option( 'elementor_experiment-' . $feature, 'inactive' );
-		}
+	function solace_extra_deactivate_optimized_markup() {
+		update_option( 'elementor_experiment-e_optimized_markup', 'inactive' );
 	}
 }
 
-// Keep the Atomic Editor deactivated on every request while this plugin runs.
-add_action( 'init', 'solace_extra_deactivate_atomic_editor', 1 );
+// Keep Optimized Markup deactivated on every request while this plugin runs.
+add_action( 'init', 'solace_extra_deactivate_optimized_markup', 1 );
 
 
 /** Functions missing in older WordPress versions. */
@@ -161,8 +151,9 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
                         throw new \RuntimeException('Elementor import-export component is unavailable; cannot import kit.');
                     }
 
-                    // The Atomic Editor is already kept inactive by the global
-                    // `init` hook, so no import-specific disable is needed.
+                    // No import-specific experiment overrides are needed here; the
+                    // only experiment this plugin keeps inactive (Optimized Markup)
+                    // is handled by the global `init` hook.
                     $import_export->import_kit($zip_file_path, array('include', 'selected_plugins', 'selected_cpt', 'selected_override_conditions'));
 
                     $zip->close();
@@ -2941,7 +2932,7 @@ class Solace_Extra_Import {
                     }
                 }
 
-                // 3) Kalau ada page lokal, pakai sebagai post_type page.
+                // 3) If a local page exists, use it as the "page" post type.
                 if ( $local_shop_id ) {
                     $local_url = get_permalink( $local_shop_id );
                     if ( ! $local_url || is_wp_error( $local_url ) ) {
