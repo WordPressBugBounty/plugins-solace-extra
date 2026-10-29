@@ -99,7 +99,8 @@ class SolaceFormBuilder extends SolaceFormBase {
 	 * @return array Widget styles dependencies.
 	 */
 	public function get_style_depends() {
-		return array( 'solaceform' );
+		// Merge with parent so control assets (e.g. Hover Animation e-animation-* styles) are still enqueued.
+		return array_merge( parent::get_style_depends(), array( 'solaceform' ) );
 	}
 
 	/**
@@ -1573,7 +1574,7 @@ class SolaceFormBuilder extends SolaceFormBase {
 			<div
 				class="solaceform-button-column <?php echo $is_inline ? 'inline' : 'newline'; ?>"
 				style="<?php echo $is_inline ? '' : 'width:100%;display:flex;justify-content:' . esc_attr( $settings['button_position'] ) . ';'; ?>">
-				<button type="submit" class="elementor-button submit-button solaceform-form-button" id="<?php echo esc_attr($settings['button_id']); ?>">
+				<button type="submit" class="elementor-button submit-button solaceform-form-button<?php echo ! empty( $settings['hover_animation'] ) ? ' elementor-animation-' . esc_attr( $settings['hover_animation'] ) : ''; ?>" id="<?php echo esc_attr($settings['button_id']); ?>">
 					<span class="elementor-button-content-wrapper">
 						
 						<?php if ( ! empty( $settings['button_icon']['value'] ) && 'left' === $settings['button_icon_position'] ) : ?>
@@ -1595,6 +1596,13 @@ class SolaceFormBuilder extends SolaceFormBase {
 					</span>
 				</button>
 			</div>
+
+			<?php
+			// The submit script writes success and error text into this element.
+			// Without it in the markup the AJAX reply has nowhere to land, so the
+			// visitor sees no confirmation and no error -- the submit looks dead.
+			?>
+			<div class="solaceform-form-msg" style="display: none;"><span></span></div>
 		</form>
 
 		<style>

@@ -43,30 +43,6 @@ if ( ! class_exists( 'WP_Importer' ) ) {
 	}
 }
 
-if ( ! function_exists( 'solace_extra_deactivate_optimized_markup' ) ) {
-	/**
-	 * Keep Elementor's "Optimized Markup" experiment inactive while the Solace
-	 * Extra plugin is active.
-	 *
-	 * Solace demo kits are built against Elementor's classic (non-optimized) DOM
-	 * output. The Optimized Markup experiment changes that markup (for example it
-	 * removes the `.elementor-widget-container` wrapper), which can break the
-	 * styling of imported templates. Elementor enables Optimized Markup by default
-	 * on new sites running 3.30.0+, so it is set back to inactive on every request
-	 * while this plugin is active.
-	 *
-	 * The Atomic Editor (Editor V4) experiments are intentionally left untouched so
-	 * users can opt in and use Editor V4 freely.
-	 *
-	 * @return void
-	 */
-	function solace_extra_deactivate_optimized_markup() {
-		update_option( 'elementor_experiment-e_optimized_markup', 'inactive' );
-	}
-}
-
-// Keep Optimized Markup deactivated on every request while this plugin runs.
-add_action( 'init', 'solace_extra_deactivate_optimized_markup', 1 );
 
 
 /** Functions missing in older WordPress versions. */
@@ -91,9 +67,48 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
     protected $action = 'import_posts_process';
     private $demo_name;
 
+    /**
+     * Queue items are flat arrays ("action" + "demo_name" strings) -- no
+     * objects. Keep unserialize locked down to close the object-injection
+     * surface exposed by the vendored background-process defaults.
+     *
+     * @var bool|array
+     */
+    protected $allowed_batch_data_classes = false;
+
+    /**
+     * Process lock duration in seconds.
+     *
+     * The whole kit import runs as one queue item, and the item is only removed
+     * when it returns. With the library default (60 s) the cron healthcheck saw
+     * an expired lock while a slow import was still running and started the same
+     * item again, importing the kit twice (duplicate empty pages and menus).
+     *
+     * @var int
+     */
+    protected $queue_lock_time = 600;
+
+    /**
+     * Option marking the kit import that is running on this site.
+     */
+    const RUNNING_OPTION = 'solace_extra_import_running';
+
     protected function task($item) {
         if (isset($item['action']) && $item['action'] === 'demo_name' && isset($item['demo_name'])) {
-            $this->import_elementor_kit($item['demo_name']);
+            // Skip a second run of the same item while the first one is still
+            // importing (an import slower than the lock). A crashed import stops
+            // blocking after an hour.
+            $running = get_option( self::RUNNING_OPTION );
+            if ( is_array( $running ) && ( $running['demo'] ?? '' ) === $item['demo_name'] && time() - (int) ( $running['started'] ?? 0 ) < HOUR_IN_SECONDS ) {
+                return false;
+            }
+
+            update_option( self::RUNNING_OPTION, array( 'demo' => $item['demo_name'], 'started' => time() ), false );
+            try {
+                $this->import_elementor_kit($item['demo_name']);
+            } finally {
+                delete_option( self::RUNNING_OPTION );
+            }
         }
         return false;
     }
@@ -107,8 +122,15 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
         $response = wp_remote_get($demo);
         $datas = wp_remote_retrieve_body($response);
         $data = json_decode($datas);
-        update_option( 'elementor_disable_color_schemes', 'yes' );
-        update_option( 'elementor_disable_typography_schemes', 'yes' );
+        // Follow the demo's "Disable Default Colors / Fonts" settings: with them off,
+        // Elementor styles widgets from the global colors and fonts, and forcing
+        // them on dropped that styling. Older endpoints without the keys keep 'yes'.
+        // The endpoint sends the stored option ("yes") or false when it is not set.
+        $on             = array( true, 'yes', 1, '1' );
+        $disable_colors = ! isset( $data->disable_color_schemes ) || in_array( $data->disable_color_schemes, $on, true );
+        $disable_fonts  = ! isset( $data->disable_typography_schemes ) || in_array( $data->disable_typography_schemes, $on, true );
+        update_option( 'elementor_disable_color_schemes', $disable_colors ? 'yes' : '' );
+        update_option( 'elementor_disable_typography_schemes', $disable_fonts ? 'yes' : '' );
         update_option( 'elementor_experiment-nested-elements', sanitize_key( $data->nested_elements ) );        
 
         $zip_url = trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . "wp-content/uploads/demolist/" . $demo_name . "/" . $demo_name . ".zip";
@@ -137,6 +159,20 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
 
                     add_filter('elementor/document/save/data', array($this, 'handle_pages_import'), 10, 2);
 
+                    // Elementor's WXR importer drops post_date/post_date_gmt, so every
+                    // imported post would carry the import date (wrong dates and blog
+                    // order). Put the dates from the demo XML back.
+                    add_filter('wp_import_post_data_processed', array($this, 'keep_import_post_dates'), 10, 2);
+
+                    // Some demo kits carry attachments whose GUID is a short word ("rio")
+                    // instead of a URL; Elementor then replaces that word everywhere in post
+                    // content with the image URL ("periodically" -> "pe<url>dically").
+                    add_filter('wp_import_post_data_raw', array($this, 'fix_attachment_guid'));
+
+                    // WordPress' own "Hello world!" post exists before the import; remember it
+                    // so it can be moved behind the demo posts afterwards.
+                    $default_posts = get_posts(array('post_type' => 'post', 'name' => 'hello-world', 'post_status' => 'any', 'fields' => 'ids', 'posts_per_page' => -1));
+
                     $import_export = \Elementor\Plugin::$instance->app->get_component('import-export');
 
                     // In non-admin contexts (WP-Cron / REST) Elementor skips registering
@@ -151,10 +187,22 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
                         throw new \RuntimeException('Elementor import-export component is unavailable; cannot import kit.');
                     }
 
-                    // No import-specific experiment overrides are needed here; the
-                    // only experiment this plugin keeps inactive (Optimized Markup)
-                    // is handled by the global `init` hook.
+                    // No import-specific experiment overrides are needed here.
                     $import_export->import_kit($zip_file_path, array('include', 'selected_plugins', 'selected_cpt', 'selected_override_conditions'));
+
+                    // Match the demo's Elementor stable-feature states (e.g.
+                    // "Optimized Markup") recorded inside the kit's own
+                    // site-settings.json. Elementor's importer skips 'inactive'
+                    // states (its allow-list repeats STATE_ACTIVE and never
+                    // mentions STATE_INACTIVE), so explicitly apply the effective
+                    // state per demo afterwards.
+                    $this->apply_kit_experiment_states( $zip );
+
+                    $this->push_default_posts_back( $default_posts );
+
+                    $this->restore_product_attributes( $demo_name );
+
+                    $this->restore_posts_page( $demo_name );
 
                     $zip->close();
 
@@ -177,6 +225,548 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
             $elementor_active_kit = get_option( 'elementor_active_kit' );
             update_post_meta( $elementor_active_kit, 'solace_import_elementor_kit', true );
 		} 
+    }
+
+    /**
+     * Recreate the demo's posts page when the kit does not carry it.
+     *
+     * A posts page with no Elementor design is neither in the kit's Elementor
+     * content nor in its page.xml, and the menu import only creates it when a
+     * menu links to it. Pages of the live demo that are missing locally are
+     * checked once: WordPress renders the posts page with the "blog" body
+     * class. The demo site is only read.
+     *
+     * @param string $demo_name Demo slug.
+     * @return void
+     */
+    private function restore_posts_page( $demo_name ) {
+        if ( empty( $demo_name ) || (int) get_option( 'page_for_posts' ) ) {
+            return;
+        }
+
+        $base     = trailingslashit( trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $demo_name );
+        $response = wp_remote_get( $base . 'wp-json/wp/v2/pages?per_page=100&_fields=id,slug,link,title', array( 'timeout' => 30 ) );
+        if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+            return;
+        }
+
+        foreach ( (array) json_decode( wp_remote_retrieve_body( $response ), true ) as $page ) {
+            if ( empty( $page['slug'] ) || empty( $page['link'] ) || get_page_by_path( $page['slug'] ) ) {
+                continue;
+            }
+            $html = wp_remote_retrieve_body( wp_remote_get( $page['link'], array( 'timeout' => 30 ) ) );
+            if ( ! preg_match( '/<body[^>]*class="([^"]*)"/i', (string) $html, $m ) || ! preg_match( '/(^|\s)blog(\s|$)/', $m[1] ) ) {
+                continue;
+            }
+            $page_id = wp_insert_post( array(
+                'post_title'  => wp_strip_all_tags( html_entity_decode( $page['title']['rendered'] ?? $page['slug'] ) ),
+                'post_name'   => $page['slug'],
+                'post_status' => 'publish',
+                'post_type'   => 'page',
+            ) );
+            if ( $page_id && ! is_wp_error( $page_id ) ) {
+                update_option( 'page_for_posts', $page_id );
+            }
+            return;
+        }
+    }
+
+    /**
+     * Restore WooCommerce global attributes and their terms from the live demo.
+     *
+     * The kit only carries each product's `_product_attributes` meta (e.g. a
+     * reference to `pa_color`), not the attribute definition (stored in its own
+     * table) nor the terms assigned to the product. WooCommerce then ignores the
+     * attribute, so "Additional information" and attribute based variations
+     * disappear. The demo's public Store API exposes both; this recreates the
+     * missing attributes/terms and assigns them to the imported products,
+     * matched by slug. The demo site is only read.
+     *
+     * @param string $demo_name Demo slug.
+     * @return void
+     */
+    private function restore_product_attributes( $demo_name ) {
+        if ( ! function_exists( 'wc_create_attribute' ) || empty( $demo_name ) ) {
+            return;
+        }
+
+        $base  = trailingslashit( trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) . $demo_name ) . 'wp-json/wc/store/v1/';
+        $fetch = function ( $path ) use ( $base ) {
+            $response = wp_remote_get( $base . $path, array( 'timeout' => 30 ) );
+            if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+                return array();
+            }
+            $data = json_decode( wp_remote_retrieve_body( $response ), true );
+            return is_array( $data ) ? $data : array();
+        };
+
+        // 1) Attribute definitions and their terms.
+        foreach ( $fetch( 'products/attributes' ) as $attribute ) {
+            if ( empty( $attribute['taxonomy'] ) || 0 !== strpos( $attribute['taxonomy'], 'pa_' ) ) {
+                continue;
+            }
+            $taxonomy = $attribute['taxonomy'];
+            $slug     = substr( $taxonomy, 3 );
+
+            $existing_id = wc_attribute_taxonomy_id_by_name( $slug );
+            if ( $existing_id ) {
+                // An older kit may have created the attribute from the slug ("color");
+                // use the demo's label ("Color").
+                $existing = wc_get_attribute( $existing_id );
+                if ( $existing && ! empty( $attribute['name'] ) && $existing->name !== $attribute['name'] ) {
+                    wc_update_attribute( $existing_id, array(
+                        'name'         => $attribute['name'],
+                        'slug'         => $slug,
+                        'type'         => $existing->type,
+                        'order_by'     => $existing->order_by,
+                        'has_archives' => $existing->has_archives,
+                    ) );
+                }
+            } else {
+                $created = wc_create_attribute( array(
+                    'name'         => $attribute['name'] ?? $slug,
+                    'slug'         => $slug,
+                    'type'         => $attribute['type'] ?? 'select',
+                    'order_by'     => $attribute['order'] ?? 'menu_order',
+                    'has_archives' => ! empty( $attribute['has_archives'] ),
+                ) );
+                if ( is_wp_error( $created ) ) {
+                    continue;
+                }
+            }
+
+            // The taxonomy is registered by WooCommerce on the next request only.
+            if ( ! taxonomy_exists( $taxonomy ) ) {
+                register_taxonomy( $taxonomy, array( 'product' ), array( 'hierarchical' => false, 'show_ui' => false, 'query_var' => true, 'rewrite' => false ) );
+            }
+
+            if ( ! empty( $attribute['id'] ) ) {
+                foreach ( $fetch( 'products/attributes/' . (int) $attribute['id'] . '/terms?per_page=100' ) as $term ) {
+                    if ( ! empty( $term['slug'] ) && ! term_exists( $term['slug'], $taxonomy ) ) {
+                        wp_insert_term( $term['name'] ?? $term['slug'], $taxonomy, array( 'slug' => $term['slug'] ) );
+                    }
+                }
+            }
+        }
+
+        // 2) All demo products, so demo IDs (grouped children) can be matched by slug.
+        $products = array();
+        for ( $page = 1; $page <= 20; $page++ ) {
+            $batch = $fetch( 'products?per_page=100&page=' . $page );
+            if ( empty( $batch ) ) {
+                break;
+            }
+            $products = array_merge( $products, $batch );
+            if ( count( $batch ) < 100 ) {
+                break;
+            }
+        }
+        $slug_by_demo_id = wp_list_pluck( $products, 'slug', 'id' );
+
+        // 3) Per product, matched by slug: gallery and grouped children, then the
+        //    terms assigned to each product and its variations.
+        foreach ( $products as $product ) {
+            if ( empty( $product['slug'] ) ) {
+                continue;
+            }
+            $local = get_page_by_path( $product['slug'], OBJECT, 'product' );
+            if ( ! $local ) {
+                continue;
+            }
+            $this->restore_product_links( $local->ID, $product, $slug_by_demo_id );
+            foreach ( (array) ( $product['attributes'] ?? array() ) as $attribute ) {
+                if ( empty( $attribute['taxonomy'] ) || ! taxonomy_exists( $attribute['taxonomy'] ) || empty( $attribute['terms'] ) ) {
+                    continue;
+                }
+                wp_set_object_terms( $local->ID, wp_list_pluck( $attribute['terms'], 'slug' ), $attribute['taxonomy'] );
+            }
+            if ( ! empty( $product['attributes'] ) && ! empty( $product['variations'] ) ) {
+                $this->restore_product_variations( $local->ID, $product, $fetch );
+            }
+            if ( function_exists( 'wc_delete_product_transients' ) ) {
+                wc_delete_product_transients( $local->ID );
+            }
+        }
+
+        delete_transient( 'wc_attribute_taxonomies' );
+
+        // 4) Product category IDs saved in Elementor widgets (Shop "include/exclude
+        //    categories") are the demo's term IDs; translate them by slug.
+        $this->remap_widget_categories( wp_list_pluck( $fetch( 'products/categories?per_page=100' ), 'slug', 'id' ) );
+    }
+
+    /**
+     * Translate demo product category IDs in Elementor widget settings to local IDs.
+     *
+     * @param array $slug_by_demo_id Demo term ID => slug.
+     * @return void
+     */
+    private function remap_widget_categories( $slug_by_demo_id ) {
+        if ( empty( $slug_by_demo_id ) ) {
+            return;
+        }
+        $map = array();
+        foreach ( $slug_by_demo_id as $demo_id => $slug ) {
+            $term = get_term_by( 'slug', $slug, 'product_cat' );
+            if ( $term ) {
+                $map[ (string) $demo_id ] = (string) $term->term_id;
+            }
+        }
+        $keys = array( 'include_categories', 'exclude_categories' );
+        $walk = function ( &$elements ) use ( &$walk, $map, $keys ) {
+            $changed = false;
+            foreach ( $elements as &$element ) {
+                foreach ( $keys as $key ) {
+                    if ( ! empty( $element['settings'][ $key ] ) && is_array( $element['settings'][ $key ] ) ) {
+                        $new = array();
+                        foreach ( $element['settings'][ $key ] as $id ) {
+                            $new[] = isset( $map[ (string) $id ] ) ? $map[ (string) $id ] : (string) $id;
+                        }
+                        if ( $new !== $element['settings'][ $key ] ) {
+                            $element['settings'][ $key ] = $new;
+                            $changed                     = true;
+                        }
+                    }
+                }
+                if ( ! empty( $element['elements'] ) && $walk( $element['elements'] ) ) {
+                    $changed = true;
+                }
+            }
+            return $changed;
+        };
+
+        global $wpdb;
+        // Revisions are skipped: update_post_meta() on a revision writes to its parent.
+        $ids = $wpdb->get_col( "SELECT pm.post_id FROM {$wpdb->postmeta} pm JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = '_elementor_data' AND p.post_type <> 'revision' AND pm.meta_value LIKE '%\\_categories%'" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup during import.
+        foreach ( $ids as $post_id ) {
+            $data = json_decode( (string) get_post_meta( $post_id, '_elementor_data', true ), true );
+            if ( is_array( $data ) && $walk( $data ) ) {
+                update_post_meta( $post_id, '_elementor_data', wp_slash( wp_json_encode( $data ) ) );
+                delete_post_meta( $post_id, '_elementor_element_cache' );
+            }
+        }
+    }
+
+    /**
+     * Restore a product's gallery and grouped children from the demo's Store API.
+     *
+     * `_product_image_gallery` and `_children` hold the demo's post IDs and the
+     * kit import does not translate them, so imported galleries pointed at
+     * missing images and grouped products at unrelated posts. Gallery images are
+     * matched by file name among the imported media (downloaded from the demo
+     * when missing); grouped children are matched by product slug.
+     *
+     * @param int   $local_id        Imported product ID.
+     * @param array $product         Demo product from the Store API.
+     * @param array $slug_by_demo_id Demo product ID => slug.
+     * @return void
+     */
+    private function restore_product_links( $local_id, $product, $slug_by_demo_id ) {
+        $local = wc_get_product( $local_id );
+        if ( ! $local ) {
+            return;
+        }
+        $changed = false;
+
+        // The first Store API image is the featured image; the rest are the gallery.
+        $gallery = array();
+        foreach ( array_slice( (array) ( $product['images'] ?? array() ), 1 ) as $image ) {
+            $id = empty( $image['src'] ) ? 0 : $this->local_attachment_for( $image['src'], $local_id );
+            if ( $id ) {
+                $gallery[] = $id;
+            }
+        }
+        if ( $gallery && $gallery !== array_map( 'intval', $local->get_gallery_image_ids() ) ) {
+            $local->set_gallery_image_ids( $gallery );
+            $changed = true;
+        }
+
+        if ( $local->is_type( 'grouped' ) && ! empty( $product['grouped_products'] ) ) {
+            $children = array();
+            foreach ( (array) $product['grouped_products'] as $demo_id ) {
+                $child = isset( $slug_by_demo_id[ $demo_id ] ) ? get_page_by_path( $slug_by_demo_id[ $demo_id ], OBJECT, 'product' ) : null;
+                if ( $child ) {
+                    $children[] = (int) $child->ID;
+                }
+            }
+            if ( $children && $children !== array_map( 'intval', $local->get_children() ) ) {
+                $local->set_children( $children );
+                $changed = true;
+            }
+        }
+
+        if ( $changed ) {
+            $local->save();
+        }
+    }
+
+    /**
+     * Imported attachment whose file name matches $src, downloaded from $src when missing.
+     *
+     * @param string $src     Image URL on the demo.
+     * @param int    $post_id Post the downloaded image is attached to.
+     * @return int Attachment ID, or 0.
+     */
+    private function local_attachment_for( $src, $post_id ) {
+        global $wpdb;
+        $file = pathinfo( (string) wp_parse_url( $src, PHP_URL_PATH ), PATHINFO_FILENAME );
+        if ( '' === $file ) {
+            return 0;
+        }
+        $id = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup during import.
+            "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1",
+            '%' . $wpdb->esc_like( '/' . $file ) . '.%'
+        ) );
+        if ( $id ) {
+            return $id;
+        }
+        if ( ! function_exists( 'media_sideload_image' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/media.php';
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+            require_once ABSPATH . 'wp-admin/includes/image.php';
+        }
+        $id = media_sideload_image( $src, $post_id, null, 'id' );
+        return is_wp_error( $id ) ? 0 : (int) $id;
+    }
+
+    /**
+     * Recreate the variations of a variable product from the demo's Store API.
+     *
+     * Elementor's kit export carries the parent product but no
+     * `product_variation` posts, so imported variable products cannot be bought
+     * and show a single price. Each demo variation is rebuilt with its attribute
+     * combination ("any" when the demo leaves it empty), prices, SKU, stock
+     * status and image (matched by file name among the imported media).
+     *
+     * @param int      $parent_id Imported parent product ID.
+     * @param array    $product   Demo product from the Store API.
+     * @param callable $fetch     Store API reader.
+     * @return void
+     */
+    private function restore_product_variations( $parent_id, $product, $fetch ) {
+        $parent = wc_get_product( $parent_id );
+        if ( ! $parent || ! $parent->is_type( 'variable' ) || $parent->get_children() ) {
+            return;
+        }
+
+        $taxonomy_by_name = array();
+        foreach ( (array) $product['attributes'] as $attribute ) {
+            if ( ! empty( $attribute['name'] ) && ! empty( $attribute['taxonomy'] ) ) {
+                $taxonomy_by_name[ strtolower( $attribute['name'] ) ] = $attribute['taxonomy'];
+            }
+        }
+
+        global $wpdb;
+        foreach ( $product['variations'] as $item ) {
+            if ( empty( $item['id'] ) ) {
+                continue;
+            }
+            $detail = $fetch( 'products/' . (int) $item['id'] );
+            if ( empty( $detail ) || 'variation' !== ( $detail['type'] ?? '' ) ) {
+                continue;
+            }
+
+            $attributes = array();
+            foreach ( (array) ( $item['attributes'] ?? array() ) as $attribute ) {
+                $name = strtolower( $attribute['name'] ?? '' );
+                if ( isset( $taxonomy_by_name[ $name ] ) ) {
+                    // Global attribute: the value is a term slug.
+                    $attributes[ $taxonomy_by_name[ $name ] ] = null === $attribute['value'] ? '' : sanitize_title( $attribute['value'] );
+                } else {
+                    // Custom product attribute: WooCommerce stores the option text as is.
+                    $attributes[ sanitize_title( $name ) ] = null === $attribute['value'] ? '' : (string) $attribute['value'];
+                }
+            }
+
+            $variation = new WC_Product_Variation();
+            $variation->set_parent_id( $parent_id );
+            $variation->set_attributes( $attributes );
+
+            $unit    = pow( 10, (int) ( $detail['prices']['currency_minor_unit'] ?? 2 ) );
+            $regular = isset( $detail['prices']['regular_price'] ) ? (float) $detail['prices']['regular_price'] / $unit : '';
+            $sale    = isset( $detail['prices']['sale_price'] ) ? (float) $detail['prices']['sale_price'] / $unit : '';
+            $variation->set_regular_price( (string) $regular );
+            if ( '' !== $sale && $sale < $regular ) {
+                $variation->set_sale_price( (string) $sale );
+            }
+
+            if ( ! empty( $detail['sku'] ) && ! wc_get_product_id_by_sku( $detail['sku'] ) ) {
+                $variation->set_sku( $detail['sku'] );
+            }
+            $variation->set_stock_status( empty( $detail['is_in_stock'] ) ? 'outofstock' : 'instock' );
+
+            if ( ! empty( $detail['images'][0]['src'] ) ) {
+                $file     = pathinfo( wp_parse_url( $detail['images'][0]['src'], PHP_URL_PATH ), PATHINFO_FILENAME );
+                $image_id = (int) $wpdb->get_var( $wpdb->prepare( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- One-off lookup during import.
+                    "SELECT post_id FROM {$wpdb->postmeta} WHERE meta_key = '_wp_attached_file' AND meta_value LIKE %s LIMIT 1",
+                    '%' . $wpdb->esc_like( '/' . $file ) . '.%'
+                ) );
+                if ( $image_id ) {
+                    $variation->set_image_id( $image_id );
+                }
+            }
+
+            $variation->save();
+        }
+
+        WC_Product_Variable::sync( $parent_id );
+    }
+
+    /**
+     * Date WordPress' default posts just before the oldest imported post.
+     *
+     * The default "Hello world!" post carries the site creation date, so it is
+     * newer than every demo post and lands first in the blog and related-posts
+     * lists, shifting the demo order. Moving it behind the demo posts keeps the
+     * demo order without deleting the site owner's content. A "Hello world!"
+     * shipped by the demo itself is not in $post_ids and stays untouched.
+     *
+     * @param int[] $post_ids Posts that existed before the import.
+     * @return void
+     */
+    private function push_default_posts_back( $post_ids ) {
+        if ( empty( $post_ids ) ) {
+            return;
+        }
+        // The oldest imported post: skip the pre-existing ones in PHP, they are few.
+        $oldest = null;
+        foreach ( get_posts( array(
+            'post_type'      => 'post',
+            'post_status'    => 'publish',
+            'posts_per_page' => count( $post_ids ) + 1,
+            'orderby'        => 'date',
+            'order'          => 'ASC',
+        ) ) as $candidate ) {
+            if ( ! in_array( (int) $candidate->ID, array_map( 'intval', $post_ids ), true ) ) {
+                $oldest = $candidate;
+                break;
+            }
+        }
+        if ( ! $oldest ) {
+            return;
+        }
+        $date = gmdate( 'Y-m-d H:i:s', strtotime( $oldest->post_date_gmt . ' UTC' ) - 1 );
+        foreach ( $post_ids as $post_id ) {
+            wp_update_post( array(
+                'ID'            => $post_id,
+                'post_date'     => get_date_from_gmt( $date ),
+                'post_date_gmt' => $date,
+            ) );
+        }
+    }
+
+    /**
+     * Replace a non-URL attachment GUID with the attachment URL.
+     *
+     * Elementor's importer maps every attachment GUID to the new upload URL and
+     * str_replace()s it through all imported content, so a GUID such as "rio"
+     * corrupts every word containing it.
+     *
+     * @param array $post Raw post data parsed from the WXR file.
+     * @return array
+     */
+    public function fix_attachment_guid( $post ) {
+        if ( isset( $post['post_type'] ) && 'attachment' === $post['post_type']
+            && ! empty( $post['attachment_url'] )
+            && ( empty( $post['guid'] ) || false === strpos( $post['guid'], '://' ) ) ) {
+            $post['guid'] = $post['attachment_url'];
+        }
+        return $post;
+    }
+
+    /**
+     * Keep the original post dates when Elementor imports the demo content.
+     *
+     * @param array $postdata Post data about to be inserted.
+     * @param array $post     Raw post data parsed from the WXR file.
+     * @return array
+     */
+    public function keep_import_post_dates( $postdata, $post ) {
+        foreach ( array( 'post_date', 'post_date_gmt' ) as $key ) {
+            if ( ! empty( $post[ $key ] ) && '0000-00-00 00:00:00' !== $post[ $key ] ) {
+                $postdata[ $key ] = $post[ $key ];
+            }
+        }
+        return $postdata;
+    }
+
+    /**
+     * Apply the Elementor experiment states the demo was designed with.
+     *
+     * Reads the `experiments` block from the imported kit's site-settings.json
+     * and writes the matching `elementor_experiment-{name}` options, so the
+     * imported site renders like the staging demo. Different demos may ship
+     * different stable-feature choices (for example "Optimized Markup" was kept
+     * inactive on retailridge), so each kit is honoured independently.
+     *
+     * Only experiments released as `stable` are applied; alpha/beta features
+     * (Atomic Editor/Editor V4 and friends) are intentionally left untouched so
+     * the site owner can still opt in and out freely.
+     *
+     * Elementor's own importer only applies experiments whose exported state is
+     * 'active' or 'default'; its allow-list repeats STATE_ACTIVE twice and never
+     * lists STATE_INACTIVE, so a demo designed with a feature explicitly
+     * disabled would silently keep the target site's default. This pass closes
+     * that gap by forcing the effective state recorded in the kit.
+     *
+     * @since 1.7.3
+     *
+     * @param \ZipArchive $zip Opened handle of the imported kit zip.
+     * @return void
+     */
+    private function apply_kit_experiment_states( $zip_file_path ) {
+        if ( empty( $zip_file_path ) || ! $zip_file_path instanceof \ZipArchive ) {
+            return;
+        }
+
+        if ( ! class_exists( '\Elementor\Plugin' ) || empty( \Elementor\Plugin::$instance->experiments ) ) {
+            return;
+        }
+
+        $site_settings_json = $zip_file_path->getFromName( 'site-settings.json' );
+
+        if ( empty( $site_settings_json ) ) {
+            return;
+        }
+
+        $site_settings = json_decode( $site_settings_json, true );
+
+        if ( empty( $site_settings['experiments'] ) || ! is_array( $site_settings['experiments'] ) ) {
+            return;
+        }
+
+        $experiments_manager = \Elementor\Plugin::$instance->experiments;
+
+        foreach ( $site_settings['experiments'] as $feature_name => $feature_data ) {
+            if ( empty( $feature_name ) || ! is_array( $feature_data ) || empty( $feature_data['state'] ) ) {
+                continue;
+            }
+
+            // Only stable features are guaranteed to render like the demo;
+            // alpha/beta experiments stay open for the site owner to choose.
+            if ( empty( $feature_data['release_status'] ) || 'stable' !== $feature_data['release_status'] ) {
+                continue;
+            }
+
+            $feature = $experiments_manager->get_features( $feature_name );
+
+            if ( empty( $feature['mutable'] ) ) {
+                continue;
+            }
+
+            // 'default' means the designer left the experiment untouched, so the
+            // demo follows Elementor's current default. Keep it as 'default':
+            // the default recorded in the kit is the one of the exporting site
+            // (e.g. Inline Font Icons "inactive") and forcing it would make the
+            // imported site drift from the live demo.
+            $state = $feature_data['state'];
+
+            if ( ! in_array( $state, array( 'active', 'inactive', 'default' ), true ) ) {
+                continue;
+            }
+
+            update_option( $experiments_manager->get_feature_option_key( $feature_name ), $state );
+        }
     }
 
     protected function complete() {
@@ -415,6 +1005,14 @@ class Solace_Import_Elementor_Process extends XWP_Background_Process {
 class Thumbnail_Generator extends XWP_Background_Process {
 
     protected $action = 'generate_thumbnails';
+
+    /**
+     * Queue items are plain attachment IDs (integers) -- never objects.
+     * Lock unserialize to scalars/arrays only.
+     *
+     * @var bool|array
+     */
+    protected $allowed_batch_data_classes = false;
 
     /**
      * Process each item.
@@ -830,7 +1428,7 @@ class Solace_Extra_Import {
     
         global $wp_filesystem;
         WP_Filesystem();
-        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
+        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, ( defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644 ));
     
         if ($file_saved === false) {
             esc_html_e('Failed to save file.', 'solace-extra');
@@ -901,7 +1499,7 @@ class Solace_Extra_Import {
     
         global $wp_filesystem;
         WP_Filesystem();
-        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, FS_CHMOD_FILE);
+        $file_saved = $wp_filesystem->put_contents($file_path, $file_content, ( defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644 ));
     
         if ($file_saved === false) {
             esc_html_e('Failed to save file.', 'solace-extra');
@@ -1037,9 +1635,11 @@ class Solace_Extra_Import {
 
                     // Check if the menu is found before updating the values
                     if ($menu) {
-                        // Update 'nav_menu' and 'nav_menu_id' with the term_id of the menu
-                        $data->$widget_area[$widget_id]['nav_menu'] = $menu->term_id;
-                        $data->$widget_area[$widget_id]['nav_menu_id'] = $menu->term_id;
+                        // Update 'nav_menu' and 'nav_menu_id' with the term_id of the menu.
+                        // Explicit braces avoid PHP 7.0+ left-to-right indirect access
+                        // evaluation ({$widget_area} is the property name, not the key).
+                        $data->{$widget_area}[$widget_id]['nav_menu'] = $menu->term_id;
+                        $data->{$widget_area}[$widget_id]['nav_menu_id'] = $menu->term_id;
                     }
                 }
             }
@@ -2616,6 +3216,60 @@ class Solace_Extra_Import {
     
 
     /**
+     * Prefer this demo's imported copy over a same-slug page the site already had.
+     *
+     * WooCommerce creates its own empty "Shop" page (/shop/) before the import, so a
+     * demo page with the same slug is imported as /shop-2/ and a menu item resolved
+     * by slug pointed at the empty page. When the slug match is not part of this
+     * import and an imported page with the same title and a "<slug>-N" slug exists,
+     * that page is the one the demo's menu links to.
+     *
+     * @param WP_Post $found     Post found by slug.
+     * @param string  $demo_name Import meta key, "solace_extra_<demo>".
+     * @return int Post ID to link to.
+     */
+    private function prefer_imported_copy( $found, $demo_name ) {
+        if ( get_post_meta( $found->ID, $demo_name, true ) ) {
+            return (int) $found->ID;
+        }
+        $copies = get_posts(
+            array(
+                'post_type'      => $found->post_type,
+                'post_status'    => 'publish',
+                'title'          => $found->post_title,
+                'meta_key'       => $demo_name, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+                'posts_per_page' => -1,
+            )
+        );
+        foreach ( $copies as $copy ) {
+            if ( preg_match( '/^' . preg_quote( $found->post_name, '/' ) . '-\d+$/', $copy->post_name ) ) {
+                return (int) $copy->ID;
+            }
+        }
+        return (int) $found->ID;
+    }
+
+    /**
+     * Whether a demo URL renders the WooCommerce product archive.
+     *
+     * On some demos the page with slug "shop" is shadowed by the product archive
+     * (no or a missing shop page setting), so the menu link opens the archive.
+     *
+     * @param string $url Demo URL from the menu export.
+     * @return bool
+     */
+    private function demo_url_shows_product_archive( $url ) {
+        if ( empty( $url ) || 0 !== strpos( $url, trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) ) ) {
+            return false;
+        }
+        $response = wp_remote_get( $url, array( 'timeout' => 20 ) );
+        if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
+            return false;
+        }
+        return false !== strpos( wp_remote_retrieve_body( $response ), 'post-type-archive-product' );
+    }
+
+    /**
      * Get unique posts by title or slug, filtering by a specific post meta.
      *
      * @param string $title The title or slug to search for.
@@ -2911,7 +3565,12 @@ class Solace_Extra_Import {
                     if ( $shop_page && ! is_wp_error( $shop_page ) && $shop_page->ID ) {
                         // Make sure the slug is really 'shop', not some other page like 'hello-world'.
                         if ( isset( $shop_page->post_name ) && strtolower( $shop_page->post_name ) === 'shop' ) {
-                            $local_shop_id = (int) $shop_page->ID;
+                            // When the demo's /shop/ URL shows the WooCommerce product archive (its
+                            // page with that slug is shadowed), visitors see the archive there, so the
+                            // menu keeps the local shop page instead of the imported copy (/shop-2/).
+                            $local_shop_id = $this->demo_url_shows_product_archive( $menu_item->url )
+                                ? (int) $shop_page->ID
+                                : (int) $this->prefer_imported_copy( $shop_page, $demo_name );
                         }
                     }
                 }
@@ -2934,6 +3593,12 @@ class Solace_Extra_Import {
 
                 // 3) If a local page exists, use it as the "page" post type.
                 if ( $local_shop_id ) {
+                    // The shop page option is cleared before the menus are imported and
+                    // this early return skips the generic handler that restores it.
+                    if ( ! empty( $menu_item->is_shop_page ) ) {
+                        update_option( 'woocommerce_shop_page_id', $local_shop_id );
+                    }
+
                     $local_url = get_permalink( $local_shop_id );
                     if ( ! $local_url || is_wp_error( $local_url ) ) {
                         $local_url = $menu_item->url; // Fallback to the URL from the JSON.
@@ -3028,7 +3693,13 @@ class Solace_Extra_Import {
 
             // Check if a post with the specified slug exists.
             if ($post && $post[0]->post_title) {
-                $resolved_object_id = (int) $post[0]->ID;
+                $resolved_object_id = (int) $this->prefer_imported_copy( $post[0], $demo_name );
+
+                // The posts page must be set here too: when the page is found by
+                // slug the fallback branch below (which also sets it) never runs.
+                if ( ! empty( $menu_item->is_posts_page ) && 'page' === get_post_type( $resolved_object_id ) ) {
+                    update_option( 'page_for_posts', $resolved_object_id );
+                }
             } else {
                 // Second approach if the first one doesn't yield results.
                 // Check if a post with the menu item title exists.

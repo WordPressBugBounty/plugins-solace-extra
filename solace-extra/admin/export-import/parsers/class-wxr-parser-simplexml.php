@@ -21,11 +21,16 @@ class Solace_Extra_WXR_Parser_SimpleXML {
 
 		$dom       = new DOMDocument();
 		$old_value = null;
+		// libxml_disable_entity_loader() is deprecated in PHP 8.0+ (a no-op there);
+		// this guard keeps the XXE mitigation for PHP < 8.0 and never calls it on 8.0+.
 		if ( function_exists( 'libxml_disable_entity_loader' ) && PHP_VERSION_ID < 80000 ) {
+			// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- version-guarded, PHP < 8.0 only.
 			$old_value = libxml_disable_entity_loader( true );
 		}
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading an uploaded WXR import file; WP_Filesystem has no DOMDocument::loadXML() handle.
 		$success = $dom->loadXML( file_get_contents( $file ) );
 		if ( ! is_null( $old_value ) ) {
+			// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- restores the previous setting; only reachable when guarded above.
 			libxml_disable_entity_loader( $old_value );
 		}
 

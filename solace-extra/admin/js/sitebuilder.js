@@ -79,7 +79,9 @@
                 if(response.success) {
                     location.reload(); 
                 } else {
-                    alert('Failed to update status: ' + response.data);
+                    alert(response.data);
+                    // The switches were changed optimistically: show the real state again.
+                    location.reload();
                 }
             },
             error: function(xhr, status, error) {
@@ -162,7 +164,8 @@
                 if(response.success) {
                     location.reload();  // Refresh the page after successful update
                 } else {
-                    alert('Failed to update status.');
+                    alert(response.data || 'Failed to update status.');
+                    location.reload();
                 }
             }
         });
@@ -1398,7 +1401,23 @@
             },
             success: function(response) {
                 if (response.success) {
-                    $saveBtn.closest('.title-column')
+                    const $titleCol = $saveBtn.closest('.title-column');
+
+                    // Cart/Checkout/My Account: the page address under the title
+                    // follows the slug the rename gave that page.
+                    const pageUrl = response.data && response.data.page_url ? response.data.page_url : '';
+                    if (pageUrl) {
+                        const $url = $titleCol.siblings('.solace-part-url');
+                        const shown = pageUrl.replace(/^https?:\/\//, '');
+                        if ($url.is('a')) {
+                            $url.attr('href', pageUrl).text(shown + ' \u2197');
+                        } else if ($url.length) {
+                            // Not live: plain text, no link.
+                            $url.text(shown);
+                        }
+                    }
+
+                    $titleCol
                         .text(newTitle)
                         .data('original-title', newTitle); // Update the original title
 

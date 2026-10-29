@@ -26,11 +26,20 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
     var ajaxurl = "<?php echo esc_url( admin_url('admin-ajax.php') ); ?>";
 </script>
 <script>
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 
     jQuery(document).ready(function($) {
 
         // =================== 2nd TRYING TO COMBINE AJAX FONT AND COLOR ===================
-        var fontValue = localStorage.getItem('solace_step5_font');
+        var fontValue = localStorage.getItem(solaceStorageKey('solace_step5_font'));
         var new_solace_body_font = null;
         var new_solace_heading_font = null;
 
@@ -44,7 +53,7 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
             }
         }
 
-        var colorValue = localStorage.getItem('solace_step5_color');
+        var colorValue = localStorage.getItem(solaceStorageKey('solace_step5_color'));
         var new_base_color = null;
         var new_heading_color = null;
         var new_link_button_color = null;
@@ -123,7 +132,7 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
 
 
         // Get the 'solaceDuration' value from local storage
-        var solaceDuration = localStorage.getItem('solaceDuration');
+        var solaceDuration = localStorage.getItem(solaceStorageKey('solaceDuration'));
 
         // Check if solaceDuration is not null or undefined
         if (solaceDuration) {
@@ -151,7 +160,7 @@ $solace_extra_customizer_link = admin_url( 'customize.php' );
             }
 
             // Remove information imported
-            localStorage.removeItem('solaceRemoveImported');
+            localStorage.removeItem(solaceStorageKey('solaceRemoveImported'));
         }
     });
 

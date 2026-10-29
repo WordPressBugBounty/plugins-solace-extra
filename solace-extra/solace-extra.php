@@ -14,7 +14,7 @@
  * Plugin Name:       Solace Extra
  * Plugin URI:        https://solacewp.com/
  * Description:       Additional features for Solace Theme
- * Version:           1.7.3
+ * Version:           1.8.0
  * Requires PHP:      7.4
  * Author:            Solace
  * Author URI:        https://solacewp.com/
@@ -38,7 +38,7 @@ defined( 'ABSPATH' ) || exit;
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'SOLACE_EXTRA_VERSION', '1.7.3' );
+define( 'SOLACE_EXTRA_VERSION', '1.8.0' );
 
 /**
  * Bumped whenever a change affects the rewrite rules this plugin contributes.
@@ -100,6 +100,34 @@ global $solace_is_run_in_shortcode;
  * The code that runs during plugin activation.
  * This action is documented in includes/class-solace-extra-activator.php
  */
+/**
+ * Sanitize a color that may be hex or rgb()/rgba().
+ *
+ * Demo palettes can use transparent colors (e.g. text selection
+ * "rgba(255,149,0,0.31)"); sanitize_hex_color() turned those into ''.
+ *
+ * @param string $color Raw color.
+ * @return string Sanitized color or ''.
+ */
+function solace_extra_sanitize_color( $color ) {
+	$color = trim( (string) $color );
+	if ( '' === $color ) {
+		return '';
+	}
+	if ( '#' === $color[0] ) {
+		return (string) sanitize_hex_color( $color );
+	}
+	if ( preg_match( '/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*(0|1|0?\.\d+|1\.0+)\s*)?\)$/i', $color, $m ) ) {
+		if ( max( (int) $m[1], (int) $m[2], (int) $m[3] ) > 255 ) {
+			return '';
+		}
+		return isset( $m[4] ) && '' !== $m[4]
+			? sprintf( 'rgba(%d,%d,%d,%s)', $m[1], $m[2], $m[3], $m[4] )
+			: sprintf( 'rgb(%d,%d,%d)', $m[1], $m[2], $m[3] );
+	}
+	return '';
+}
+
 function solace_extra_activate() {
     add_option( 'solace_extra_redirect_after_activation_option', true );
 	require_once plugin_dir_path( __FILE__ ) . 'includes/class-solace-extra-activator.php';
@@ -481,7 +509,7 @@ function solace_disable_image_processing() {
         $action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : 
                 (isset($_POST['action']) ? sanitize_key(wp_unslash($_POST['action'])) : 'not_detected');
         // phpcs:enable
-        if ($action === 'wp_import_posts_process') {
+        if (preg_match('/^wp(_\d+)?_import_posts_process$/', $action)) {
             add_filter('intermediate_image_sizes_advanced', 'solace_disable_sizes');
         } else {
         }
@@ -512,18 +540,17 @@ function generate_thumbnails_for_single_image( $image_id ) {
         return false;
     }
 
-    $sizes = array(
-        'solace-single2'                             => array( 2000, 975 ),
-        'solace-single-default'                      => array( 1220, 715 ),
-        'solace-default-blog'                        => array( 1214, 715 ),
-        'solace-related-posts'                       => array( 250, 277 ),
-        'solace-wc-shop-layout3-layout4-layout6'     => array( 350, 500 ),
-
-        'thumbnail'       => array( (int) get_option( 'thumbnail_size_w' ), (int) get_option( 'thumbnail_size_h' ) ),
-        'medium'          => array( (int) get_option( 'medium_size_w' ), (int) get_option( 'medium_size_h' ) ),
-        'medium_large'    => array( (int) get_option( 'medium_large_size_w' ), (int) get_option( 'medium_large_size_h' ) ),
-        'large'           => array( (int) get_option( 'large_size_w' ), (int) get_option( 'large_size_h' ) ),
-    );
+    // Use the sizes and crop flags as registered by WordPress and the theme.
+    // Hard-coding them (all cropped) cropped proportional sizes such as
+    // medium/large and drifted from the theme (solace-single-default is 1220x700).
+    $names = array( 'solace-single2', 'solace-single-default', 'solace-default-blog', 'solace-related-posts', 'solace-wc-shop-layout3-layout4-layout6', 'thumbnail', 'medium', 'medium_large', 'large' );
+    $registered = wp_get_registered_image_subsizes();
+    $sizes = array();
+    foreach ( $names as $name ) {
+        if ( isset( $registered[ $name ] ) ) {
+            $sizes[ $name ] = array( (int) $registered[ $name ]['width'], (int) $registered[ $name ]['height'], ! empty( $registered[ $name ]['crop'] ) );
+        }
+    }
 
     $metadata = wp_get_attachment_metadata( $image_id );
 
@@ -540,7 +567,7 @@ function generate_thumbnails_for_single_image( $image_id ) {
     }
 
     foreach ( $sizes as $size_name => $dimensions ) {
-        $thumbnail = image_make_intermediate_size( $file_path, $dimensions[0], $dimensions[1], true );
+        $thumbnail = image_make_intermediate_size( $file_path, $dimensions[0], $dimensions[1], $dimensions[2] );
         if ( $thumbnail ) {
             $metadata['sizes'][$size_name] = array(
                 'file'      => basename( $thumbnail['file'] ),

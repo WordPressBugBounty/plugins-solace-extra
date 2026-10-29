@@ -2,6 +2,12 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
+ * WooCommerce page options integration (Solace Site Builder parts).
+ * See file for details.
+ */
+require_once __DIR__ . '/woo-pages-integration.php';
+
+/**
  * The sitebuilder functionality of the plugin.
  *
  * @link       https://solacewp.com
@@ -265,6 +271,20 @@ function solace_sitebuilder_get_elementor_pro_parts( $part ) {
             $conditions = array();
         }
 
+        // Elementor Pro shows a template only where an include condition
+        // matches. One without any (never given display conditions) is not
+        // shown anywhere, so it cannot clash with a Site Builder part.
+        $has_include = false;
+        foreach ( $conditions as $condition ) {
+            if ( 0 === strpos( (string) $condition, 'include/' ) ) {
+                $has_include = true;
+                break;
+            }
+        }
+        if ( ! $has_include ) {
+            continue;
+        }
+
         $broad = isset( $entire_conditions[ $part ] ) ? $entire_conditions[ $part ] : array();
         $is_entire = ! empty( array_intersect( $broad, $conditions ) );
 
@@ -322,7 +342,7 @@ function solace_sitebuilder_elementor_condition_label( $condition ) {
  * @return bool
  */
 function solace_sitebuilder_part_is_active( $part ) {
-    if ( ! in_array( $part, array( 'header', 'footer', 'singleproduct', 'shopproduct', 'blogsinglepost', 'blogarchive', '404', 'purchase-summary' ), true ) ) {
+    if ( ! in_array( $part, array( 'header', 'footer', 'singleproduct', 'shopproduct', 'blogsinglepost', 'blogarchive', '404', 'purchase-summary', 'cart', 'checkout', 'myaccount' ), true ) ) {
         return false;
     }
     $posts = get_posts(
@@ -417,9 +437,109 @@ function solace_sitebuilder_elementor_pro_notice( $part ) {
         }
     );
 
+    if ( 'shopproduct' === $part ) {
+        // The Solace shop template always wins where this part applies, so
+        // this is information rather than a conflict.
+        echo '<div class="solace-ep-conflict-box solace-ep-info-box">';
+        echo solace_sitebuilder_elementor_pro_shop_priority_content( $templates ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+        echo '</div>';
+        return;
+    }
+
     echo '<div class="solace-ep-conflict-box">';
     echo solace_sitebuilder_elementor_pro_conflict_content( $part_label, $templates, ! empty( $whole_site ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
     echo '</div>';
+}
+
+/**
+ * Whether the active Shop Product Archive parts cover every product archive.
+ *
+ * A part without conditions applies everywhere, and "Shop Page" (product|shop)
+ * covers the shop page plus every product taxonomy archive and product search.
+ * Any exclude rule leaves a gap.
+ *
+ * @return bool
+ */
+function solace_sitebuilder_shop_part_covers_all_archives() {
+    $posts = get_posts(
+        array(
+            'post_type'      => 'solace-sitebuilder',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'no_found_rows'  => true,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Active status per part.
+            'meta_key'       => '_solace_shopproduct_status',
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Active status per part.
+            'meta_value'     => '1',
+            'fields'         => 'ids',
+        )
+    );
+
+    foreach ( (array) $posts as $post_id ) {
+        $conditions = maybe_unserialize( get_post_meta( $post_id, '_solace_shopproduct_conditions', true ) );
+        if ( empty( $conditions ) || ! is_array( $conditions ) ) {
+            return true;
+        }
+
+        $has_shop    = false;
+        $has_exclude = false;
+        foreach ( $conditions as $condition ) {
+            if ( ! is_array( $condition ) || ! isset( $condition['type'], $condition['value'] ) ) {
+                continue;
+            }
+            if ( 'exclude' === $condition['type'] ) {
+                $has_exclude = true;
+            } elseif ( 'include' === $condition['type'] && 'product|shop' === $condition['value'] ) {
+                $has_shop = true;
+            }
+        }
+        if ( $has_shop && ! $has_exclude ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Info content for an Elementor Pro Products Archive template next to an
+ * active Shop Product Archive part.
+ *
+ * Solace Extra Pro swaps the shop template at template_include priority 99999,
+ * after Elementor Pro's Theme Builder (priority 11), so the Solace part is
+ * shown wherever its conditions match. The Elementor Pro template only shows
+ * on product archives the part does not cover.
+ *
+ * @param array $templates Templates from solace_sitebuilder_get_elementor_pro_parts().
+ * @param bool  $plain     Render template titles as text (no links) for the card tooltip.
+ * @param bool  $heading   Print the heading.
+ * @return string Escaped HTML.
+ */
+function solace_sitebuilder_elementor_pro_shop_priority_content( $templates, $plain = false, $heading = true ) {
+    $html = '';
+    if ( $heading ) {
+        $html .= '<p><strong>' . esc_html__( 'Solace Site Builder takes priority', 'solace-extra' ) . '</strong></p>';
+    }
+
+    $html .= '<p>' . esc_html__( 'A Products Archive template from Elementor Pro Theme Builder is also active. Where this Shop Product Archive part applies, the Solace part is shown and the Elementor Pro template is skipped.', 'solace-extra' ) . '</p>';
+
+    $html .= '<ul style="list-style:disc;padding-left:22px;margin:0 0 8px;">';
+    foreach ( $templates as $t ) {
+        $labels = ! empty( $t['labels'] ) ? implode( ', ', $t['labels'] ) : __( 'no conditions', 'solace-extra' );
+        $title  = $plain
+            ? esc_html( $t['title'] )
+            : '<a href="' . esc_url( $t['edit_url'] ) . '" target="_blank">' . esc_html( $t['title'] ) . '</a>';
+        $html  .= '<li>' . $title . ' &mdash; ' . esc_html( $labels ) . '</li>';
+    }
+    $html .= '</ul>';
+
+    if ( solace_sitebuilder_shop_part_covers_all_archives() ) {
+        $html .= '<p style="margin:0;">' . esc_html__( 'This part covers every product archive, so the Elementor Pro template is not shown anywhere. If you do not need it, set it to Draft or remove its display conditions.', 'solace-extra' ) . '</p>';
+    } else {
+        $html .= '<p style="margin:0;">' . esc_html__( 'The Elementor Pro template still shows on product archives outside this part\'s conditions.', 'solace-extra' ) . '</p>';
+    }
+
+    return $html;
 }
 
 /**
@@ -439,7 +559,7 @@ function solace_sitebuilder_conflict_box_css() {
     // Custom class: the dashboard admin CSS hides every `.notice` with
     // !important on these pages (body.solace_page_dashboard-sitebuilder
     // #wpbody-content .notice { display:none !important; }).
-    echo '<style>.solace-ep-conflict-box{background:#fff;border-left:4px solid #dba617;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:1px 12px;margin:16px 0;}</style>';
+    echo '<style>.solace-ep-conflict-box{background:#fff;border-left:4px solid #dba617;box-shadow:0 1px 1px rgba(0,0,0,.04);padding:1px 12px;margin:16px 0;}.solace-ep-conflict-box.solace-ep-info-box{border-left-color:#2271b1;}</style>';
 }
 
 /**
@@ -456,12 +576,26 @@ function solace_sitebuilder_conflict_box_css() {
  * @return bool
  */
 function solace_sitebuilder_shopproduct_replaces_shop_page() {
+    return (bool) solace_sitebuilder_shopproduct_shop_page_part_id();
+}
+
+/**
+ * The Shop Product Archive part that replaces the WooCommerce Shop page, or 0.
+ *
+ * Same rule as solace_sitebuilder_shopproduct_replaces_shop_page(). When more
+ * than one part qualifies, the newest is named.
+ *
+ * @return int
+ */
+function solace_sitebuilder_shopproduct_shop_page_part_id() {
     $posts = get_posts(
         array(
             'post_type'      => 'solace-sitebuilder',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
             'no_found_rows'  => true,
+            'orderby'        => 'ID',
+            'order'          => 'DESC',
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- Active Shop Product Archive parts.
             'meta_key'       => '_solace_shopproduct_status',
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- Active Shop Product Archive parts.
@@ -474,7 +608,7 @@ function solace_sitebuilder_shopproduct_replaces_shop_page() {
         $conditions = maybe_unserialize( get_post_meta( $post_id, '_solace_shopproduct_conditions', true ) );
 
         if ( empty( $conditions ) || ! is_array( $conditions ) ) {
-            return true;
+            return (int) $post_id;
         }
 
         $included = false;
@@ -492,11 +626,198 @@ function solace_sitebuilder_shopproduct_replaces_shop_page() {
         }
 
         if ( $included && ! $excluded ) {
-            return true;
+            return (int) $post_id;
         }
     }
 
-    return false;
+    return 0;
+}
+
+/**
+ * Whether a page was designed with Elementor.
+ *
+ * Builder mode with actual content, not the empty '[]' Elementor leaves behind
+ * on a page opened but never built.
+ *
+ * @param int $page_id Page ID.
+ * @return bool
+ */
+function solace_sitebuilder_page_is_elementor_designed( $page_id ) {
+    $page_id = absint( $page_id );
+
+    if ( ! $page_id || 'builder' !== get_post_meta( $page_id, '_elementor_edit_mode', true ) ) {
+        return false;
+    }
+
+    $elementor_data = trim( (string) get_post_meta( $page_id, '_elementor_data', true ) );
+
+    return '' !== $elementor_data && '[]' !== $elementor_data;
+}
+
+/**
+ * The page Elementor Pro Site Settings uses for a WooCommerce part, when it takes priority.
+ *
+ * Elementor Pro's Site Settings > WooCommerce Pages picks the Cart, Checkout,
+ * My Account and Shop pages (the same options WooCommerce stores) and its own
+ * Purchase Summary page. When that page is in use there, Elementor Pro wins and
+ * the Solace part stands aside:
+ *
+ *  - Cart, Checkout, My Account, Shop: the page is published and designed with
+ *    Elementor. Every store has these pages, so a plain one is not "in use".
+ *  - Purchase Summary: a published page is chosen. Elementor Pro sends
+ *    customers there after checkout.
+ *
+ * Needs Elementor Pro, which owns Site Settings, and Solace Extra Pro, which
+ * owns the overrides that would otherwise replace the page.
+ *
+ * @param string $part 'cart' | 'checkout' | 'myaccount' | 'shopproduct' | 'purchase-summary'.
+ * @return array{setting:string,page_id:int,page_title:string,edit_url:string}|array Empty when Elementor Pro does not take the page.
+ */
+function solace_sitebuilder_elementor_pro_woo_page( $part ) {
+    $labels = array(
+        'cart'             => __( 'Cart', 'solace-extra' ),
+        'checkout'         => __( 'Checkout', 'solace-extra' ),
+        'myaccount'        => __( 'My Account', 'solace-extra' ),
+        'shopproduct'      => __( 'Shop', 'solace-extra' ),
+        'purchase-summary' => __( 'Purchase Summary', 'solace-extra' ),
+    );
+
+    if ( ! isset( $labels[ $part ] ) || ! defined( 'SOLACE_EXTRA_PRO_VERSION' ) || ! class_exists( 'WooCommerce' ) ) {
+        return array();
+    }
+
+    if ( ! defined( 'ELEMENTOR_PRO_VERSION' ) && ! class_exists( '\ElementorPro\Plugin' ) ) {
+        return array();
+    }
+
+    if ( 'purchase-summary' === $part ) {
+        $page_id = absint( get_option( 'elementor_woocommerce_purchase_summary_page_id' ) );
+    } else {
+        $page_id = absint( wc_get_page_id( 'shopproduct' === $part ? 'shop' : $part ) );
+
+        if ( ! solace_sitebuilder_page_is_elementor_designed( $page_id ) ) {
+            return array();
+        }
+    }
+
+    if ( ! $page_id || 'page' !== get_post_type( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+        return array();
+    }
+
+    return array(
+        'setting'    => $labels[ $part ],
+        'page_id'    => $page_id,
+        'page_title' => get_the_title( $page_id ),
+        'edit_url'   => admin_url( 'post.php?post=' . $page_id . '&action=elementor' ),
+    );
+}
+
+/**
+ * The WooCommerce part the current front-end request belongs to, or ''.
+ *
+ * @return string
+ */
+function solace_sitebuilder_current_woo_page_part() {
+    if ( ! class_exists( 'WooCommerce' ) ) {
+        return '';
+    }
+
+    if ( ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'order-received' ) ) || '' !== (string) get_query_var( 'order-received', '' ) ) {
+        return 'purchase-summary';
+    }
+    if ( function_exists( 'is_cart' ) && is_cart() ) {
+        return 'cart';
+    }
+    if ( function_exists( 'is_checkout' ) && is_checkout() ) {
+        return 'checkout';
+    }
+    if ( function_exists( 'is_account_page' ) && is_account_page() ) {
+        return 'myaccount';
+    }
+    if ( function_exists( 'is_shop' ) && is_shop() ) {
+        return 'shopproduct';
+    }
+
+    return '';
+}
+
+/**
+ * Remember the template chosen before Solace Extra Pro's overrides (priority 99999) run.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function solace_sitebuilder_remember_template( $template ) {
+    $GLOBALS['solace_sitebuilder_template_before_override'] = $template;
+
+    return $template;
+}
+add_filter( 'template_include', 'solace_sitebuilder_remember_template', 99998 );
+
+/**
+ * Give the page back to Elementor Pro when its Site Settings use it.
+ *
+ * Runs after Solace Extra Pro's overrides. If one of them swapped in a Solace
+ * part on a page Elementor Pro Site Settings uses, the template chosen before
+ * the swap is restored, so the Elementor page renders instead.
+ *
+ * @param string $template Template path.
+ * @return string
+ */
+function solace_sitebuilder_elementor_pro_woo_priority( $template ) {
+    $before = isset( $GLOBALS['solace_sitebuilder_template_before_override'] ) ? (string) $GLOBALS['solace_sitebuilder_template_before_override'] : '';
+
+    if ( '' === $before || $before === $template ) {
+        return $template;
+    }
+
+    $part = solace_sitebuilder_current_woo_page_part();
+
+    if ( '' === $part || ! solace_sitebuilder_elementor_pro_woo_page( $part ) ) {
+        return $template;
+    }
+
+    // The override also tagged the body for the part it no longer renders.
+    add_filter(
+        'body_class',
+        static function ( $classes ) use ( $part ) {
+            return array_values( array_diff( $classes, array( 'solace-sitebuilder-' . $part ) ) );
+        },
+        999
+    );
+
+    return $before;
+}
+add_filter( 'template_include', 'solace_sitebuilder_elementor_pro_woo_priority', 100000 );
+
+/**
+ * Short info text for a part Elementor Pro takes priority over.
+ *
+ * @param string $part     Part slug.
+ * @param array  $info     From solace_sitebuilder_elementor_pro_woo_page().
+ * @param bool   $plain    Page title as text instead of a link (card tooltip).
+ * @param bool   $heading  Print the heading.
+ * @return string
+ */
+function solace_sitebuilder_elementor_pro_priority_content( $part, $info, $plain = false, $heading = true ) {
+    $html = '';
+
+    if ( $heading ) {
+        $html .= '<p><strong>' . esc_html__( 'Elementor Pro takes priority', 'solace-extra' ) . '</strong></p>';
+    }
+
+    $page = $plain
+        ? esc_html( $info['page_title'] )
+        : '<a href="' . esc_url( $info['edit_url'] ) . '" target="_blank">' . esc_html( $info['page_title'] ) . '</a>';
+
+    $html .= '<p style="margin:0;">' . sprintf(
+        /* translators: 1: page name, e.g. Cart, 2: page title (may be a link). */
+        esc_html__( 'Site Settings uses %2$s as the %1$s page, so this part is skipped.', 'solace-extra' ),
+        esc_html( $info['setting'] ),
+        $page
+    ) . '</p>';
+
+    return $html;
 }
 
 /**
@@ -518,16 +839,31 @@ function solace_sitebuilder_shopproduct_replaces_shop_page() {
  *    Elementor and a Shop Product Archive part replaces the Shop page: Solace
  *    Extra Pro's shop template renders only the part, so the design disappears.
  *
- * Both overrides live in Solace Extra Pro, so nothing is reported without it.
+ *  - Cart, Checkout and My Account (WooCommerce's own page options, which
+ *    Elementor Pro mirrors the same way). Same rule as Shop: a conflict only
+ *    when the page was designed with Elementor and the part is replacing it.
  *
- * @param string $part 'shopproduct' | 'purchase-summary'.
+ * All of these overrides live in Solace Extra Pro, so nothing is reported without it.
+ *
+ * @param string $part 'shopproduct' | 'purchase-summary' | 'cart' | 'checkout' | 'myaccount'.
  * @return array{setting:string,location:string,page_title:string,edit_url:string}|array Empty when nothing conflicts.
  */
 function solace_sitebuilder_elementor_site_settings_conflict( $part ) {
-    if ( ! in_array( $part, array( 'shopproduct', 'purchase-summary' ), true ) ) {
+    $woo_page_labels = array(
+        'cart'      => __( 'Cart', 'solace-extra' ),
+        'checkout'  => __( 'Checkout', 'solace-extra' ),
+        'myaccount' => __( 'My Account', 'solace-extra' ),
+    );
+
+    if ( ! in_array( $part, array( 'shopproduct', 'purchase-summary' ), true ) && ! isset( $woo_page_labels[ $part ] ) ) {
         return array();
     }
     if ( ! defined( 'SOLACE_EXTRA_PRO_VERSION' ) || ! class_exists( 'WooCommerce' ) ) {
+        return array();
+    }
+
+    // Elementor Pro wins these pages, so nothing is replaced and nothing conflicts.
+    if ( solace_sitebuilder_elementor_pro_woo_page( $part ) ) {
         return array();
     }
 
@@ -545,18 +881,24 @@ function solace_sitebuilder_elementor_site_settings_conflict( $part ) {
         }
 
         $setting = __( 'Purchase Summary', 'solace-extra' );
-    } else {
-        $page_id = function_exists( 'wc_get_page_id' ) ? absint( wc_get_page_id( 'shop' ) ) : 0;
-
-        if ( ! $page_id ) {
+    } elseif ( isset( $woo_page_labels[ $part ] ) ) {
+        // Only while the part is actually replacing its page: switched on,
+        // carrying its widget, and the page selected and published.
+        if ( ! function_exists( 'solace_woo_page_part_locks_page' ) || ! solace_woo_page_part_locks_page( $part ) ) {
             return array();
         }
 
-        // Designed with Elementor: builder mode with actual content, not the
-        // empty '[]' Elementor leaves behind on a page opened but never built.
-        $elementor_data = (string) get_post_meta( $page_id, '_elementor_data', true );
+        $page_id = absint( wc_get_page_id( $part ) );
 
-        if ( 'builder' !== get_post_meta( $page_id, '_elementor_edit_mode', true ) || '' === trim( $elementor_data ) || '[]' === trim( $elementor_data ) ) {
+        if ( ! solace_sitebuilder_page_is_elementor_designed( $page_id ) ) {
+            return array();
+        }
+
+        $setting = $woo_page_labels[ $part ];
+    } else {
+        $page_id = function_exists( 'wc_get_page_id' ) ? absint( wc_get_page_id( 'shop' ) ) : 0;
+
+        if ( ! solace_sitebuilder_page_is_elementor_designed( $page_id ) ) {
             return array();
         }
 
@@ -583,7 +925,9 @@ function solace_sitebuilder_elementor_site_settings_conflict( $part ) {
         // Shop page is only reachable through WooCommerce's own settings.
         'location'   => $has_elementor_pro
             ? __( 'Elementor Site Settings > WooCommerce Pages', 'solace-extra' )
-            : __( 'WooCommerce > Settings > Products', 'solace-extra' ),
+            : ( 'shopproduct' === $part
+                ? __( 'WooCommerce > Settings > Products', 'solace-extra' )
+                : __( 'WooCommerce > Settings > Advanced', 'solace-extra' ) ),
         'page_title' => get_the_title( $page_id ),
         'edit_url'   => admin_url( 'post.php?post=' . $page_id . '&action=elementor' ),
     );
@@ -609,21 +953,117 @@ function solace_sitebuilder_site_settings_conflict_content( $part, $conflict, $p
         ? esc_html( $conflict['page_title'] )
         : '<a href="' . esc_url( $conflict['edit_url'] ) . '" target="_blank">' . esc_html( $conflict['page_title'] ) . '</a>';
 
-    $html .= '<p>' . sprintf(
-        /* translators: 1: page title (may be a link), 2: settings location, 3: setting name */
-        esc_html__( '%1$s is selected in %2$s as the %3$s page.', 'solace-extra' ),
-        $page,
-        esc_html( $conflict['location'] ),
-        esc_html( $conflict['setting'] )
-    ) . ' ';
-
     if ( 'purchase-summary' === $part ) {
-        $html .= esc_html__( 'After checkout, customers are sent to that page, but this Solace Purchase Summary part replaces its content, so the page design is never shown.', 'solace-extra' ) . '</p>';
-        $html .= '<p style="margin:0;">' . esc_html__( 'Clear the Purchase Summary page in Elementor Site Settings, or turn off this Solace Site Builder part, so the intended one takes effect.', 'solace-extra' ) . '</p>';
+        $html .= '<p>' . sprintf(
+            /* translators: 1: page title (may be a link), 2: settings location. */
+            esc_html__( 'The Purchase Summary page (%1$s) in %2$s is replaced by this part after checkout.', 'solace-extra' ),
+            $page,
+            esc_html( $conflict['location'] )
+        ) . '</p>';
+        $html .= '<p style="margin:0;">' . esc_html__( 'Clear that page or turn off this part.', 'solace-extra' ) . '</p>';
     } else {
-        $html .= esc_html__( 'That page is designed with Elementor, but this Solace Shop Product Archive part replaces the Shop page, so the page design is never shown.', 'solace-extra' ) . '</p>';
-        $html .= '<p style="margin:0;">' . esc_html__( 'Choose a Shop page that is not designed with Elementor, or turn off this Solace Site Builder part, so the intended one takes effect.', 'solace-extra' ) . '</p>';
+        $html .= '<p>' . sprintf(
+            /* translators: 1: page name, e.g. Cart, 2: page title (may be a link), 3: settings location. */
+            esc_html__( 'The %1$s page (%2$s) in %3$s is designed with Elementor, but this part replaces it.', 'solace-extra' ),
+            esc_html( $conflict['setting'] ),
+            $page,
+            esc_html( $conflict['location'] )
+        ) . '</p>';
+        $html .= '<p style="margin:0;">' . esc_html__( 'Pick another page or turn off this part.', 'solace-extra' ) . '</p>';
     }
+
+    return $html;
+}
+
+/**
+ * A regular page chosen in WooCommerce Settings while a Cart/Checkout/My Account
+ * part is switched on.
+ *
+ * The part is then skipped on the front end ("WooCommerce Settings takes
+ * priority", woo-pages-integration.php), whether or not that page was designed
+ * with Elementor.
+ *
+ * @param string $part 'cart' | 'checkout' | 'myaccount'.
+ * @return array{label:string,part_id:int,page_title:string,edit_url:string}|array Empty when the part is not skipped.
+ */
+function solace_sitebuilder_woo_settings_priority( $part ) {
+    $labels = array(
+        'cart'      => __( 'Cart', 'solace-extra' ),
+        'checkout'  => __( 'Checkout', 'solace-extra' ),
+        'myaccount' => __( 'My Account', 'solace-extra' ),
+    );
+
+    if ( ! isset( $labels[ $part ] ) || ! class_exists( 'WooCommerce' ) || ! function_exists( 'solace_get_active_part_id' ) ) {
+        return array();
+    }
+
+    $part_id = (int) solace_get_active_part_id( $part );
+    $page_id = absint( get_option( 'woocommerce_' . $part . '_page_id', 0 ) );
+
+    if ( ! $part_id || ! $page_id || $page_id === $part_id ) {
+        return array();
+    }
+
+    if ( 'page' !== get_post_type( $page_id ) || 'publish' !== get_post_status( $page_id ) ) {
+        return array();
+    }
+
+    return array(
+        'label'      => $labels[ $part ],
+        'part_id'    => $part_id,
+        'page_title' => get_the_title( $page_id ),
+        'edit_url'   => admin_url( 'admin.php?page=wc-settings&tab=advanced' ),
+        // A page built with Elementor (e.g. an Elementor Pro cart design) is what renders instead.
+        'elementor'  => function_exists( 'solace_sitebuilder_page_is_elementor_designed' ) && solace_sitebuilder_page_is_elementor_designed( $page_id ),
+    );
+}
+
+/**
+ * Heading for solace_sitebuilder_woo_settings_priority().
+ *
+ * @param array $info From solace_sitebuilder_woo_settings_priority().
+ * @return string
+ */
+function solace_sitebuilder_woo_settings_priority_heading( $info ) {
+    // The WooCommerce Settings choice is what skips the part, whatever the page
+    // was built with. "Elementor takes priority" read as Elementor Pro winning,
+    // even with Elementor Pro inactive; the text below says when the page was
+    // designed with Elementor.
+    return __( 'WooCommerce Settings takes priority', 'solace-extra' );
+}
+
+/**
+ * Text for solace_sitebuilder_woo_settings_priority().
+ *
+ * @param array $info    From solace_sitebuilder_woo_settings_priority().
+ * @param bool  $plain   Settings link as text (card tooltip, inside an <a>).
+ * @param bool  $heading Print the heading.
+ * @return string Escaped HTML.
+ */
+function solace_sitebuilder_woo_settings_priority_content( $info, $plain = false, $heading = true ) {
+    $html = '';
+
+    if ( $heading ) {
+        $html .= '<p><strong>' . esc_html( solace_sitebuilder_woo_settings_priority_heading( $info ) ) . '</strong></p>';
+    }
+
+    $settings = $plain
+        ? esc_html__( 'WooCommerce Settings', 'solace-extra' )
+        : '<a href="' . esc_url( $info['edit_url'] ) . '" target="_blank">' . esc_html__( 'WooCommerce Settings', 'solace-extra' ) . '</a>';
+
+    $text = ! empty( $info['elementor'] )
+        /* translators: 1: part title, 2: page title, 3: page type (Cart, Checkout, My Account), 4: WooCommerce Settings (may be a link). */
+        ? __( '%2$s, designed with Elementor, is selected as the %3$s page in %4$s, so %1$s is skipped. Choose the "(Solace Sitebuilder)" option there to use this part.', 'solace-extra' )
+        /* translators: 1: part title, 2: page title, 3: page type (Cart, Checkout, My Account), 4: WooCommerce Settings (may be a link). */
+        : __( '%2$s is selected as the %3$s page in %4$s, so %1$s is skipped. Choose the "(Solace Sitebuilder)" option there to use this part.', 'solace-extra' );
+
+    $html .= '<p style="margin:0;">' . sprintf(
+        esc_html( $text ),
+        '<strong>' . esc_html( get_the_title( $info['part_id'] ) ) . '</strong>',
+        '<strong>' . esc_html( $info['page_title'] ) . '</strong>',
+        esc_html( $info['label'] ),
+        $settings
+    ) . '</p>';
 
     return $html;
 }
@@ -636,6 +1076,30 @@ function solace_sitebuilder_site_settings_conflict_content( $part, $conflict, $p
  * @return void
  */
 function solace_sitebuilder_elementor_site_settings_notice( $part ) {
+    $woo_priority = solace_sitebuilder_woo_settings_priority( $part );
+
+    if ( $woo_priority ) {
+        solace_sitebuilder_conflict_box_css();
+
+        echo '<div class="solace-ep-conflict-box solace-ep-info-box">';
+        echo solace_sitebuilder_woo_settings_priority_content( $woo_priority ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+        echo '</div>';
+
+        return;
+    }
+
+    $priority = solace_sitebuilder_elementor_pro_woo_page( $part );
+
+    if ( $priority && solace_sitebuilder_part_is_active( $part ) ) {
+        solace_sitebuilder_conflict_box_css();
+
+        echo '<div class="solace-ep-conflict-box solace-ep-info-box">';
+        echo solace_sitebuilder_elementor_pro_priority_content( $part, $priority ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+        echo '</div>';
+
+        return;
+    }
+
     $conflict = solace_sitebuilder_elementor_site_settings_conflict( $part );
 
     if ( empty( $conflict ) ) {
@@ -672,7 +1136,20 @@ function solace_sitebuilder_elementor_pro_card_badge( $part ) {
     // replaces. Checked independently of Theme Builder: either can apply alone.
     $site_conflict = solace_sitebuilder_elementor_site_settings_conflict( $part );
 
-    if ( empty( $templates ) && empty( $site_conflict ) ) {
+    // Elementor Pro Site Settings using the page: information, not a conflict.
+    $priority = solace_sitebuilder_part_is_active( $part ) ? solace_sitebuilder_elementor_pro_woo_page( $part ) : array();
+
+    // A regular page chosen in WooCommerce Settings: the part is skipped.
+    $woo_priority = solace_sitebuilder_woo_settings_priority( $part );
+
+    if ( $woo_priority ) {
+        // It explains the whole situation for this card on its own.
+        $templates     = array();
+        $site_conflict = array();
+        $priority      = array();
+    }
+
+    if ( empty( $templates ) && empty( $site_conflict ) && empty( $priority ) && empty( $woo_priority ) ) {
         return;
     }
 
@@ -693,7 +1170,7 @@ function solace_sitebuilder_elementor_pro_card_badge( $part ) {
         // switch closes it rather than keeping it open. A hovered strip rises
         // one more level so its tooltip is not covered by a neighbouring card's.
         echo '<style>'
-            . '.part-header,.part-footer,.part-singleproduct,.part-shopproduct,.part-purchase-summary,.part-blogsinglepost,.part-blogarchive,.part-404{position:relative;}'
+            . '.part-header,.part-footer,.part-singleproduct,.part-shopproduct,.part-purchase-summary,.part-blogsinglepost,.part-blogarchive,.part-404,.part-cart,.part-checkout,.part-myaccount{position:relative;}'
             . '.solace-ep-card-overlay{position:absolute;top:0;left:0;right:0;z-index:10;background:#000f44;color:#fff;font-size:11px;font-weight:600;line-height:1.4;padding:6px 10px;text-align:left;border-bottom:3px solid #ff9400;box-sizing:border-box;border-radius:8px 8px 0 0;overflow:visible;white-space:nowrap;}'
             . '.solace-ep-card-overlay .solace-ep-detail{position:absolute;top:100%;left:0;right:0;z-index:3;background:#fff;border:2px solid #000f44;border-top:none;border-radius:0 0 8px 8px;box-shadow:0 6px 16px rgba(0,15,68,.25);padding:10px 12px;font-size:11px;font-weight:400;line-height:1.5;color:#1d2327;text-align:left;white-space:normal;pointer-events:none;opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .35s ease-in-out,visibility .35s ease-in-out,transform .35s ease-in-out;}'
             . '.solace-ep-card-overlay .solace-ep-detail ul{margin:0 0 6px;padding-left:18px;}'
@@ -704,10 +1181,16 @@ function solace_sitebuilder_elementor_pro_card_badge( $part ) {
             . '</style>';
     }
 
-    $both = ! empty( $templates ) && ! empty( $site_conflict );
+    $both = ! empty( $templates ) && ( ! empty( $site_conflict ) || ! empty( $priority ) );
 
-    if ( $both ) {
+    if ( ! empty( $woo_priority ) ) {
+        $short = solace_sitebuilder_woo_settings_priority_heading( $woo_priority );
+    } elseif ( ! $both && ! empty( $priority ) ) {
+        $short = __( 'Elementor Pro takes priority', 'solace-extra' );
+    } elseif ( $both ) {
         $short = __( 'Elementor conflicts', 'solace-extra' );
+    } elseif ( ! empty( $templates ) && 'shopproduct' === $part ) {
+        $short = __( 'Solace Site Builder takes priority', 'solace-extra' );
     } elseif ( ! empty( $templates ) ) {
         $short = __( 'Elementor Pro Theme Builder conflict', 'solace-extra' );
     } else {
@@ -717,10 +1200,17 @@ function solace_sitebuilder_elementor_pro_card_badge( $part ) {
     // Short always-visible overlay inside the card; the full conflict detail
     // expands below it on hover. Plain text throughout: the tooltip sits inside
     // the card's <a>, and nested anchors would break the grid.
-    echo '<div class="solace-ep-card-overlay">&#9888; ' . esc_html( $short );
+    $shop_info = 'shopproduct' === $part && ! empty( $templates );
+    echo '<div class="solace-ep-card-overlay">' . ( ! $both && ( ! empty( $priority ) || ! empty( $woo_priority ) || $shop_info ) ? '&#9432; ' : '&#9888; ' ) . esc_html( $short );
     echo '<div class="solace-ep-detail">';
 
-    if ( ! empty( $templates ) ) {
+    if ( ! empty( $woo_priority ) ) {
+        echo solace_sitebuilder_woo_settings_priority_content( $woo_priority, true, false ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+    }
+
+    if ( $shop_info ) {
+        echo solace_sitebuilder_elementor_pro_shop_priority_content( $templates, true, $both ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+    } elseif ( ! empty( $templates ) ) {
         $whole_site = array_filter(
             $templates,
             static function ( $t ) {
@@ -736,8 +1226,50 @@ function solace_sitebuilder_elementor_pro_card_badge( $part ) {
         echo solace_sitebuilder_site_settings_conflict_content( $part, $site_conflict, true, $both ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
     }
 
+    if ( ! empty( $priority ) ) {
+        echo solace_sitebuilder_elementor_pro_priority_content( $part, $priority, true, $both ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped inside the helper.
+    }
+
     echo '</div>';
     echo '</div>';
+}
+
+/**
+ * Add the Elementor badge to the cart, checkout and my account cards Pro renders.
+ *
+ * Solace Extra Pro prints the "All Layout" cards and calls
+ * solace_sitebuilder_elementor_pro_card_badge() for its older cards only, so
+ * these three never showed one. The badge goes first inside each card link,
+ * where Pro puts it on the others.
+ *
+ * @param string $html Cards HTML from the solace_pro_cards_render action.
+ * @return string
+ */
+function solace_sitebuilder_add_woo_page_card_badges( $html ) {
+    foreach ( array( 'cart', 'checkout', 'myaccount' ) as $part ) {
+        if ( ! preg_match( '#<a\s+class="part-' . preg_quote( $part, '#' ) . '[\s"][^>]*>#', $html, $match, PREG_OFFSET_CAPTURE ) ) {
+            continue;
+        }
+
+        $open  = $match[0][0];
+        $start = $match[0][1] + strlen( $open );
+        $close = strpos( $html, '</a>', $start );
+
+        // Pro may add the badge itself one day; never print it twice.
+        if ( false !== $close && false !== strpos( substr( $html, $start, $close - $start ), 'solace-ep-card-overlay' ) ) {
+            continue;
+        }
+
+        ob_start();
+        solace_sitebuilder_elementor_pro_card_badge( $part );
+        $badge = ob_get_clean();
+
+        if ( '' !== $badge ) {
+            $html = substr_replace( $html, $badge, $start, 0 );
+        }
+    }
+
+    return $html;
 }
 
 /**
@@ -1278,6 +1810,16 @@ function solace_update_sitebuilder_status() {
         wp_send_json_error( 'Invalid part.' );
     }
 
+    // A Cart / Checkout / My Account template the store cannot use yet (draft, no
+    // design, no page widget) is refused before the live one is switched off.
+    $turning_on = in_array( $status, array( '1', 'true', 'on' ), true );
+    if ( $turning_on && function_exists( 'solace_extra_woo_part_unusable_reason' ) ) {
+        $reason = solace_extra_woo_part_unusable_reason( $post_id, $part );
+        if ( '' !== $reason ) {
+            wp_send_json_error( $reason );
+        }
+    }
+
     // singleproduct / shopproduct templates each carry their own conditions, so
     // multiple templates may be active at once. Only enforce one-active for the
     // parts that have no conditions (purchase-summary, blog, archive, 404).
@@ -1362,9 +1904,30 @@ function solace_update_sitebuilder_all_status() {
         }
         wp_send_json_success('Status updated to 0 for all posts.');
     } elseif ($status === '1') {
-        foreach ($posts as $post_id) {
-            solace_set_part_status( $post_id, $part, true );
-            break;
+        // Switch on the newest template that can actually be used (published,
+        // designed and, for Cart / Checkout / My Account, carrying the page
+        // widget), not merely the newest one, which may be an empty draft.
+        $chosen = 0;
+        foreach ( $posts as $post_id ) {
+            $usable = 'publish' === get_post_status( $post_id ) && solace_part_is_renderable( $post_id );
+            if ( $usable && function_exists( 'solace_extra_woo_part_unusable_reason' ) ) {
+                $usable = '' === solace_extra_woo_part_unusable_reason( $post_id, $part );
+            }
+            if ( $usable ) {
+                $chosen = (int) $post_id;
+                break;
+            }
+        }
+
+        if ( ! $chosen ) {
+            if ( in_array( $part, array( 'cart', 'checkout', 'myaccount' ), true ) ) {
+                wp_send_json_error( __( 'No template of this type can be used yet. Publish one with a design and its page widget first.', 'solace-extra' ) );
+            }
+            $chosen = $posts ? (int) $posts[0] : 0;
+        }
+
+        if ( $chosen ) {
+            solace_set_part_status( $chosen, $part, true );
         }
         wp_send_json_success('Status updated to 1 for all posts.');
     } else {
@@ -1928,8 +2491,13 @@ function solace_extra_create_and_edit_page( $part, $title_prefix ) {
     $query = new WP_Query( $args );
     $post_count = count( $query->posts ) + 1;
 
+    // Cart / Checkout / My Account: the store keeps its current template (and its
+    // WooCommerce page) while the new one is a draft. The new template takes over
+    // once it is published with a design (solace_extra_woo_activate_on_publish()).
+    $activate_on_publish = in_array( $part, array( 'cart', 'checkout', 'myaccount' ), true ) && function_exists( 'solace_extra_woo_activate_on_publish' );
+
     // Deactivate every existing part of this type.
-    if ( $query->have_posts() ) {
+    if ( ! $activate_on_publish && $query->have_posts() ) {
         while ( $query->have_posts() ) {
             $query->the_post();
             solace_set_part_status( get_the_ID(), $part, false );
@@ -1953,7 +2521,12 @@ function solace_extra_create_and_edit_page( $part, $title_prefix ) {
         // one format.
         update_post_meta( $post_id, '_solace_template', $part );
 
-        solace_set_part_status( $post_id, $part, true );
+        if ( $activate_on_publish ) {
+            solace_set_part_status( $post_id, $part, false );
+            update_post_meta( $post_id, '_solace_activate_on_publish', '1' );
+        } else {
+            solace_set_part_status( $post_id, $part, true );
+        }
 
         // New Shop Product Archive / Shop Single Product templates get their
         // default display condition so Instances are never empty.
@@ -2469,6 +3042,10 @@ function solace_get_elementor_content_via_ajax() {
         wp_die(esc_html__('Elementor is not active. Please activate Elementor to view this content.', 'solace-extra'));
     }
 
+    // CSRF protection for the preview endpoint. The Site Builder dashboard
+    // always appends a nonce when it builds the preview URL.
+    check_ajax_referer( 'solace_sitebuilder_preview', 'nonce' );
+
     // phpcs:ignore WordPress.Security.NonceVerification.Recommended
     $post_id = isset($_GET['post_id']) ? absint(sanitize_text_field(wp_unslash($_GET['post_id']))) : 0;
 
@@ -2861,17 +3438,23 @@ add_action( 'wp_enqueue_scripts', 'solace_override_container_var', 99 );
  * API, which should not carry this HTML.
  */
 add_filter( 'woocommerce_settings_pages', 'solace_woo_page_setup_part_notices' );
+// The Shop page selector lives under Products, not Advanced.
+add_filter( 'woocommerce_product_settings', 'solace_woo_page_setup_part_notices' );
 
 function solace_woo_page_setup_part_notices( $settings ) {
-    if ( ! is_array( $settings ) || ! is_admin() || wp_doing_ajax() || ! function_exists( 'solace_woo_page_parts_enabled' ) || ! solace_woo_page_parts_enabled() ) {
+    if ( ! is_array( $settings ) || ! is_admin() || wp_doing_ajax() ) {
         return $settings;
     }
 
-    $fields = array(
-        'woocommerce_cart_page_id'      => 'cart',
-        'woocommerce_checkout_page_id'  => 'checkout',
-        'woocommerce_myaccount_page_id' => 'myaccount',
-    );
+    $fields = array( 'woocommerce_shop_page_id' => 'shopproduct' );
+
+    if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) {
+        $fields += array(
+            'woocommerce_cart_page_id'      => 'cart',
+            'woocommerce_checkout_page_id'  => 'checkout',
+            'woocommerce_myaccount_page_id' => 'myaccount',
+        );
+    }
 
     foreach ( $settings as $key => $field ) {
         if ( ! is_array( $field ) || empty( $field['id'] ) || ! isset( $fields[ $field['id'] ] ) ) {
@@ -2923,19 +3506,33 @@ function solace_woo_page_setup_part_notices( $settings ) {
  * True exactly when the notice says Site Builder is replacing the page: Pro can
  * apply the part, the part is in use, and the selected page is published.
  *
- * @param string $part 'cart', 'checkout' or 'myaccount'.
+ * @param string $part 'cart', 'checkout', 'myaccount' or 'shopproduct'.
  * @return bool
  */
 function solace_woo_page_part_locks_page( $part ) {
-    if ( ! class_exists( 'Solace_Extra_Pro_Public' ) || ! method_exists( 'Solace_Extra_Pro_Public', 'override_' . $part . '_template' ) ) {
+    $page = ( 'shopproduct' === $part ) ? 'shop' : $part;
+
+    if ( ! class_exists( 'Solace_Extra_Pro_Public' ) || ! method_exists( 'Solace_Extra_Pro_Public', 'override_' . $page . '_template' ) ) {
         return false;
     }
 
-    if ( ! (int) solace_get_woo_page_part_id( $part ) ) {
+    if ( solace_sitebuilder_elementor_pro_woo_page( $part ) ) {
         return false;
     }
 
-    $page_id = (int) wc_get_page_id( $part );
+    $in_use = ( 'shopproduct' === $part ) ? solace_sitebuilder_shopproduct_shop_page_part_id() : solace_get_woo_page_part_id( $part );
+
+    if ( ! (int) $in_use ) {
+        return false;
+    }
+
+    // The shop part replaces /shop/ whether or not a Shop page is chosen, so
+    // its selector is locked either way; pick a page after turning it off.
+    if ( 'shopproduct' === $part ) {
+        return true;
+    }
+
+    $page_id = (int) wc_get_page_id( $page );
 
     return $page_id > 0 && 'publish' === get_post_status( $page_id );
 }
@@ -2948,10 +3545,14 @@ function solace_woo_page_part_locks_page( $part ) {
  * override for the type, because then no part can replace the page whatever its
  * status says.
  *
- * @param string $part 'cart', 'checkout' or 'myaccount'.
+ * @param string $part 'cart', 'checkout', 'myaccount' or 'shopproduct'.
  * @return string HTML, passed through wp_kses_post() by WooCommerce.
  */
 function solace_woo_page_part_notice( $part ) {
+    if ( 'shopproduct' === $part ) {
+        return solace_woo_shop_page_part_notice();
+    }
+
     $labels = array(
         'cart'      => __( 'Cart', 'solace-extra' ),
         'checkout'  => __( 'Checkout', 'solace-extra' ),
@@ -2978,7 +3579,7 @@ function solace_woo_page_part_notice( $part ) {
             'post_status'    => $statuses,
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key, WordPress.DB.SlowDBQuery.slow_db_query_meta_value
             'meta_key'       => '_solace_' . $part . '_status',
-            'meta_value'     => '1',
+            'meta_value'     => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
             'posts_per_page' => 1,
             'orderby'        => 'ID',
             'order'          => 'DESC',
@@ -3003,25 +3604,40 @@ function solace_woo_page_part_notice( $part ) {
         esc_html__( 'Site Builder', 'solace-extra' )
     );
 
+    // Elementor Pro Site Settings has this page, so the part stands aside.
+    $priority = solace_sitebuilder_elementor_pro_woo_page( $part );
+
+    if ( $priority ) {
+        $post_id = $switched_on( 'publish' );
+
+        /* translators: %s: linked part title. */
+        return $post_id ? sprintf( __( 'Elementor Pro Site Settings takes priority, so Site Builder part %s is not used.', 'solace-extra' ), $part_link( $post_id ) ) : '';
+    }
+
     $in_use = (int) solace_get_woo_page_part_id( $part );
 
     if ( $in_use ) {
+        // Switches the part off from this screen, handled by the script in
+        // solace_woo_page_setup_notice_script(). Only for users the AJAX handler
+        // would accept anyway.
+        $turn_off = solace_woo_page_part_turn_off_button( $part, $in_use );
+
         // The part replaces whichever page is saved here, so what it is doing
         // depends on that page being set and published.
         $page_id = (int) wc_get_page_id( $part );
 
         if ( $page_id <= 0 || ! get_post( $page_id ) ) {
             /* translators: %s: linked part title. */
-            return sprintf( __( 'Site Builder part %s is on, but no page is selected.', 'solace-extra' ), $part_link( $in_use ) );
+            return sprintf( __( 'Site Builder part %s is on, but no page is selected.', 'solace-extra' ), $part_link( $in_use ) ) . $turn_off;
         }
 
         if ( 'publish' !== get_post_status( $page_id ) ) {
             /* translators: %s: linked part title. */
-            return sprintf( __( 'Site Builder part %s is on, but this page is not published.', 'solace-extra' ), $part_link( $in_use ) );
+            return sprintf( __( 'Site Builder part %s is on, but this page is not published.', 'solace-extra' ), $part_link( $in_use ) ) . $turn_off;
         }
 
         /* translators: 1: linked part title, 2: link to Site Builder. */
-        return sprintf( __( 'Using Site Builder part %1$s. Turn it off in %2$s to change this page.', 'solace-extra' ), $part_link( $in_use ), $site_builder_link );
+        return sprintf( __( 'Using Site Builder part %1$s. To change this page, turn the part off here or in %2$s.', 'solace-extra' ), $part_link( $in_use ), $site_builder_link ) . $turn_off;
     }
 
     // Mirror solace_get_active_part_id(): the newest published, switched-on part is
@@ -3050,6 +3666,121 @@ function solace_woo_page_part_notice( $part ) {
 }
 
 /**
+ * The Turn off button that sits in a Page setup notice, or '' for users who may not use it.
+ *
+ * @param string $part        Part slug.
+ * @param int    $post_id     Part in use.
+ * @param string $description Optional text for the confirmation dialog.
+ * @return string
+ */
+function solace_woo_page_part_turn_off_button( $part, $post_id, $description = '' ) {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return '';
+    }
+
+    return sprintf(
+        ' <a href="#" class="button button-small solace-page-part-turn-off" data-part="%1$s" data-post-id="%2$d" data-title="%3$s"%4$s>%5$s</a>',
+        esc_attr( $part ),
+        absint( $post_id ),
+        esc_attr( get_the_title( $post_id ) ),
+        '' !== $description ? ' data-description="' . esc_attr( $description ) . '"' : '',
+        esc_html__( 'Turn off', 'solace-extra' )
+    );
+}
+
+/**
+ * The notice under the Shop page selector, or '' when no part replaces the shop.
+ *
+ * A Shop Product Archive part replaces the shop whether or not a Shop page is
+ * selected: without one, WooCommerce still serves the product archive at /shop/.
+ * So the selector is locked in both cases, the same as the cart, checkout and
+ * account selectors.
+ *
+ * @return string
+ */
+function solace_woo_shop_page_part_notice() {
+    if ( ! class_exists( 'Solace_Extra_Pro_Public' ) || ! method_exists( 'Solace_Extra_Pro_Public', 'override_shop_template' ) ) {
+        return '';
+    }
+
+    $in_use = solace_sitebuilder_shopproduct_shop_page_part_id();
+
+    if ( ! $in_use ) {
+        return '';
+    }
+
+    $part_link = sprintf(
+        '<a href="%1$s"><strong>%2$s</strong></a>',
+        esc_url( admin_url( 'post.php?post=' . $in_use . '&action=elementor' ) ),
+        esc_html( get_the_title( $in_use ) )
+    );
+
+    if ( solace_sitebuilder_elementor_pro_woo_page( 'shopproduct' ) ) {
+        /* translators: %s: linked part title. */
+        return sprintf( __( 'Elementor Pro Site Settings takes priority, so Site Builder part %s is not used.', 'solace-extra' ), $part_link );
+    }
+    $site_builder_link = sprintf(
+        '<a href="%1$s">%2$s</a>',
+        esc_url( admin_url( 'admin.php?page=dashboard-sitebuilder&part=shopproduct' ) ),
+        esc_html__( 'Site Builder', 'solace-extra' )
+    );
+
+    // A Shop Product Archive part also covers the product archives its
+    // conditions name, so switching it off reaches further than this page.
+    $turn_off = solace_woo_page_part_turn_off_button(
+        'shopproduct',
+        $in_use,
+        __( 'The shop, and every other product archive this part covers, goes back to its WooCommerce design right away. You can switch the part on again in Site Builder.', 'solace-extra' )
+    );
+
+    /* translators: 1: linked part title, 2: link to Site Builder. */
+    return sprintf( __( 'Using Site Builder part %1$s. To change this page, turn the part off here or in %2$s.', 'solace-extra' ), $part_link, $site_builder_link ) . $turn_off;
+}
+
+/**
+ * Switch a shop, cart, checkout or my account part off from WooCommerce's settings.
+ *
+ * Answers with the notice and lock state for the page as they are now, so the
+ * screen can update in place. If another switched-on part takes over, the
+ * notice names that one instead.
+ *
+ * @return void
+ */
+function solace_woo_page_part_turn_off() {
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['nonce'] ) ), 'solace_woo_page_part_turn_off' ) ) {
+        wp_send_json_error( array( 'message' => __( 'Your session has expired. Reload the page and try again.', 'solace-extra' ) ), 403 );
+    }
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( array( 'message' => __( 'You are not allowed to change Site Builder parts.', 'solace-extra' ) ), 403 );
+    }
+
+    $part    = isset( $_POST['part'] ) ? sanitize_key( wp_unslash( $_POST['part'] ) ) : '';
+    $post_id = isset( $_POST['post_id'] ) ? absint( wp_unslash( $_POST['post_id'] ) ) : 0;
+
+    $parts = function_exists( 'solace_woo_page_parts' ) ? solace_woo_page_parts() : array();
+    $parts[] = 'shopproduct';
+
+    if ( ! in_array( $part, $parts, true ) ) {
+        wp_send_json_error( array( 'message' => __( 'Invalid part.', 'solace-extra' ) ), 400 );
+    }
+
+    if ( ! $post_id || 'solace-sitebuilder' !== get_post_type( $post_id ) || ! metadata_exists( 'post', $post_id, '_solace_' . $part . '_status' ) ) {
+        wp_send_json_error( array( 'message' => __( 'Site Builder part not found.', 'solace-extra' ) ), 404 );
+    }
+
+    solace_set_part_status( $post_id, $part, false );
+
+    wp_send_json_success(
+        array(
+            'notice' => wp_kses_post( solace_woo_page_part_notice( $part ) ),
+            'locked' => solace_woo_page_part_locks_page( $part ),
+        )
+    );
+}
+add_action( 'wp_ajax_solace_woo_page_part_turn_off', 'solace_woo_page_part_turn_off' );
+
+/**
  * Keep the Page setup notices honest while the store owner is choosing a page.
  *
  * The notices describe the page that is saved. The moment a different page is
@@ -3071,11 +3802,11 @@ function solace_woo_page_setup_notice_script() {
     $section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
     // phpcs:enable
 
-    if ( 'advanced' !== $tab || '' !== $section ) {
+    if ( '' !== $section || ! in_array( $tab, array( 'advanced', 'products' ), true ) ) {
         return;
     }
 
-    if ( ! function_exists( 'solace_woo_page_parts_enabled' ) || ! solace_woo_page_parts_enabled() ) {
+    if ( 'advanced' === $tab && ( ! function_exists( 'solace_woo_page_parts_enabled' ) || ! solace_woo_page_parts_enabled() ) ) {
         return;
     }
     ?>
@@ -3105,16 +3836,259 @@ function solace_woo_page_setup_notice_script() {
         tr.solace-page-locked .select2-container--disabled .select2-selection__arrow {
             display: none;
         }
+
+        /* Turn off confirmation. */
+        .solace-part-modal[hidden] { display: none; }
+        .solace-part-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(0, 15, 68, .55);
+            animation: solacePartModalFade .15s ease-out;
+        }
+        .solace-part-modal__dialog {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 15, 68, .35);
+            overflow: hidden;
+            animation: solacePartModalRise .2s ease-out;
+        }
+        .solace-part-modal__body {
+            display: flex;
+            gap: 16px;
+            padding: 24px 24px 8px;
+        }
+        .solace-part-modal__icon {
+            flex: 0 0 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #fcf0f1;
+            color: #d63638;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .solace-part-modal__icon .dashicons { font-size: 24px; width: 24px; height: 24px; }
+        .solace-part-modal__title {
+            margin: 2px 0 6px;
+            font-size: 17px;
+            line-height: 1.4;
+            color: #1d2327;
+        }
+        .solace-part-modal__text {
+            margin: 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #50575e;
+        }
+        .solace-part-modal__error {
+            margin: 12px 0 0;
+            padding: 8px 12px;
+            border-left: 4px solid #d63638;
+            background: #fcf0f1;
+            color: #8a2424;
+            font-size: 13px;
+        }
+        .solace-part-modal__error[hidden] { display: none; }
+        .solace-part-modal__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 16px 24px 20px;
+        }
+        .solace-part-modal__actions .button { min-height: 34px; padding: 0 16px; }
+        .solace-part-modal__confirm.button-primary,
+        .solace-part-modal__confirm.button-primary:focus {
+            background: #d63638;
+            border-color: #d63638;
+        }
+        .solace-part-modal__confirm.button-primary:hover { background: #b32d2e; border-color: #b32d2e; }
+        .solace-part-modal__confirm.is-busy,
+        .solace-part-modal__confirm.is-busy:disabled {
+            background: #d63638 !important;
+            border-color: #d63638 !important;
+            color: #fff !important;
+            opacity: .9;
+            cursor: progress;
+        }
+        .solace-page-part-notice.is-updated { animation: solacePartNoticeFlash 1.6s ease-out; }
+        @keyframes solacePartModalFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes solacePartModalRise { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+        @keyframes solacePartNoticeFlash { from { background: #edfaef; } to { background: transparent; } }
+        @media (prefers-reduced-motion: reduce) {
+            .solace-part-modal, .solace-part-modal__dialog, .solace-page-part-notice.is-updated { animation: none; }
+        }
     </style>
+    <div class="solace-part-modal" hidden>
+        <div class="solace-part-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="solace-part-modal-title" aria-describedby="solace-part-modal-text">
+            <div class="solace-part-modal__body">
+                <div class="solace-part-modal__icon" aria-hidden="true"><span class="dashicons dashicons-warning"></span></div>
+                <div>
+                    <h2 class="solace-part-modal__title" id="solace-part-modal-title"></h2>
+                    <p class="solace-part-modal__text" id="solace-part-modal-text"><?php esc_html_e( 'The page goes back to its WooCommerce design right away. You can switch the part on again in Site Builder.', 'solace-extra' ); ?></p>
+                    <p class="solace-part-modal__error" role="alert" hidden></p>
+                </div>
+            </div>
+            <div class="solace-part-modal__actions">
+                <button type="button" class="button solace-part-modal__cancel"><?php esc_html_e( 'Cancel', 'solace-extra' ); ?></button>
+                <button type="button" class="button button-primary solace-part-modal__confirm"><?php esc_html_e( 'Turn off', 'solace-extra' ); ?></button>
+            </div>
+        </div>
+    </div>
     <script>
     jQuery( function ( $ ) {
         var pending = <?php echo wp_json_encode( __( 'Save to update the Site Builder status.', 'solace-extra' ) ); ?>;
+        var turnOff = <?php
+        echo wp_json_encode(
+            array(
+                'nonce'   => wp_create_nonce( 'solace_woo_page_part_turn_off' ),
+                /* translators: %s: part title, e.g. Cart #3. */
+                'title'   => __( 'Turn off %s?', 'solace-extra' ),
+                'working' => __( 'Turning off...', 'solace-extra' ),
+                'off'     => __( 'Site Builder part turned off. This page now uses its WooCommerce design.', 'solace-extra' ),
+                'error'   => __( 'Could not turn off the Site Builder part. Please try again.', 'solace-extra' ),
+            )
+        );
+        ?>;
+
+        var $modal   = $( '.solace-part-modal' ).appendTo( 'body' );
+        var $title   = $modal.find( '.solace-part-modal__title' );
+        var $text    = $modal.find( '.solace-part-modal__text' );
+        var defaultText = $text.text();
+        var $error   = $modal.find( '.solace-part-modal__error' );
+        var $cancel  = $modal.find( '.solace-part-modal__cancel' );
+        var $confirm = $modal.find( '.solace-part-modal__confirm' );
+        var confirmLabel = $confirm.text();
+        var current  = null;
+        var busy     = false;
+
+        function setBusy( on ) {
+            busy = on;
+            $cancel.prop( 'disabled', on );
+            $confirm.prop( 'disabled', on );
+
+            $confirm.toggleClass( 'is-busy', on ).attr( 'aria-busy', on ? 'true' : 'false' );
+
+            $confirm.text( on ? turnOff.working : confirmLabel );
+        }
+
+        function closeModal() {
+            if ( busy || ! current ) {
+                return;
+            }
+
+            $modal.prop( 'hidden', true );
+            $( document ).off( 'keydown.solacePartModal' );
+
+            // Back to the button that opened the dialog, if it is still there.
+            if ( current.$trigger.closest( 'body' ).length ) {
+                current.$trigger.trigger( 'focus' );
+            }
+
+            current = null;
+        }
+
+        function openModal( $trigger, $notice, $select, $row, onDone ) {
+            current = { $trigger: $trigger, $notice: $notice, $select: $select, $row: $row, onDone: onDone };
+
+            $title.text( turnOff.title.replace( '%s', $trigger.data( 'title' ) || '' ) );
+            $text.text( $trigger.data( 'description' ) || defaultText );
+            $error.prop( 'hidden', true ).text( '' );
+            setBusy( false );
+            $modal.prop( 'hidden', false );
+            $cancel.trigger( 'focus' );
+
+            $( document ).on( 'keydown.solacePartModal', function ( e ) {
+                if ( 'Escape' === e.key ) {
+                    closeModal();
+                } else if ( 'Tab' === e.key ) {
+                    // Keep focus inside the two buttons.
+                    var last = e.shiftKey ? $cancel[0] : $confirm[0];
+                    if ( document.activeElement === last ) {
+                        e.preventDefault();
+                        ( e.shiftKey ? $confirm : $cancel ).trigger( 'focus' );
+                    }
+                }
+            } );
+        }
+
+        function showError( message ) {
+            setBusy( false );
+            $error.text( message || turnOff.error ).prop( 'hidden', false );
+        }
+
+        $cancel.on( 'click', closeModal );
+
+        $modal.on( 'mousedown', function ( e ) {
+            if ( e.target === this ) {
+                closeModal();
+            }
+        } );
+
+        $confirm.on( 'click', function () {
+            if ( busy || ! current ) {
+                return;
+            }
+
+            var target = current;
+
+            $error.prop( 'hidden', true );
+            setBusy( true );
+
+            $.post( ajaxurl, {
+                action: 'solace_woo_page_part_turn_off',
+                nonce: turnOff.nonce,
+                part: target.$trigger.data( 'part' ),
+                post_id: target.$trigger.data( 'post-id' )
+            } ).done( function ( response ) {
+                if ( ! response || ! response.success ) {
+                    showError( response && response.data && response.data.message );
+                    return;
+                }
+
+                // Another switched-on part may have taken over; the server says
+                // which, in the same words it uses on page load.
+                var html = response.data.notice || turnOff.off;
+                target.onDone( html );
+                target.$notice.html( html ).removeClass( 'is-updated' );
+                void target.$notice[0].offsetWidth; // Restart the highlight.
+                target.$notice.addClass( 'is-updated' );
+
+                // A disabled select is not submitted, so it has to be enabled
+                // before the page choice can be saved again.
+                var locked = !! response.data.locked;
+                target.$select.prop( 'disabled', locked ).trigger( 'change.select2' );
+                target.$row.toggleClass( 'wc-settings-row-solace-page-locked solace-page-locked', locked );
+
+                setBusy( false );
+                closeModal();
+            } ).fail( function ( xhr ) {
+                var data = xhr && xhr.responseJSON && xhr.responseJSON.data;
+                showError( data && data.message );
+            } );
+        } );
 
         $( '.solace-page-part-notice' ).each( function () {
             var $notice  = $( this );
             var $select  = $( '#' + $notice.data( 'field' ) );
+            var $row     = $select.closest( 'tr' );
             var saved    = String( $select.val() || '' );
             var original = $notice.html();
+
+            // WooCommerce's plain page dropdown (the Shop page) ignores the
+            // disabled attribute set on the field, unlike the searchable one used
+            // for cart, checkout and account. The row class does get printed, so
+            // lock from that. Like the server-side lock, a disabled select is not
+            // submitted, so saving leaves the page as it is.
+            if ( $row.is( '.solace-page-locked, .wc-settings-row-solace-page-locked' ) && ! $select.prop( 'disabled' ) ) {
+                $select.prop( 'disabled', true ).trigger( 'change.select2' );
+            }
 
             $select.on( 'change', function () {
                 if ( String( $select.val() || '' ) === saved ) {
@@ -3122,6 +4096,13 @@ function solace_woo_page_setup_notice_script() {
                 } else {
                     $notice.text( pending );
                 }
+            } );
+
+            $notice.on( 'click', '.solace-page-part-turn-off', function ( e ) {
+                e.preventDefault();
+                openModal( $( this ), $notice, $select, $row, function ( html ) {
+                    original = html;
+                } );
             } );
         } );
     } );

@@ -512,6 +512,42 @@ add_action('elementor/editor/after_enqueue_scripts', function() {
             'nonce' => wp_create_nonce( 'solace_save_preview' ),
         )
     );
+
+    // Shop widget: an empty Tablet/Mobile "Products per Page" uses the larger
+    // device's value; show that value as the field's placeholder so the field
+    // never looks empty, and keep it current while the values are edited.
+    $solace_per_page_js = <<<'JS'
+(function ($) {
+	var DEFAULT_PER_PAGE = 4;
+	function num(v) { v = parseInt(v, 10); return v >= 1 ? v : 0; }
+	function sync(panel, model) {
+		var s = model.get('settings');
+		var d = num(s.get('posts_per_page')) || DEFAULT_PER_PAGE;
+		var t = num(s.get('posts_per_page_tablet')) || d;
+		panel.$el.find('input[data-setting="posts_per_page_tablet"]').attr('placeholder', d);
+		panel.$el.find('input[data-setting="posts_per_page_mobile"]').attr('placeholder', t);
+	}
+	var current = null;
+	$(window).on('elementor:init', function () {
+		if (elementor.channels && elementor.channels.deviceMode) {
+			elementor.channels.deviceMode.on('change', function () { if (current) { current(); } });
+		}
+		elementor.hooks.addAction('panel/open_editor/widget/solace-extra-woocommerce-shop', function (panel, model) {
+			var later = function () { setTimeout(function () { sync(panel, model); }, 0); };
+			later();
+			var s = model.get('settings');
+			if (!s._solacePerPageSync) {
+				s._solacePerPageSync = true;
+				s.on('change:posts_per_page change:posts_per_page_tablet change:posts_per_page_mobile', later);
+			}
+			// Device switches and section/tab changes re-render the controls.
+			panel.$el.off('.solacePerPage').on('click.solacePerPage', later);
+			current = later;
+		});
+	});
+})(jQuery);
+JS;
+    wp_add_inline_script( 'solace-preview-button', $solace_per_page_js );
 });
 
 

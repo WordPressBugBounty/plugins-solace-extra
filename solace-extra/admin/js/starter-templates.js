@@ -1,3 +1,12 @@
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 (function( $ ) {
 	'use strict';
 
@@ -38,12 +47,15 @@
 	// Clean up localStorage and cookies
 	var currentDate = new Date();
 	currentDate.setTime(currentDate.getTime() - 24 * 60 * 60 * 1000);
-	localStorage.removeItem('solace_step5_font');
-	localStorage.removeItem('solace_step5_color');
-	localStorage.removeItem('solace_step5_logo');
+	localStorage.removeItem(solaceStorageKey('solace_step5_font'));
+	localStorage.removeItem(solaceStorageKey('solace_step5_color'));
+	localStorage.removeItem(solaceStorageKey('solace_step5_logo'));
 	document.cookie = "solace_step5_font=; expires=" + currentDate.toUTCString() + "; path=/";
+	document.cookie = "solace_step5_font=; expires=" + currentDate.toUTCString() + "; path=" + solaceCookiePath();
 	document.cookie = "solace_step5_color=; expires=" + currentDate.toUTCString() + "; path=/";
+	document.cookie = "solace_step5_color=; expires=" + currentDate.toUTCString() + "; path=" + solaceCookiePath();
 	document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=/";
+	document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=" + solaceCookiePath();
 
 	// Get filter license value
 	function getFilterLicense() {
@@ -189,8 +201,8 @@
 				nonce: ajax_object.nonce,
 			},
 			success: function(response) {
-				localStorage.setItem('solaceInfo', demoUrl);
-				localStorage.setItem('solaceDemoName', demoName);
+				localStorage.setItem(solaceStorageKey('solaceInfo'), demoUrl);
+				localStorage.setItem(solaceStorageKey('solaceDemoName'), demoName);
 				let adminUrl = pluginUrl.admin_url + `admin.php?page=dashboard-step5&type=${demoType}&demo=${demoName}&nonce=${ajax_object.nonce}`;
 				window.location.replace(adminUrl);
 			},

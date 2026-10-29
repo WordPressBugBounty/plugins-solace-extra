@@ -54,6 +54,49 @@
 			// Add class active
 			$( '.solaceform-form-button' ).addClass( 'active' ).prop('disabled', true);
 
+			// Show a message in the form's status area, green for success and red
+			// otherwise. Kept in one place so every outcome -- including the ones
+			// below where the server reply could not be read -- notifies the
+			// visitor instead of failing silently.
+			const showMsg = function( text, isSuccess ) {
+				msg_form.text( text || '' );
+				msg_form.css({
+					'color': isSuccess ? '#05b705' : '#f72929',
+					'margin-top': '5px',
+					'display': 'block',
+				});
+				$( '.solaceform-form-msg' ).fadeIn( 300 );
+			};
+
+			// Pull a message out of whatever came back. jQuery may hand us a parsed
+			// object or, when the body was not clean JSON (a stray PHP notice, an
+			// HTML error page), the raw string -- which must not be fed to the
+			// success/error logic as if it were the expected shape.
+			const readData = function( res ) {
+				if ( res && typeof res === 'object' ) {
+					return res;
+				}
+				if ( typeof res === 'string' ) {
+					try {
+						return JSON.parse( res );
+					} catch ( e ) {
+						return null;
+					}
+				}
+				return null;
+			};
+
+			const resetForm = function() {
+				// Clear all form input values
+				form.find('input, textarea, select').val('')
+				.prop('checked', false)   // Uncheck checkboxes and radios
+				.prop('selected', false); // Deselect options in select dropdowns
+			};
+
+			const reenableButton = function() {
+				$( '.solaceform-form-button' ).removeClass( 'active' ).prop('disabled', false);
+			};
+
 			$.ajax({
 				method: 'POST',
 				url: elementor_form_builder_obj.ajaxurl,
@@ -61,47 +104,29 @@
 				processData: false, // Prevent jQuery from processing the data
 				contentType: false, // Let the browser set the correct content type
 				success: function(res) {
-					if ( res.success ) {
-						msg_form.text(res.data.success_message);
-						msg_form.css({
-							'color': '#05b705',
-							'margin-top': '5px',
-							'display': 'block',
-						});
-						$( '.solaceform-form-msg' ).fadeIn( 300 );
+					const data = readData( res );
+
+					if ( data && data.success ) {
+						showMsg( data.data && data.data.success_message, true );
+						resetForm();
+					} else if ( data && data.data ) {
+						showMsg( data.data.error_message, false );
 					} else {
-						msg_form.text(res.data.error_message);
-						msg_form.css({
-							'color': '#f72929',
-							'margin-top': '5px',
-							'display': 'block',
-						});
-						$( '.solaceform-form-msg' ).fadeIn( 300 );
+						// A 200 whose body we could not parse -- treat as a failure
+						// so the visitor is told, rather than left guessing.
+						showMsg( 'Something went wrong. Please try again.', false );
 					}
 
-					// Clear all form input values
-					form.find('input, textarea, select').val('')
-					.prop('checked', false)   // Uncheck checkboxes and radios
-					.prop('selected', false); // Deselect options in select dropdowns						
-
-					// remove class active
-					$( '.solaceform-form-button' ).removeClass( 'active' ).prop('disabled', false);
-
+					reenableButton();
 				},
 				error: function(err) {
-					const errorData = JSON.parse(err.responseText);
-					const errorMessage = errorData?.data?.error_message;
+					const data = readData( err && err.responseText );
+					const errorMessage = ( data && data.data && data.data.error_message )
+						? data.data.error_message
+						: 'Something went wrong. Please try again.';
 
-					msg_form.text(errorMessage);
-					msg_form.css({
-						'color': '#f72929',
-						'margin-top': '5px',
-						'display': 'block',
-					});
-					$( '.solaceform-form-msg' ).fadeIn( 300 );
-
-					// remove class active
-					$( '.solaceform-form-button' ).removeClass( 'active' ).prop('disabled', false);
+					showMsg( errorMessage, false );
+					reenableButton();
 				}
 			});
 		});

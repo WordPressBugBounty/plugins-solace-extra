@@ -1,5 +1,23 @@
 <?php defined('ABSPATH') || exit; ?>
-<?php $solace_extra_customizer_link = admin_url('customize.php'); 
+<?php
+/**
+ * Build a nonce-protected preview URL for the Elementor content AJAX endpooint.
+ *
+ * @param int $post_id Sitebuilder part post ID.
+ * @return string
+ */
+function solace_extra_get_elementor_content_preview_url( $post_id ) {
+	return add_query_arg(
+		array(
+			'action'  => 'get_elementor_content',
+			'post_id' => absint( $post_id ),
+			'nonce'   => wp_create_nonce( 'solace_sitebuilder_preview' ),
+		),
+		admin_url( 'admin-ajax.php' )
+	);
+}
+
+$solace_extra_customizer_link = admin_url('customize.php'); 
 $solace_extra_comingsoon = false; ?>
 <div class="wrap">
 <?php require_once plugin_dir_path(dirname(__FILE__)) . 'partials/header.php'; ?>
@@ -150,7 +168,15 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
             </a>
 
             <?php if (function_exists('solace_pro_parts') && solace_pro_card()) {
-                echo wp_kses_post( solace_pro_parts($solace_extra_part) );
+                // Pro's menu borrows other parts' icons for these entries
+                // (blogsinglepost.png for Purchase Summary, purchase-summary.png for
+                // Cart, Checkout and My Account). Give each its own icon.
+                $solace_extra_pro_parts_html = preg_replace(
+                    '#(part=(purchase-summary|cart|checkout|myaccount)"[^>]*>\s*<img\s+src="[^"]*/images/)[^"/]+\.png#',
+                    '$1$2.png',
+                    (string) solace_pro_parts( $solace_extra_part )
+                );
+                echo wp_kses_post( $solace_extra_pro_parts_html );
             } else { ?>
                 <?php if ( class_exists( 'WooCommerce' ) ) : ?>
                 <a href="#" class="button nf">
@@ -169,29 +195,29 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                 </a>
                 <a href="#" class="button nf">
                     <div class='desc'>
-                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/blogsinglepost.png'); ?>" />
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
                         <span><?php esc_html_e( 'Purchase Summary', 'solace-extra' ); ?></span>
                     </div>
                     <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
                 </a>
-                <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts are hidden for now. ?>
+                <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts; off when the solace_sitebuilder_woo_page_parts_enabled filter returns false. ?>
                 <a href="#" class="button nf">
                     <div class='desc'>
-                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/cart.png'); ?>" />
                         <span><?php esc_html_e( 'Cart', 'solace-extra' ); ?></span>
                     </div>
                     <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
                 </a>
                 <a href="#" class="button nf">
                     <div class='desc'>
-                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/checkout.png'); ?>" />
                         <span><?php esc_html_e( 'Checkout', 'solace-extra' ); ?></span>
                     </div>
                     <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
                 </a>
                 <a href="#" class="button nf">
                     <div class='desc'>
-                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/purchase-summary.png'); ?>" />
+                        <img src="<?php echo esc_url(SOLACE_EXTRA_ASSETS_URL . 'images/myaccount.png'); ?>" />
                         <span><?php esc_html_e( 'My Account', 'solace-extra' ); ?></span>
                     </div>
                     <span class="dashicons dashicons-lock" style="margin-left: 5px;"></span>
@@ -246,8 +272,8 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
             }
 
             // Pages chosen in Elementor Site Settings > WooCommerce Pages that
-            // this part replaces (Shop and Purchase Summary).
-            if ( in_array( $solace_extra_part, array( 'shopproduct', 'purchase-summary' ), true ) && function_exists( 'solace_sitebuilder_elementor_site_settings_notice' ) ) {
+            // this part replaces (Shop, Purchase Summary, Cart, Checkout, My Account).
+            if ( in_array( $solace_extra_part, array( 'shopproduct', 'purchase-summary', 'cart', 'checkout', 'myaccount' ), true ) && function_exists( 'solace_sitebuilder_elementor_site_settings_notice' ) ) {
                 solace_sitebuilder_elementor_site_settings_notice( $solace_extra_part );
             }
             ?>
@@ -331,9 +357,55 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                             <?php if ( $solace_extra_part == 'header' || $solace_extra_part == 'footer' || 'shopproduct' === $solace_extra_part || 'singleproduct' === $solace_extra_part ) { ?>
                                 <div class="box-group-instances" style="display: flex;">
                             <?php } ?>
+                            <?php
+                            // Cart / Checkout / My Account: the part's own address, under the
+                            // title. Live when this template is on and selected as the page;
+                            // otherwise that address forwards to the page the store uses.
+                            $solace_extra_page_labels = array(
+                                'cart'      => __( 'Cart', 'solace-extra' ),
+                                'checkout'  => __( 'Checkout', 'solace-extra' ),
+                                'myaccount' => __( 'My Account', 'solace-extra' ),
+                            );
+                            $solace_extra_page_url  = '';
+                            $solace_extra_page_live = false;
+                            if ( isset( $solace_extra_page_labels[ $solace_extra_part ] ) && function_exists( 'wc_get_page_id' ) ) {
+                                // Each part's own address (woo-pages-integration.php section 15).
+                                $solace_extra_own_page = function_exists( 'solace_extra_woo_part_page_id' ) ? solace_extra_woo_part_page_id( $post_id, $solace_extra_part, true ) : 0;
+                                if ( $solace_extra_own_page ) {
+                                    $solace_extra_page_url = get_permalink( $solace_extra_own_page );
+                                }
+                                $solace_extra_page_live = '1' === (string) get_post_meta( $post_id, '_solace_' . $solace_extra_part . '_status', true )
+                                    && (int) get_option( 'woocommerce_' . $solace_extra_part . '_page_id', 0 ) === (int) $post_id;
+                            }
+                            ?>
+                            <?php if ( $solace_extra_page_url ) : ?>
+                                <div class="solace-part-title-wrap" style="display:flex;flex-direction:column;gap:2px;">
+                            <?php endif; ?>
                             <div class="list-column title-column">
                                 <?php echo esc_html( $solace_extra_get_the_title ); ?>
                             </div>
+                            <?php if ( $solace_extra_page_url ) : ?>
+                                <?php
+                                $solace_extra_page_text = preg_replace( '#^https?://#', '', $solace_extra_page_url );
+                                $solace_extra_page_style = 'padding-left:16px;font-size:12px;font-weight:400;text-decoration:none;';
+                                if ( $solace_extra_page_live ) :
+                                    ?>
+                                    <a href="<?php echo esc_url( $solace_extra_page_url ); ?>" class="solace-part-url is-live" target="_blank" rel="noopener"
+                                        title="<?php /* translators: %s: Cart, Checkout or My Account. */ echo esc_attr( sprintf( __( 'Open the %s page on the frontend', 'solace-extra' ), $solace_extra_page_labels[ $solace_extra_part ] ) ); ?>"
+                                        style="<?php echo esc_attr( $solace_extra_page_style ); ?>color:#2271b1;"><?php echo esc_html( $solace_extra_page_text ); ?> &#8599;</a>
+                                <?php else : ?>
+                                    <?php
+                                    // Not a link: that address shows another design (the page chosen
+                                    // in WooCommerce Settings, or another template), not this part.
+                                    $solace_extra_page_tip = '1' === (string) get_post_meta( $post_id, '_solace_' . $solace_extra_part . '_status', true )
+                                        ? __( 'WooCommerce Settings takes priority, frontend preview not available.', 'solace-extra' )
+                                        : __( 'Template is off, frontend preview not available.', 'solace-extra' );
+                                    ?>
+                                    <span class="solace-part-url" title="<?php echo esc_attr( $solace_extra_page_tip ); ?>"
+                                        style="<?php echo esc_attr( $solace_extra_page_style ); ?>color:#8c8f94;cursor:help;"><?php echo esc_html( $solace_extra_page_text ); ?></span>
+                                <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                             <?php
                             if ( $solace_extra_part == 'header' || $solace_extra_part == 'footer' || 'shopproduct' === $solace_extra_part || 'singleproduct' === $solace_extra_part ) {?>
                                 <div class="group instances">
@@ -419,8 +491,8 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                     </a>
                                 </div>
                                 <div class="list-column edit-column">
-                                    <?php 
-                                    $solace_extra_link_preview = admin_url('admin-ajax.php?action=get_elementor_content&post_id=' . $post_id);
+                                    <?php                                    
+                                    $solace_extra_link_preview = solace_extra_get_elementor_content_preview_url( $post_id );
                                     if ( 'purchase-summary' === $solace_extra_part ) {
                                         $solace_extra_link_preview = solace_extra_get_purchase_summary_preview_url( $post_id, 'auto' );
                                     }
@@ -483,7 +555,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                     style="position: relative; width: 100%;height: 100%; overflow: hidden;">
                                     <iframe 
                                         id="responsive-iframe"
-                                        src="<?php echo esc_url(admin_url('admin-ajax.php?action=get_elementor_content&post_id=' . $post_id)); ?>" 
+                                        src="<?php echo esc_url( solace_extra_get_elementor_content_preview_url( $post_id ) ); ?>" 
                                         style="
                                             width: 1400px; /* Fixed iframe width */
                                             height: 254.7125px; /* Fixed iframe height for 1400px width */
@@ -570,7 +642,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                             <section class="template-demo">
                                 <article 
                                     class="template-card"
-                                    href="<?php echo esc_url(admin_url('admin-ajax.php?action=get_elementor_content&post_id=' . $post_id)); ?>"
+                                    href="<?php echo esc_url( solace_extra_get_elementor_content_preview_url( $post_id ) ); ?>"
                                     data-fancybox
                                     data-type="iframe"
                                 >
@@ -579,7 +651,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                             id="iframe-preview-<?php echo esc_attr( $solace_extra_part ); ?>"
                                             class="iframe-preview"
                                             title="Template Preview" 
-                                            src="<?php echo esc_url(admin_url('admin-ajax.php?action=get_elementor_content&post_id=' . $post_id)); ?>">
+                                            src="<?php echo esc_url( solace_extra_get_elementor_content_preview_url( $post_id ) ); ?>">
                                         </iframe>
                                     </div>
                                 </article>
@@ -792,7 +864,11 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                         <?php 
                         
                         if (function_exists('solace_pro_card') && solace_pro_card()) {
+                            // Pro skips the Elementor badge on the cart, checkout and account cards.
+                            ob_start();
                             do_action( 'solace_pro_cards_render' );
+                            $solace_extra_cards_html = (string) ob_get_clean();
+                            echo function_exists( 'solace_sitebuilder_add_woo_page_card_badges' ) ? solace_sitebuilder_add_woo_page_card_badges( $solace_extra_cards_html ) : $solace_extra_cards_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Pro's own card markup, printed as before.
                         } else { ?>
                             <?php if ( class_exists( 'WooCommerce' ) ) : ?>
                             <a class="part-singleproduct lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
@@ -839,7 +915,7 @@ function solace_extra_get_purchase_summary_preview_url( $template_id, $overflow 
                                     </div>
                                 </div>
                             </a>
-                            <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts are hidden for now. ?>
+                            <?php if ( function_exists( 'solace_woo_page_parts_enabled' ) && solace_woo_page_parts_enabled() ) : // Cart, checkout and account parts; off when the solace_sitebuilder_woo_page_parts_enabled filter returns false. ?>
                             <a class="part-cart lock" target="_blank" href="<?php echo esc_url( SOLACE_UPGRADE_URL ); ?>">
                             <div class="card" style="background-image: url('<?php 
                                     $solace_extra_image = 'purchase-summary.svg';

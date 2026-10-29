@@ -4,7 +4,7 @@ Donate link: https://solacewp.com/
 Tags: solace, import, template, kit
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 1.7.3
+Stable tag: 1.8.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -68,6 +68,22 @@ https://www.google.com/recaptcha/api.js
 
 
 == Changelog ==
+
+= 1.8.0 - 29 October 2026 =
+
+* feat: Site Builder: Cart, Checkout and My Account parts get their own page, kept in sync with WooCommerce settings (on/off, rename, slugs, redirects)
+* feat: Site Builder: page URL shown under the Cart, Checkout and My Account parts
+* feat: Site Builder: Elementor Pro badge, Site Settings and Theme Builder notices for WooCommerce pages
+* feat: Shop widget: responsive Products per Page (desktop, tablet, mobile)
+* fix: Shop widget: hidden product cards, pagination and arrow colour
+* fix: Starter Templates: fonts in step 5 keep the demo's font pairing
+* fix: Starter Templates: product categories in Elementor widgets point to the imported categories
+* fix: Starter Templates: restore product galleries, grouped products, variations and attributes from the demo
+* fix: Starter Templates: menu links, posts page, thumbnails and demo colours/fonts follow the live demo
+* fix: Starter Templates: import queue and wizard data scoped per site on multisite; import no longer runs twice
+* fix: palette keeps rgb/rgba colours
+* fix: Form Builder notifications and hover animation
+* fix: security hardening (nonces, capability checks, escaping) and Plugin Check findings
 
 = 1.7.3 - 25 September 2026 =
 

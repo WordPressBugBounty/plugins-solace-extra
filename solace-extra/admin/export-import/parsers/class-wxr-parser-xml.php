@@ -93,6 +93,7 @@ class Solace_Extra_WXR_Parser_XML {
 		xml_set_character_data_handler( $xml, array( $this, 'cdata' ) );
 		xml_set_element_handler( $xml, array( $this, 'tag_open' ), array( $this, 'tag_close' ) );
 
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading an uploaded WXR import file; the XML parser requires a raw byte stream.
 		if ( ! xml_parse( $xml, file_get_contents( $file ), true ) ) {
 			$current_line   = xml_get_current_line_number( $xml );
 			$current_column = xml_get_current_column_number( $xml );
@@ -100,7 +101,13 @@ class Solace_Extra_WXR_Parser_XML {
 			$error_string   = xml_error_string( $error_code );
 			return new WP_Error( 'XML_parse_error', 'There was an error when reading this WXR file', array( $current_line, $current_column, $error_string ) );
 		}
-		xml_parser_free( $xml );
+		// xml_parser_free() is a no-op and emits a deprecation notice on PHP 8.0+
+		// (the parser is freed automatically). Only call it on PHP &lt; 8.0 where
+		// it still frees the resource explicitly.
+		if ( PHP_VERSION_ID < 80000 ) {
+			// phpcs:ignore Generic.PHP.DeprecatedFunctions.Deprecated -- no-op on PHP 8.0+, guarded below.
+			xml_parser_free( $xml );
+		}
 
 		if ( ! preg_match( '/^\d+\.\d+$/', $this->wxr_version ) ) {
 			return new WP_Error( 'WXR_parse_error', __( 'This does not appear to be a WXR file, missing/invalid WXR version number', 'solace-extra' ) );

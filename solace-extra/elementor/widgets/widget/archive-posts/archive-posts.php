@@ -1583,7 +1583,7 @@ class Solace_Extra_Post_Archive extends \Elementor\Widget_Base {
                     } elseif ( is_tax() ) {
                         $queried = get_queried_object();
                         if ( $queried instanceof WP_Term ) {
-                            $query_args['tax_query'] = [
+                            $query_args['tax_query'] = [ // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
                                 [
                                     'taxonomy' => $queried->taxonomy,
                                     'field'    => 'term_id',

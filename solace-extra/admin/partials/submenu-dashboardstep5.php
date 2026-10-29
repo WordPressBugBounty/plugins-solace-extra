@@ -524,6 +524,15 @@ p:'$solace_extra_font1';
     var ajaxurl = "<?php echo esc_url( admin_url('admin-ajax.php') ); ?>";
 </script>
 <script>
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 
     jQuery(document).ready(function($) { 
 
@@ -593,8 +602,8 @@ p:'$solace_extra_font1';
     });
 
     function clearStoredStyles() {
-        localStorage.removeItem('appliedStyles');
-        localStorage.removeItem('appliedFontStyles');
+        localStorage.removeItem(solaceStorageKey('appliedStyles'));
+        localStorage.removeItem(solaceStorageKey('appliedFontStyles'));
         document.body.style.cssText = ''; // Reset styles on the body element.
         console.log('Stored styles cleared from LocalStorage');
     }
@@ -604,9 +613,9 @@ p:'$solace_extra_font1';
 
     jQuery(document).ready(function($) { 
         
-        let demoUrl = localStorage.getItem('solaceDemoName');
+        let demoUrl = localStorage.getItem(solaceStorageKey('solaceDemoName'));
         demoUrl = '<?php echo esc_js( trailingslashit( SOLACE_EXTRA_DEMO_IMPORT_URL ) ); ?>' + demoUrl;
-        // let demoName = localStorage.getItem('solaceDemoName');
+        // let demoName = localStorage.getItem(solaceStorageKey('solaceDemoName'));
         let demoName = getParameterByName('demo');
         demoName = demoName.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
 
@@ -627,24 +636,24 @@ p:'$solace_extra_font1';
         var colorPalette6 = <?php echo wp_json_encode( $solace_extra_color_palettes[4] ); ?>;
 
         var defaultColorValue = {
-            new_base_color: '<?php echo sanitize_hex_color( $solace_extra_api_base_color ); ?>',
-            new_heading_color: '<?php echo sanitize_hex_color( $solace_extra_api_heading_color ); ?>',
-            new_link_button_color: '<?php echo sanitize_hex_color( $solace_extra_api_link_button_color ); ?>',
-            new_link_button_hover_color: '<?php echo sanitize_hex_color( $solace_extra_api_link_button_hover_color ); ?>',
-            new_button_color: '<?php echo sanitize_hex_color( $solace_extra_api_button_color ); ?>',
-            new_button_hover_color: '<?php echo sanitize_hex_color( $solace_extra_api_button_hover_color ); ?>',
-            new_text_selection_color: '<?php echo sanitize_hex_color( $solace_extra_api_text_selection_color ); ?>',
-            new_text_selection_bg_color: '<?php echo sanitize_hex_color( $solace_extra_api_text_selection_bg_color ); ?>',
-            new_border_color: '<?php echo sanitize_hex_color( $solace_extra_api_border_color ); ?>',
-            new_background_color: '<?php echo sanitize_hex_color( $solace_extra_api_background_color ); ?>',
-            new_page_title_text_color: '<?php echo sanitize_hex_color( $solace_extra_api_page_title_text_color ); ?>',
-            new_page_title_bg_color: '<?php echo sanitize_hex_color( $solace_extra_api_page_title_bg_color ); ?>',
-            new_bg_menu_dropdown_color: '<?php echo ! empty( $solace_extra_api_bg_menu_dropdown_color ) ? sanitize_hex_color( $solace_extra_api_bg_menu_dropdown_color ) : sanitize_hex_color( $solace_extra_api_border_color ); ?>'
+            new_base_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_base_color ) ); ?>',
+            new_heading_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_heading_color ) ); ?>',
+            new_link_button_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_link_button_color ) ); ?>',
+            new_link_button_hover_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_link_button_hover_color ) ); ?>',
+            new_button_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_button_color ) ); ?>',
+            new_button_hover_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_button_hover_color ) ); ?>',
+            new_text_selection_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_text_selection_color ) ); ?>',
+            new_text_selection_bg_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_text_selection_bg_color ) ); ?>',
+            new_border_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_border_color ) ); ?>',
+            new_background_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_background_color ) ); ?>',
+            new_page_title_text_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_page_title_text_color ) ); ?>',
+            new_page_title_bg_color: '<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_page_title_bg_color ) ); ?>',
+            new_bg_menu_dropdown_color: '<?php echo esc_js( ! empty( $solace_extra_api_bg_menu_dropdown_color ) ? solace_extra_sanitize_color( $solace_extra_api_bg_menu_dropdown_color ) : solace_extra_sanitize_color( $solace_extra_api_border_color ) ); ?>'
         }
 
         console.log(defaultColorValue);
         var jsonColorString = JSON.stringify(defaultColorValue);
-        localStorage.setItem('solace_step5_color', jsonColorString);
+        localStorage.setItem(solaceStorageKey('solace_step5_color'), jsonColorString);
 
 
         var bodyFontFamily = "";
@@ -665,7 +674,7 @@ p:'$solace_extra_font1';
         };
         console.log(defaultFontValue);
         var jsonFontString = JSON.stringify(defaultFontValue);
-        localStorage.setItem('solace_step5_font', jsonFontString);
+        localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonFontString);
         
         var link1 = document.createElement('link');
         link1.href = '<?php echo esc_html( $solace_extra_palette_font_scheme[1][0] );?>';
@@ -690,7 +699,7 @@ p:'$solace_extra_font1';
         var firstload = true;
 
         // Remove the 'solaceRemoveImported' value from localStorage
-        localStorage.removeItem('solaceRemoveImported');
+        localStorage.removeItem(solaceStorageKey('solaceRemoveImported'));
 
         // Attach a click event listener to the checkbox inside the '.box-delete' element
         $('.box-delete input').click(function(e){
@@ -708,7 +717,7 @@ p:'$solace_extra_font1';
             }
 
             // Store the updated status in localStorage with the key 'solaceRemoveImported'
-            localStorage.setItem('solaceRemoveImported', updatedStatus);
+            localStorage.setItem(solaceStorageKey('solaceRemoveImported'), updatedStatus);
         });
 
         $('#solace-extra-back-link').click(function(){
@@ -723,23 +732,23 @@ p:'$solace_extra_font1';
             $(this).addClass('active');
             
             var colorValue = { 
-                new_base_color: "<?php echo sanitize_hex_color( $solace_extra_api_base_color ); ?>",
-                new_heading_color: "<?php echo sanitize_hex_color( $solace_extra_api_heading_color ); ?>",
-                new_link_button_color: "<?php echo sanitize_hex_color( $solace_extra_api_link_button_color ); ?>",
-                new_link_button_hover_color: "<?php echo sanitize_hex_color( $solace_extra_api_link_button_hover_color ); ?>",
-                new_button_color: "<?php echo sanitize_hex_color( $solace_extra_api_button_color ); ?>",
-                new_button_hover_color: "<?php echo sanitize_hex_color( $solace_extra_api_button_hover_color ); ?>",
-                new_text_selection_color: "<?php echo sanitize_hex_color( $solace_extra_api_text_selection_color ); ?>",
-                new_text_selection_bg_color: "<?php echo sanitize_hex_color( $solace_extra_api_text_selection_bg_color ); ?>",
-                new_border_color: "<?php echo sanitize_hex_color( $solace_extra_api_border_color ); ?>",
-                new_background_color: "<?php echo sanitize_hex_color( $solace_extra_api_background_color ); ?>",
-                new_page_title_text_color: "<?php echo sanitize_hex_color( $solace_extra_api_page_title_text_color ); ?>",
-                new_page_title_bg_color: "<?php echo sanitize_hex_color( $solace_extra_api_page_title_bg_color ); ?>",
-                new_bg_menu_dropdown_color: "<?php echo sanitize_hex_color( $solace_extra_api_bg_menu_dropdown_color ); ?>",
+                new_base_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_base_color ) ); ?>",
+                new_heading_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_heading_color ) ); ?>",
+                new_link_button_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_link_button_color ) ); ?>",
+                new_link_button_hover_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_link_button_hover_color ) ); ?>",
+                new_button_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_button_color ) ); ?>",
+                new_button_hover_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_button_hover_color ) ); ?>",
+                new_text_selection_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_text_selection_color ) ); ?>",
+                new_text_selection_bg_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_text_selection_bg_color ) ); ?>",
+                new_border_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_border_color ) ); ?>",
+                new_background_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_background_color ) ); ?>",
+                new_page_title_text_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_page_title_text_color ) ); ?>",
+                new_page_title_bg_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_page_title_bg_color ) ); ?>",
+                new_bg_menu_dropdown_color: "<?php echo esc_js( solace_extra_sanitize_color( $solace_extra_api_bg_menu_dropdown_color ) ); ?>",
             };
             console.log(colorValue);
             var jsonString = JSON.stringify(colorValue);
-            localStorage.setItem('solace_step5_color', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_color'), jsonString);
         });
 
         $('#color-2').click(function(e) {
@@ -765,7 +774,7 @@ p:'$solace_extra_font1';
 
             console.log(colorValue);
             var jsonString = JSON.stringify(colorValue);
-            localStorage.setItem('solace_step5_color', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_color'), jsonString);
         });
         $('#color-3').click(function(e) {
             e.preventDefault();
@@ -790,7 +799,7 @@ p:'$solace_extra_font1';
 
             console.log(colorValue);
             var jsonString = JSON.stringify(colorValue);
-            localStorage.setItem('solace_step5_color', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_color'), jsonString);
         });
         $('#color-4').click(function(e) {
             e.preventDefault();
@@ -815,7 +824,7 @@ p:'$solace_extra_font1';
 
             console.log(colorValue);
             var jsonString = JSON.stringify(colorValue);
-            localStorage.setItem('solace_step5_color', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_color'), jsonString);
         });
 
         $('#font-1').addClass('active');
@@ -833,7 +842,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
 
             
         });
@@ -851,7 +860,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
 
             
         });
@@ -869,7 +878,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
             
         });
 
@@ -886,7 +895,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
             
         });
 
@@ -902,7 +911,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
             
         });
 
@@ -919,7 +928,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
             
         });
 
@@ -935,7 +944,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
                 
         });
 
@@ -952,7 +961,7 @@ p:'$solace_extra_font1';
             };
             console.log(fontValue);
             var jsonString = JSON.stringify(fontValue);
-            localStorage.setItem('solace_step5_font', jsonString);
+            localStorage.setItem(solaceStorageKey('solace_step5_font'), jsonString);
             
         });
 
@@ -1077,7 +1086,7 @@ p:'$solace_extra_font1';
             //     setLogoURL(attachment_id);
             // }
 
-            var solaceStep6 = localStorage.getItem('solaceStep6');
+            var solaceStep6 = localStorage.getItem(solaceStorageKey('solaceStep6'));
             console.log ('done step6? :'+solaceStep6);
             if (solaceStep6 === 'success') {
                 const demoType = getParameterByName('type');
@@ -1090,30 +1099,30 @@ p:'$solace_extra_font1';
                     return now.toLocaleString(); // Using local date and time format
                 }
 
-                if (localStorage.getItem('solaceDuration')) {
+                if (localStorage.getItem(solaceStorageKey('solaceDuration'))) {
                     // If it exists, remove it first
-                    localStorage.removeItem('solaceDuration');
+                    localStorage.removeItem(solaceStorageKey('solaceDuration'));
                 }
 
                 // Get the time when the button is clicked
                 var currentTime = getCurrentTime();
 
                 // Save the time value to local storage with the name 'solaceDuration'
-                localStorage.setItem('solaceDuration', currentTime);
+                localStorage.setItem(solaceStorageKey('solaceDuration'), currentTime);
 
                 // Check if the 'solaceListDemo' key already exists in local storage
-                if (localStorage.getItem('solaceRemoveDataDemo')) {
+                if (localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo'))) {
                     // Retrieve the existing value
-                    let existingValue = localStorage.getItem('solaceRemoveDataDemo');
+                    let existingValue = localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo'));
 
                     // Combine the existing value with the new data, separated by a comma
                     let combinedValue = existingValue + ',' + demoName;
 
                     // Save the combined value back to local storage
-                    localStorage.setItem('solaceRemoveDataDemo', combinedValue);
+                    localStorage.setItem(solaceStorageKey('solaceRemoveDataDemo'), combinedValue);
                 } else {
                     // If 'solaceRemoveDataDemo' doesn't exist in local storage, create it and store the new data
-                    localStorage.setItem('solaceRemoveDataDemo', demoName);
+                    localStorage.setItem(solaceStorageKey('solaceRemoveDataDemo'), demoName);
                 }                
 
                 window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();

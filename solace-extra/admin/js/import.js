@@ -1,3 +1,12 @@
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 (function( $ ) {
 	'use strict';
 
@@ -450,15 +459,15 @@
     remove_data_import();
     function remove_data_import() {
         let prevDemo = '';
-        if ( localStorage.getItem('solaceRemoveDataDemo') ) {
-            prevDemo = localStorage.getItem('solaceRemoveDataDemo');
+        if ( localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo')) ) {
+            prevDemo = localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo'));
         } else {
             prevDemo = 'blank';
         }
 
         solace_extra_import_step1();
 
-        if ( localStorage.getItem('solaceRemoveImported') === "remove") {
+        if ( localStorage.getItem(solaceStorageKey('solaceRemoveImported')) === "remove") {
             $.ajax({ 
                 url: ajax_object.ajax_url,
                 type: 'POST',
@@ -471,7 +480,7 @@
                     setImportStatus('Preparing website installation...');
                     $('section.progress-import .mycontainer .boxes .step-import').text('Delete Previously Imported Sites...');
                     // Remove list data demo
-                    localStorage.removeItem('solaceRemoveDataDemo');
+                    localStorage.removeItem(solaceStorageKey('solaceRemoveDataDemo'));
                     activate_theme();
                 },
                 error: function(xhr, textStatus, errorThrown) {
@@ -583,7 +592,7 @@
                 nonce: nonce,
                 getDemoUrl: getParameterByName('url'),
                 getDemoName: getParameterByName('demo'),
-                prevDemo: localStorage.getItem('solaceRemoveDataDemo') || 'blank',
+                prevDemo: localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo')) || 'blank',
             },
             success: function (response) {
                 // console.log("Import ZIP AJAX call succeeded. Response:", response);

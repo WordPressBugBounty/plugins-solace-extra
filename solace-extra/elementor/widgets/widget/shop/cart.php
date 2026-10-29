@@ -2618,8 +2618,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                                                 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                                 echo $_product->get_image(); ?></td>
                                                 <td class="product-name"><?php 
-                                                // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                                echo $_product->get_name(); ?></td>
+                                                echo esc_html( $_product->get_name() ); ?></td>
                                                 <td class="product-price"><?php 
                                                 // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                                 echo WC()->cart->get_product_price( $_product ); ?></td>
@@ -2762,8 +2761,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                                             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                             echo $_product->get_image(); ?></td>
                                             <td class="product-name"><?php 
-                                            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                            echo $_product->get_name(); ?></td>
+                                            echo esc_html( $_product->get_name() ); ?></td>
                                             <td class="product-price"><?php 
                                             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                             echo WC()->cart->get_product_price( $_product ); ?></td>
@@ -2889,8 +2887,7 @@ class Solace_Extra_WooCommerce_Cart extends Widget_Base {
                                         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                         echo $_product->get_image(); ?></td>
                                         <td class="product-name"><?php 
-                                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                        echo $_product->get_name(); ?></td>
+                                        echo esc_html( $_product->get_name() ); ?></td>
                                         <td class="product-price"><?php 
                                         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                                         echo WC()->cart->get_product_price( $_product ); ?></td>

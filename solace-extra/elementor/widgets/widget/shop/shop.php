@@ -270,15 +270,18 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
             ]
         );
 
-		$this->add_control(
+		// Responsive like Columns: an empty Tablet value uses Desktop, an empty
+		// Mobile value uses Tablet (see get_responsive_per_page()).
+		$this->add_responsive_control(
 			'posts_per_page',
 			[
 				'label' => esc_html__( 'Products per Page', 'solace-extra' ),
 				'type' => \Elementor\Controls_Manager::NUMBER,
-				'min' => -1,
+				'min' => 1,
 				'max' => 100,
 				'step' => 1,
 				'default' => 4,
+				'description' => esc_html__( 'Use a multiple of Columns on each device to keep the last row full. Minimum 1; an empty Tablet/Mobile value uses the larger device.', 'solace-extra' ),
 			]
 		);
 
@@ -1722,6 +1725,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 				align-items: center;
 				line-height: inherit;
 				padding: 8px 16px;
+				fill: currentColor;
 			}
 
 			.solace-extra-pagination .page-numbers.current {
@@ -1776,6 +1780,55 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
 		}
 
 		echo '<div class="product-description">' . esc_html( $description ) . '</div>';
+	}
+
+	/**
+	 * Products per page per device, inheriting like the Columns control:
+	 * Tablet falls back to Desktop, Mobile to Tablet. Values below 1 count as empty.
+	 *
+	 * @param array $settings Widget settings.
+	 * @return int[] desktop|tablet|mobile => count.
+	 */
+	protected function get_responsive_per_page( $settings ) {
+		// Values below 1 (0, -1, saved before the control had a minimum of 1)
+		// count as empty, so the device falls back like an empty field.
+		$desktop = isset( $settings['posts_per_page'] ) && intval( $settings['posts_per_page'] ) >= 1 ? intval( $settings['posts_per_page'] ) : 4; // Control default.
+		$tablet  = isset( $settings['posts_per_page_tablet'] ) && intval( $settings['posts_per_page_tablet'] ) >= 1 ? intval( $settings['posts_per_page_tablet'] ) : $desktop;
+		$mobile  = isset( $settings['posts_per_page_mobile'] ) && intval( $settings['posts_per_page_mobile'] ) >= 1 ? intval( $settings['posts_per_page_mobile'] ) : $tablet;
+
+		return array(
+			'desktop' => $desktop,
+			'tablet'  => $tablet,
+			'mobile'  => $mobile,
+		);
+	}
+
+	/**
+	 * Media query per device, matching the Columns breakpoints in get_style().
+	 *
+	 * @return string[]
+	 */
+	protected function get_device_media_queries() {
+		return array(
+			'desktop' => '(min-width: 1025px)',
+			'tablet'  => '(min-width: 768px) and (max-width: 1024px)',
+			'mobile'  => '(max-width: 767px)',
+		);
+	}
+
+	/**
+	 * Device whose page size the current request paginates with.
+	 *
+	 * Tablet/Mobile pagination links carry ?solace_view=tablet|mobile, since
+	 * the server cannot tell the device; links without it are Desktop.
+	 *
+	 * @return string desktop|tablet|mobile.
+	 */
+	protected function get_requested_view() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Frontend pagination uses public query arg.
+		$view = isset( $_GET['solace_view'] ) ? sanitize_key( wp_unslash( $_GET['solace_view'] ) ) : '';
+
+		return in_array( $view, array( 'tablet', 'mobile' ), true ) ? $view : 'desktop';
 	}
 
 	protected function render() {
@@ -1871,7 +1924,20 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
         }
 		$paged = max( 1, $paged );
 
-        $posts_per_page = !empty($settings['posts_per_page']) ? intval($settings['posts_per_page']) : 6;
+        // Products per page per device. The first page of the plain URL queries
+        // the largest count and hides the extra cards per breakpoint with CSS;
+        // later pages (and any page reached through a Tablet/Mobile link) query
+        // exactly the count of the device they were requested for.
+        $per_page_by_device = $this->get_responsive_per_page( $settings );
+        $per_page_varies    = 1 < count( array_unique( $per_page_by_device ) );
+        $requested_view     = $per_page_varies ? $this->get_requested_view() : 'desktop';
+        $hide_extra_cards   = $per_page_varies && 'desktop' === $requested_view && 1 === (int) $paged;
+
+        if ( $hide_extra_cards ) {
+            $posts_per_page = in_array( -1, $per_page_by_device, true ) ? -1 : max( $per_page_by_device );
+        } else {
+            $posts_per_page = $per_page_by_device[ $requested_view ];
+        }
 
         $args = [
             'post_type'      => 'product',
@@ -2162,15 +2228,74 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
                 }
             }
             echo '</ul></div>';
-            
-            $total_pages = $query->max_num_pages;
-            if ( 'yes' === $settings['show_pagination'] && $total_pages > 1 ) {
-                $current_page = max( 1, $paged );
-                $align_class = ! empty( $settings['pagination_alignment'] ) ? ' align-' . $settings['pagination_alignment'] : '';
-                echo '<div class="solace-extra-pagination' . esc_attr( $align_class ) . '">';
+
+            $media_queries = $this->get_device_media_queries();
+            $widget_class  = '.shop-widget-' . sanitize_html_class( $widget_id );
+            $device_css    = '';
+
+            // First page of the plain URL: hide the cards beyond each device's count.
+            if ( $hide_extra_cards ) {
+                foreach ( $per_page_by_device as $device => $count ) {
+                    if ( $count > 0 && ( -1 === $posts_per_page || $count < $posts_per_page ) ) {
+                        $device_css .= '@media ' . $media_queries[ $device ] . '{' . $widget_class . ' ul.products > li.sol-product:nth-of-type(n+' . ( $count + 1 ) . '){display:none;}}';
+                    }
+                }
+            }
+
+            // One pagination per device when the page size differs per device;
+            // each shows only at its breakpoint. The current page of the other
+            // devices is the page holding the first product shown here.
+            $paginations = array();
+
+            if ( $per_page_varies ) {
+                $found_posts = (int) $query->found_posts;
+                $first_index = ( max( 1, (int) $paged ) - 1 ) * max( 0, (int) $per_page_by_device[ $requested_view ] );
+
+                foreach ( $per_page_by_device as $device => $count ) {
+                    $device_total = $count > 0 ? (int) ceil( $found_posts / $count ) : 0;
+                    // Only devices that print a pagination need its show/hide rule.
+                    if ( 'yes' === $settings['show_pagination'] && $device_total > 1 ) {
+                        $paginations[ $device ] = array(
+                            'total'   => $device_total,
+                            'current' => (int) floor( $first_index / $count ) + 1,
+                        );
+                        $device_css .= $widget_class . ' .solace-extra-pagination-' . $device . '{display:none;}@media ' . $media_queries[ $device ] . '{' . $widget_class . ' .solace-extra-pagination-' . $device . '{display:flex;}}';
+                    }
+                }
+            } else {
+                $paginations['all'] = array(
+                    'total'   => (int) $query->max_num_pages,
+                    'current' => max( 1, (int) $paged ),
+                );
+            }
+
+            if ( '' !== $device_css ) {
+                // Built from fixed selectors, the sanitized widget ID and integers only.
+                echo '<style>' . $device_css . '</style>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            }
+
+            $pagenum_base = remove_query_arg( 'solace_view', get_pagenum_link( 999999999, false ) );
+
+            foreach ( $paginations as $device => $pagination ) {
+                $total_pages = $pagination['total'];
+                if ( 'yes' !== $settings['show_pagination'] || $total_pages <= 1 ) {
+                    continue;
+                }
+                $current_page = $pagination['current'];
+                $align_class  = ! empty( $settings['pagination_alignment'] ) ? ' align-' . $settings['pagination_alignment'] : '';
+                $device_class = 'all' === $device ? '' : ' solace-extra-pagination-' . $device;
+                // Tablet/Mobile links carry ?solace_view=, the others none. Set on
+                // each link: paginate_links() copies the current query string,
+                // including this request's solace_view, into every link.
+                $view_link = static function ( $link ) use ( $device ) {
+                    $link = remove_query_arg( 'solace_view', $link );
+                    return in_array( $device, array( 'tablet', 'mobile' ), true ) ? add_query_arg( 'solace_view', $device, $link ) : $link;
+                };
+                add_filter( 'paginate_links', $view_link );
+                echo '<div class="solace-extra-pagination' . esc_attr( $align_class . $device_class ) . '">';
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                 echo paginate_links( array(
-                    'base'      => str_replace( 999999999, '%#%', esc_url( get_pagenum_link( 999999999 ) ) ),
+                    'base'      => str_replace( 999999999, '%#%', $pagenum_base ),
                     'format'    => '?paged=%#%',
                     'current'   => $current_page,
                     'total'     => $total_pages,
@@ -2178,6 +2303,7 @@ class Solace_Extra_WooCommerce_Shop extends \Elementor\Widget_Base {
                     'next_text' => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M471.1 297.4C483.6 309.9 483.6 330.2 471.1 342.7L279.1 534.7C266.6 547.2 246.3 547.2 233.8 534.7C221.3 522.2 221.3 501.9 233.8 489.4L403.2 320L233.9 150.6C221.4 138.1 221.4 117.8 233.9 105.3C246.4 92.8 266.7 92.8 279.2 105.3L471.2 297.3z"/></svg>',
                     'type'      => 'plain',
                 ) );
+                remove_filter( 'paginate_links', $view_link );
                 echo '</div>';
             }
             echo '</div>';

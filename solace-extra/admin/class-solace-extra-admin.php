@@ -391,7 +391,9 @@ class Solace_Extra_Admin {
 				'solace-sitebuilder',  // Handle of the script
 				plugin_dir_url(__FILE__) . 'js/sitebuilder.js',  // Path to the script
 				array('jquery'),  // Dependencies
-				'1.0.0',  // Version number
+				// File time as version: a fixed number kept browsers (and caches such
+				// as Cloudflare's 4-hour max-age) on an old copy after every change.
+				(string) filemtime( plugin_dir_path( __FILE__ ) . 'js/sitebuilder.js' ),
 				true  // Load in the footer
 			);
 
@@ -578,7 +580,7 @@ class Solace_Extra_Admin {
 				);
 
 				// Write the updated content back to wp-config.php
-				$wp_filesystem->put_contents( $wp_config_file, $config_content, FS_CHMOD_FILE );
+				$wp_filesystem->put_contents( $wp_config_file, $config_content, ( defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644 ) );
 			}
 		}
 	}
@@ -622,7 +624,7 @@ class Solace_Extra_Admin {
 				);
 
 				// Write the updated content back to wp-config.php
-				$wp_filesystem->put_contents( $wp_config_file, $config_content, FS_CHMOD_FILE );
+				$wp_filesystem->put_contents( $wp_config_file, $config_content, ( defined( 'FS_CHMOD_FILE' ) ? FS_CHMOD_FILE : 0644 ) );
 			}
 		}
 	}
@@ -1309,19 +1311,19 @@ class Solace_Extra_Admin {
 		// =========== BEGIN GET NEW FONT AND COLOR ===========
 		$new_solace_body_font_family = isset( $_POST['new_solace_body_font_family'] ) ? sanitize_text_field( wp_unslash( $_POST['new_solace_body_font_family'] ) ) : '';
 		$new_solace_heading_font_family_general = isset( $_POST['new_solace_heading_font_family_general'] ) ? sanitize_text_field( wp_unslash( $_POST['new_solace_heading_font_family_general'] ) ) : '';
-		$new_base_color = ! empty( $_POST['new_base_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_base_color'] ) ) : '';
-		$new_heading_color = ! empty( $_POST['new_heading_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_heading_color'] ) ) : '';
-		$new_link_button_color = ! empty( $_POST['new_link_button_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_link_button_color'] ) ) : '';
-		$new_link_button_hover_color = ! empty( $_POST['new_link_button_hover_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_link_button_hover_color'] ) ) : '';
-		$new_button_color = ! empty( $_POST['new_button_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_button_color'] ) ) : '';
-		$new_button_hover_color = ! empty( $_POST['new_button_hover_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_button_hover_color'] ) ) : '';
-		$new_text_selection_color = ! empty( $_POST['new_text_selection_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_text_selection_color'] ) ) : '';
-		$new_text_selection_hover_color = ! empty( $_POST['new_text_selection_bg_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_text_selection_bg_color'] ) ) : '';
-		$new_border_color = ! empty( $_POST['new_border_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_border_color'] ) ) : '';
-		$new_background_color = ! empty( $_POST['new_background_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_background_color'] ) ) : '';
-		$new_page_title_text_color = ! empty( $_POST['new_page_title_text_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_page_title_text_color'] ) ) : '';
-		$new_page_title_bg_color = ! empty( $_POST['new_page_title_bg_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_page_title_bg_color'] ) ) : '';
-		$new_bg_menu_dropdown_color = ! empty( $_POST['new_bg_menu_dropdown_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['new_bg_menu_dropdown_color'] ) ) : '';
+		$new_base_color = ! empty( $_POST['new_base_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_base_color'] ) ) ) : '';
+		$new_heading_color = ! empty( $_POST['new_heading_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_heading_color'] ) ) ) : '';
+		$new_link_button_color = ! empty( $_POST['new_link_button_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_link_button_color'] ) ) ) : '';
+		$new_link_button_hover_color = ! empty( $_POST['new_link_button_hover_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_link_button_hover_color'] ) ) ) : '';
+		$new_button_color = ! empty( $_POST['new_button_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_button_color'] ) ) ) : '';
+		$new_button_hover_color = ! empty( $_POST['new_button_hover_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_button_hover_color'] ) ) ) : '';
+		$new_text_selection_color = ! empty( $_POST['new_text_selection_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_text_selection_color'] ) ) ) : '';
+		$new_text_selection_hover_color = ! empty( $_POST['new_text_selection_bg_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_text_selection_bg_color'] ) ) ) : '';
+		$new_border_color = ! empty( $_POST['new_border_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_border_color'] ) ) ) : '';
+		$new_background_color = ! empty( $_POST['new_background_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_background_color'] ) ) ) : '';
+		$new_page_title_text_color = ! empty( $_POST['new_page_title_text_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_page_title_text_color'] ) ) ) : '';
+		$new_page_title_bg_color = ! empty( $_POST['new_page_title_bg_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_page_title_bg_color'] ) ) ) : '';
+		$new_bg_menu_dropdown_color = ! empty( $_POST['new_bg_menu_dropdown_color'] ) ? solace_extra_sanitize_color( sanitize_text_field( wp_unslash( $_POST['new_bg_menu_dropdown_color'] ) ) ) : '';
 		// $new_bg_menu_dropdown_color = !empty($new_bg_menu_dropdown_color)?$new_bg_menu_dropdown_color:$new_border_color;
 		
 		// =========== END OF NEW FONT AND COLOR ===========
@@ -1360,16 +1362,44 @@ class Solace_Extra_Admin {
 		// =========== END OF GET CURRENT SETTING ELEMENTOR COLOR ==============
 		
 		// =========== BEGIN SAVE FONT AND COLOR TO CUSTOMIZER ==============
-		set_theme_mod('solace_body_font_family', $new_solace_body_font_family);
-		set_theme_mod('solace_smaller_font_family', $new_solace_body_font_family);
-		set_theme_mod('solace_logotitle_font_family', $new_solace_body_font_family);
-		set_theme_mod('solace_button_font_family', $new_solace_body_font_family);
-		set_theme_mod('solace_h1_font_family_general',$new_solace_heading_font_family_general);
-		set_theme_mod('solace_h2_font_family_general',$new_solace_heading_font_family_general);
-		set_theme_mod('solace_h3_font_family_general',$new_solace_heading_font_family_general);
-		set_theme_mod('solace_h4_font_family_general',$new_solace_heading_font_family_general);
-		set_theme_mod('solace_h5_font_family_general',$new_solace_heading_font_family_general);
-		set_theme_mod('solace_h6_font_family_general',$new_solace_heading_font_family_general);
+		// Demos pair their fonts per slot (button and logo title in the heading
+		// font, Elementor's Secondary/Accent in either one, ...). Overwriting
+		// every slot with the body or heading font changed the demo's design
+		// even when the user kept its fonts. Each slot now follows its own font:
+		// the demo's body font becomes the new body font, the demo's heading
+		// font the new heading font, anything else stays.
+		$old_body_font    = (string) get_theme_mod( 'solace_body_font_family', '' );
+		$old_heading_font = (string) get_theme_mod( 'solace_h1_font_family_general', '' );
+		$map_font         = function ( $current, $is_heading_slot ) use ( $old_body_font, $old_heading_font, $new_solace_body_font_family, $new_solace_heading_font_family_general ) {
+			$current  = (string) $current;
+			$new_body = '' !== $new_solace_body_font_family ? $new_solace_body_font_family : $old_body_font;
+			$new_head = '' !== $new_solace_heading_font_family_general ? $new_solace_heading_font_family_general : $old_heading_font;
+			if ( '' === $current ) {
+				return $is_heading_slot ? $new_head : $new_body;
+			}
+			$is_body = 0 === strcasecmp( $current, $old_body_font );
+			$is_head = 0 === strcasecmp( $current, $old_heading_font );
+			if ( $is_body && $is_head ) {
+				// Same font for both in the demo: the slot kind decides.
+				return $is_heading_slot ? $new_head : $new_body;
+			}
+			if ( $is_body ) {
+				return $new_body;
+			}
+			if ( $is_head ) {
+				return $new_head;
+			}
+			return $current;
+		};
+
+		set_theme_mod( 'solace_body_font_family', $new_solace_body_font_family );
+		foreach ( array( 'solace_smaller_font_family', 'solace_logotitle_font_family', 'solace_button_font_family' ) as $font_mod ) {
+			set_theme_mod( $font_mod, $map_font( get_theme_mod( $font_mod, '' ), false ) );
+		}
+		for ( $font_level = 1; $font_level <= 6; $font_level++ ) {
+			$font_mod = 'solace_h' . $font_level . '_font_family_general';
+			set_theme_mod( $font_mod, $map_font( get_theme_mod( $font_mod, '' ), true ) );
+		}
 		$solace_base_font	= get_theme_mod('solace_body_font_family','Manrope' );
 
 		$solace_global_colors['activePalette'] = 'base';
@@ -1413,51 +1443,19 @@ class Solace_Extra_Admin {
 
 
 		// =========== BEGIN SAVE FONT AND COLOR TO ELEMENTOR ===========
-		$custom_typography = [
-			[
-				'_id' => 'primary',
-				'title' => 'Smaller',
-				'typography_font_family' => $new_solace_body_font_family
-			],
-			[
-				'_id' => 'secondary',
-				'title' => 'Logo Title / Subtitle',
-				'typography_font_family' => $new_solace_body_font_family
-			],
-			[
-				'_id' => 'text',
-				'title' => 'Solace Base',
-				'typography_font_family' => $new_solace_body_font_family
-			],
-			[
-				'_id' => 'accent',
-				'title' => 'Button',
-				'typography_font_family' => $new_solace_body_font_family
-			],
-			['
-				_id' => 'solace_body_font_family',
-				'typography_font_family' => $new_solace_body_font_family
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			],
-			[
-				'typography_font_family' => $new_solace_heading_font_family_general
-			]
-		];
-		
+		// Keep every Global Font of the kit (sizes, weights, ...) and only move
+		// its family along, the same way as the Customizer slots above.
+		$custom_typography = array();
+		$heading_ids       = array( 'solace_h1_font_family_general', 'solace_h2_font_family_general', 'solace_h3_font_family_general', 'solace_h4_font_family_general', 'solace_h5_font_family_general', 'solace_h6_font_family_general' );
+		foreach ( ( isset( $current['system_typography'] ) && is_array( $current['system_typography'] ) ) ? $current['system_typography'] : array() as $font_item ) {
+			if ( ! is_array( $font_item ) ) {
+				continue;
+			}
+			$font_id = isset( $font_item['_id'] ) ? (string) $font_item['_id'] : '';
+			$font_item['typography_font_family'] = $map_font( isset( $font_item['typography_font_family'] ) ? $font_item['typography_font_family'] : '', in_array( $font_id, $heading_ids, true ) );
+			$custom_typography[] = $font_item;
+		}
+
 		$system_colors = array(
 			array(
 				'_id' => 'primary',
@@ -1548,7 +1546,9 @@ class Solace_Extra_Admin {
 		if (class_exists('Elementor\Plugin')) {
 			\Elementor\Plugin::$instance->kits_manager->update_kit_settings_based_on_option( 'system_colors', $system_colors );
 			\Elementor\Plugin::$instance->kits_manager->update_kit_settings_based_on_option( 'solace_colors', $theme_colors );
-			\Elementor\Plugin::$instance->kits_manager->update_kit_settings_based_on_option( 'system_typography', $custom_typography );
+			if ( ! empty( $custom_typography ) ) {
+				\Elementor\Plugin::$instance->kits_manager->update_kit_settings_based_on_option( 'system_typography', $custom_typography );
+			}
 			\Elementor\Plugin::$instance->files_manager->clear_cache();
 		}
 		// =========== END OF SAVE FONT AND COLOR TO ELEMENTOR ===========
@@ -1619,9 +1619,20 @@ class Solace_Extra_Admin {
 			return $data;
         }		
 
+        // Capability check: only administrators may resolve required plugins.
+        if ( ! current_user_can( 'manage_options' ) ) {
+			$data['error'] = esc_html__( 'Unauthorized.', 'solace-extra' );
+			return $data;
+        }
+
         // Demo name
 		$get_demo = ! empty( $_GET['demo'] ) ? sanitize_text_field( wp_unslash( $_GET['demo'] ) ) : '';
-        if (empty($get_demo)) {
+		if (empty($get_demo)) {
+			$data['error'] = esc_html__( 'Error demo URL', 'solace-extra' );
+			return $data;
+        }
+		$get_demo = sanitize_title( $get_demo );
+		if ( empty( $get_demo ) || false !== strpos( $get_demo, '..' ) || false !== strpos( $get_demo, '/' ) ) {
 			$data['error'] = esc_html__( 'Error demo URL', 'solace-extra' );
 			return $data;
         }
@@ -2325,19 +2336,155 @@ class Solace_Extra_Admin {
 			wp_send_json_error('Invalid data.');
 		}
 
-		// Attempt to update the post title
-		$updated = wp_update_post([
+		$postarr = [
 			'ID'         => $post_id,
 			'post_title' => $new_title,
-		], true);
+		];
+
+		// Keep a Site Builder part's slug in step with its title (Cart #1 => your-cart).
+		// wp_insert_post() runs it through wp_unique_post_slug(), so a taken slug
+		// becomes your-cart-2 instead of colliding.
+		$new_slug = sanitize_title( $new_title );
+		if ( 'solace-sitebuilder' === get_post_type( $post_id ) && '' !== $new_slug ) {
+			$postarr['post_name'] = $new_slug;
+		}
+
+		// Attempt to update the post title
+		$updated = wp_update_post( $postarr, true );
 
 		// Return error if update fails
 		if (is_wp_error($updated)) {
 			wp_send_json_error($updated->get_error_message());
 		}
 
+		$this->sync_woo_base_page_slug( $post_id, $new_slug );
+
+		// The dashboard shows the WooCommerce page address under the title of
+		// Cart/Checkout/My Account parts; hand back the current one so the link
+		// can follow a slug change without a reload.
+		$page_url = '';
+		$part     = (string) get_post_meta( $post_id, '_solace_template', true );
+		if ( in_array( $part, array( 'cart', 'checkout', 'myaccount' ), true ) && function_exists( 'solace_extra_woo_part_page_id' ) ) {
+			$own      = solace_extra_woo_part_page_id( $post_id, $part, true );
+			$page_url = $own ? get_permalink( $own ) : '';
+		}
+
 		// Return success response
-		wp_send_json_success('Post title updated.');
+		wp_send_json_success(
+			array(
+				'message'  => 'Post title updated.',
+				'page_url' => $page_url,
+			)
+		);
+	}
+
+	/**
+	 * A slug for a WooCommerce base page that no other page or public post uses.
+	 *
+	 * wp_unique_post_slug() only compares a page with other pages, but with a
+	 * /%postname%/ permalink structure a post with the same slug would answer
+	 * at the same address. Appends -2, -3, ... until the slug is free.
+	 *
+	 * @param string $slug    Wanted slug.
+	 * @param int    $page_id The page being renamed.
+	 * @return string
+	 */
+	private function unique_woo_page_slug( $slug, $page_id ) {
+		return function_exists( 'solace_extra_woo_unique_page_slug' ) ? solace_extra_woo_unique_page_slug( $slug, $page_id ) : $slug;
+	}
+
+	/**
+	 * Give the WooCommerce page a renamed part stands in for the part's slug.
+	 *
+	 * A Cart/Checkout/My Account part selected in WooCommerce Settings is
+	 * rendered at its base page (woo-pages-integration.php), and that page is
+	 * where "View Cart" & co. link to. Renaming "Cart #1" to "Your Cart" should
+	 * therefore move the store's cart address to /your-cart/ as well.
+	 * wp_unique_post_slug() turns a taken slug into your-cart-2.
+	 *
+	 * @param int    $post_id  The renamed Site Builder part.
+	 * @param string $new_slug Slug derived from the new title.
+	 * @return void
+	 */
+	private function sync_woo_base_page_slug( $post_id, $new_slug ) {
+		if ( '' === $new_slug || 'solace-sitebuilder' !== get_post_type( $post_id ) || ! function_exists( 'solace_extra_woo_base_pages' ) ) {
+			return;
+		}
+
+		$part = (string) get_post_meta( $post_id, '_solace_template', true );
+
+		$options = array(
+			'cart'        => 'woocommerce_cart_page_id',
+			'checkout'    => 'woocommerce_checkout_page_id',
+			'myaccount'   => 'woocommerce_myaccount_page_id',
+			'shopproduct' => 'woocommerce_shop_page_id',
+		);
+
+		if ( ! isset( $options[ $part ] ) ) {
+			return;
+		}
+
+		if ( 'shopproduct' === $part ) {
+			$base_id = function_exists( 'solace_extra_woo_shop_base_page_id' ) ? solace_extra_woo_shop_base_page_id() : 0;
+		} else {
+			$bases   = solace_extra_woo_base_pages();
+			$base_id = isset( $bases[ $part ] ) ? absint( $bases[ $part ] ) : 0;
+		}
+
+		if ( 'shopproduct' === $part ) {
+			// Shop: only the part selected as the Shop page.
+			if ( (int) get_option( $options[ $part ], 0 ) !== (int) $post_id ) {
+				return;
+			}
+		} else {
+			// Cart/Checkout/My Account: the part's own page (its address, see
+			// woo-pages-integration.php section 15), whatever is selected.
+			$base_id = function_exists( 'solace_extra_woo_part_page_id' ) ? solace_extra_woo_part_page_id( $post_id, $part, true ) : 0;
+		}
+
+		if ( ! $base_id || 'page' !== get_post_type( $base_id ) || 'publish' !== get_post_status( $base_id ) ) {
+			return;
+		}
+
+		$old_slug = (string) get_post_field( 'post_name', $base_id );
+
+		// Never take an address another page or post already answers at.
+		$new_slug = $this->unique_woo_page_slug( $new_slug, $base_id );
+
+		if ( $old_slug === $new_slug ) {
+			return;
+		}
+
+		// WordPress keeps no old slugs for pages, so /cart/ would 404 and its
+		// canonical guess would send visitors to any page starting with "cart".
+		// Remember it; solace_extra_woo_redirect_old_page_slug() redirects it.
+		if ( '' !== $old_slug ) {
+			delete_post_meta( $base_id, '_solace_old_slug', $old_slug );
+			add_post_meta( $base_id, '_solace_old_slug', $old_slug );
+		}
+		delete_post_meta( $base_id, '_solace_old_slug', $new_slug );
+
+		// Renaming again and again would pile up addresses; the newest few are
+		// the ones still linked from anywhere.
+		$old_slugs = (array) get_post_meta( $base_id, '_solace_old_slug' );
+		foreach ( array_slice( $old_slugs, 0, max( 0, count( $old_slugs ) - 5 ) ) as $stale ) {
+			delete_post_meta( $base_id, '_solace_old_slug', $stale );
+		}
+
+		$update = array(
+			'ID'        => $base_id,
+			'post_name' => $new_slug,
+		);
+		// A part's own page carries its title too, as in the Pages list.
+		if ( 'shopproduct' !== $part ) {
+			$update['post_title'] = get_the_title( $post_id );
+		}
+		wp_update_post( $update );
+
+		// The product archive (/shop/) is registered from the Shop page slug.
+		if ( 'shopproduct' === $part ) {
+			update_option( 'woocommerce_queue_flush_rewrite_rules', 'yes' );
+		}
 	}
 
 	/**

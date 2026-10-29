@@ -804,12 +804,11 @@ if ( ! function_exists( 'solace_woo_page_parts_enabled' ) ) {
 	/**
 	 * Whether the cart, checkout and my account part types are available.
 	 *
-	 * Off by default - the cart, checkout and my account parts are hidden
-	 * everywhere (dashboard, Pro overrides, asset bridge, notices). Returning
-	 * true from the filter below brings them back, and reaches every place the
-	 * feature shows up. Hiding only the dashboard would leave a part that is
-	 * already switched on replacing its page, with nowhere visible to switch it
-	 * off.
+	 * On by default. Returning false from the filter below hides the cart,
+	 * checkout and my account parts again, and reaches every place the feature
+	 * shows up (dashboard, Pro overrides, asset bridge, notices). Hiding only the
+	 * dashboard would leave a part that is already switched on replacing its
+	 * page, with nowhere visible to switch it off.
 	 *
 	 * @since 1.7.2
 	 * @return bool
@@ -818,9 +817,9 @@ if ( ! function_exists( 'solace_woo_page_parts_enabled' ) ) {
 		/**
 		 * Filters whether the cart, checkout and my account part types are available.
 		 *
-		 * @param bool $enabled Default false.
+		 * @param bool $enabled Default true.
 		 */
-		return (bool) apply_filters( 'solace_sitebuilder_woo_page_parts_enabled', false );
+		return (bool) apply_filters( 'solace_sitebuilder_woo_page_parts_enabled', true );
 	}
 }
 
@@ -944,6 +943,11 @@ if ( ! function_exists( 'solace_get_woo_page_part_id' ) ) {
 	 */
 	function solace_get_woo_page_part_id( $part ) {
 		if ( ! solace_woo_page_parts_enabled() || ! in_array( $part, solace_woo_page_parts(), true ) ) {
+			return 0;
+		}
+
+		// Elementor Pro Site Settings uses the page: Elementor Pro takes priority.
+		if ( function_exists( 'solace_sitebuilder_elementor_pro_woo_page' ) && solace_sitebuilder_elementor_pro_woo_page( $part ) ) {
 			return 0;
 		}
 

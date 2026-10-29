@@ -60,6 +60,12 @@ abstract class XWP_Async_Request {
 	 * Initiate new async request.
 	 */
 	public function __construct() {
+		// On multisite, scope the identifier to the current blog so each subsite gets its own
+		// queue, status and lock (these are stored network-wide in sitemeta).
+		if ( is_multisite() ) {
+			$this->prefix .= '_' . get_current_blog_id();
+		}
+
 		$this->identifier = $this->prefix . '_' . $this->action;
 
 		add_action( 'wp_ajax_' . $this->identifier, array( $this, 'maybe_handle' ) );

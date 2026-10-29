@@ -1,3 +1,12 @@
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     const iframe = document.getElementById('solaceIframe');
 
@@ -50,8 +59,8 @@ jQuery(document).ready(function($) {
     let mediaUploader;
 
     function clearStoredStyles() {
-        localStorage.removeItem('appliedStyles');
-        localStorage.removeItem('appliedFontStyles');
+        localStorage.removeItem(solaceStorageKey('appliedStyles'));
+        localStorage.removeItem(solaceStorageKey('appliedFontStyles'));
         document.body.style.cssText = ''; // Reset styles on the body element.
         console.log('Stored styles cleared from LocalStorage');
     }
@@ -74,10 +83,11 @@ jQuery(document).ready(function($) {
         console.log('Default logo button clicked, message sent:', data);
         $(".palette-buttons img.logo").css("display", "none");
         $(".palette-buttons .logo_default").css("display", "none");
-        localStorage.removeItem('solace_step5_logo');
+        localStorage.removeItem(solaceStorageKey('solace_step5_logo'));
  
         var currentDate = new Date();
         currentDate.setTime(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000)); 
+        document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=" + solaceCookiePath();
         document.cookie = "solace_step5_logoid=; expires=" + currentDate.toUTCString() + "; path=/";
 
         if (document.cookie.indexOf('solace_step5_logoid') === -1) {
@@ -186,10 +196,10 @@ jQuery(document).ready(function($) {
         // alert(logo_url);
         // AJAX request to save the logo URL
         var logoString = logo_url;
-        localStorage.setItem('solace_step5_logo', logoString);
-        // var logoValue = localStorage.getItem('solace_step5_logo');
+        localStorage.setItem(solaceStorageKey('solace_step5_logo'), logoString);
+        // var logoValue = localStorage.getItem(solaceStorageKey('solace_step5_logo'));
         // document.cookie = "solace_step5_logo=; expires=" + currentDate.toUTCString() + "; path=/";
-        document.cookie = "solace_step5_logoid=" + (logoString || "") + "; path=/";
+        document.cookie = "solace_step5_logoid=" + (logoString || "") + "; path=" + solaceCookiePath();
                 
         $.ajax({
             url: ajax_object.ajax_url,

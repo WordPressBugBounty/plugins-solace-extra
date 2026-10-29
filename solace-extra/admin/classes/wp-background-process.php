@@ -58,9 +58,14 @@ abstract class XWP_Background_Process extends XWP_Async_Request {
 	/**
 	 * Restrict object instantiation when using unserialize.
 	 *
+	 * Default is now false (no custom classes may be instantiated from
+	 * stored batch data). The queues built by this plugin only ever
+	 * serialize arrays and scalars, so no object is ever needed. This closes
+	 * the PHP Object Injection surface that allowed_classes=true exposes.
+	 *
 	 * @var bool|array
 	 */
-	protected $allowed_batch_data_classes = true;
+	protected $allowed_batch_data_classes = false;
 
 	/**
 	 * The status set when process is cancelling.
@@ -79,9 +84,9 @@ abstract class XWP_Background_Process extends XWP_Async_Request {
 	/**
 	 * Initiate new background process.
 	 *
-	 * @param bool|array $allowed_batch_data_classes Optional. Array of class names that can be unserialized. Default true (any class).
+	 * @param bool|array $allowed_batch_data_classes Optional. Array of class names that can be unserialized. Default false (no custom classes).
 	 */
-	public function __construct( $allowed_batch_data_classes = true ) {
+	public function __construct( $allowed_batch_data_classes = false ) {
 		parent::__construct();
 
 		if ( empty( $allowed_batch_data_classes ) && false !== $allowed_batch_data_classes ) {

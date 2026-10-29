@@ -36,6 +36,13 @@ class FormHandler {
 
 	private static $instance = null;
 
+	/**
+	 * Output buffer level before the AJAX handler started its own buffer.
+	 *
+	 * @var int|null
+	 */
+	private $ob_level = null;
+
 	public static function instance() {
 		if ( self::$instance == null ) {
 			self::$instance = new FormHandler();
@@ -88,6 +95,22 @@ class FormHandler {
 	 * @access public
 	 */
 	public function elementor_form_builder_form_ajax() {
+		// This endpoint answers with JSON and nothing else. On a site running
+		// with WP_DEBUG_DISPLAY on -- or any plugin/theme that emits a notice,
+		// deprecation or stray echo during the request -- that text is printed
+		// into the response body and prepended to the JSON. The browser then
+		// cannot parse the reply: the submit silently fails with an "AJAX error"
+		// in the console and the visitor never sees a success or error message.
+		//
+		// Everything printed during the request is buffered and thrown away
+		// right before the reply is sent (send_json_success/error()), so the body
+		// is pure JSON. Nothing is hidden from the developer -- WP_DEBUG_LOG still
+		// records every notice -- it is only kept out of the bytes the browser
+		// must parse. Changing display_errors at runtime is not allowed in
+		// WordPress.org plugins, so output buffering does the job instead.
+		$this->ob_level = ob_get_level();
+		ob_start();
+
 		check_ajax_referer( 'elementor_form_builder_form', 'nonce' );
 
 		// Both run before the document lookup and the mail send, so a flood is
@@ -106,7 +129,7 @@ class FormHandler {
 
 		$document = Plugin::$instance->documents->get( $post_id );
 		if ( ! $document ) {
-			wp_send_json_error( [ 'message' => 'Invalid post document.' ], 400 );
+			$this->send_json_error( [ 'message' => 'Invalid post document.' ], 400 );
 		}
 
 		$form     = Utils::find_element_recursive( $document->get_elements_data(), $el_id );
@@ -170,7 +193,14 @@ class FormHandler {
 		// so a form whose definition could not be resolved is refused outright
 		// rather than falling back to anything the request supplied.
 		if ( empty( $fields ) || empty( $settings['email_to'] ) ) {
-			wp_send_json_error( $response, 500 );
+			// A missing recipient or unresolved field set is a handled, expected
+			// outcome, not a server fault. Answering with HTTP 500 made the browser
+			// log "POST admin-ajax.php 500 (Internal Server Error)" in the console
+			// and pushed the reply down the jQuery error() path. Returning the
+			// default 200 with success:false keeps the body (error_message) intact,
+			// clears the console error, and lets the front-end success() handler show
+			// the message the normal way.
+			$this->send_json_error( $response );
 		}
 
 		$data = $this->build_email_body( $fields );
@@ -178,7 +208,7 @@ class FormHandler {
 		// Every field arrived empty, or none of them was attributable. Nothing
 		// worth mailing, and an empty body is the shape a probe would produce.
 		if ( '' === $data ) {
-			wp_send_json_error( $response, 400 );
+			$this->send_json_error( $response, 400 );
 		}
 
 		// Prepare MIME rules and file uploads
@@ -203,10 +233,56 @@ class FormHandler {
 		// visitor as sent, and the submission was lost with nobody the wiser.
 		// The reason for a failure is broadcast on the wp_mail_failed action.
 		if ( ! $send ) {
-			wp_send_json_error( $response, 500 );
+			// Mail delivery failed (mail server down, recipient refused, no SMTP
+			// configured). The visitor still needs the error_message, but surfacing
+			// this as HTTP 500 only produced a red "500 (Internal Server Error)" in
+			// the console while the message was already carried in the JSON body.
+			// Return the default 200 with success:false so the front-end success()
+			// handler shows error_message and the console stays clean. The real
+			// delivery failure is still recorded via the wp_mail_failed action.
+			$this->send_json_error( $response );
 		}
 
-		wp_send_json_success( $response, 200 );
+		$this->send_json_success( $response, 200 );
+	}
+
+	/**
+	 * Discard whatever was printed during the request (notices, deprecations,
+	 * stray echoes) so the JSON reply is the only thing in the response body.
+	 *
+	 * @return void
+	 */
+	private function discard_stray_output() {
+		if ( null === $this->ob_level ) {
+			return;
+		}
+		while ( ob_get_level() > $this->ob_level ) {
+			ob_end_clean();
+		}
+	}
+
+	/**
+	 * wp_send_json_success() with the stray output discarded first.
+	 *
+	 * @param mixed    $data        Data to encode as JSON.
+	 * @param int|null $status_code HTTP status code.
+	 * @return void
+	 */
+	private function send_json_success( $data = null, $status_code = null ) {
+		$this->discard_stray_output();
+		wp_send_json_success( $data, $status_code );
+	}
+
+	/**
+	 * wp_send_json_error() with the stray output discarded first.
+	 *
+	 * @param mixed    $data        Data to encode as JSON.
+	 * @param int|null $status_code HTTP status code.
+	 * @return void
+	 */
+	private function send_json_error( $data = null, $status_code = null ) {
+		$this->discard_stray_output();
+		wp_send_json_error( $data, $status_code );
 	}
 
 	/**
@@ -228,7 +304,7 @@ class FormHandler {
 	private function check_honeypot() {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified by the caller.
 		if ( ! empty( $_POST['solaceform_hp'] ) ) {
-			wp_send_json_error( [ 'error_message' => __( 'Your submission could not be sent.', 'solace-extra' ) ], 400 );
+			$this->send_json_error( [ 'error_message' => __( 'Your submission could not be sent.', 'solace-extra' ) ], 400 );
 		}
 	}
 
@@ -307,7 +383,7 @@ class FormHandler {
 		}
 
 		if ( (int) $state['count'] >= $max ) {
-			wp_send_json_error(
+			$this->send_json_error(
 				[ 'error_message' => __( 'Too many submissions. Please try again in a few minutes.', 'solace-extra' ) ],
 				429
 			);
@@ -501,7 +577,7 @@ class FormHandler {
 			foreach ( $_FILES as $file_group ) {
 				foreach ( $this->normalize_file_group( $file_group ) as $file ) {
 					if ( UPLOAD_ERR_NO_FILE !== $file['error'] ) {
-						wp_send_json_error( [ 'error_message' => __( 'This form does not accept file uploads.', 'solace-extra' ) ], 400 );
+						$this->send_json_error( [ 'error_message' => __( 'This form does not accept file uploads.', 'solace-extra' ) ], 400 );
 					}
 				}
 			}
@@ -538,7 +614,7 @@ class FormHandler {
 				}
 
 				if ( count( $accepted ) >= $max_files ) {
-					wp_send_json_error(
+					$this->send_json_error(
 						[
 							'error_message' => sprintf(
 								/* translators: %d: maximum number of files. */
@@ -551,7 +627,7 @@ class FormHandler {
 				}
 
 				if ( $file['size'] > $max_size ) {
-					wp_send_json_error(
+					$this->send_json_error(
 						[
 							'error_message' => sprintf(
 								/* translators: %s: maximum file size, already formatted. */
@@ -566,7 +642,7 @@ class FormHandler {
 				$total_size += $file['size'];
 
 				if ( $total_size > $max_total_size ) {
-					wp_send_json_error(
+					$this->send_json_error(
 						[
 							'error_message' => sprintf(
 								/* translators: %s: maximum combined size, already formatted. */
@@ -584,7 +660,7 @@ class FormHandler {
 				$real_mime = function_exists( 'mime_content_type' ) ? mime_content_type( $file['tmp_name'] ) : false;
 
 				if ( ! $real_mime || ! in_array( $real_mime, $allowed_mimes, true ) ) {
-					wp_send_json_error( [ 'error_message' => __( 'Unsupported file type.', 'solace-extra' ) ], 400 );
+					$this->send_json_error( [ 'error_message' => __( 'Unsupported file type.', 'solace-extra' ) ], 400 );
 				}
 
 				// The extension has to agree with the contents too, or a script
@@ -593,7 +669,7 @@ class FormHandler {
 				$checked      = wp_check_filetype_and_ext( $file['tmp_name'], $display_name );
 
 				if ( empty( $checked['ext'] ) || empty( $checked['type'] ) || ! in_array( $checked['type'], $allowed_mimes, true ) ) {
-					wp_send_json_error( [ 'error_message' => __( 'Unsupported file type.', 'solace-extra' ) ], 400 );
+					$this->send_json_error( [ 'error_message' => __( 'Unsupported file type.', 'solace-extra' ) ], 400 );
 				}
 
 				if ( ! empty( $checked['proper_filename'] ) ) {

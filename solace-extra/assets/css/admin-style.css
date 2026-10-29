@@ -2626,7 +2626,7 @@ body.solace_page_dashboard-step5 .fontlist {
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin-bottom: 20px;
-  /* CSS Untuk Tooltip */
+  /* Tooltip */
 }
 body.solace_page_dashboard-step5 .fontlist .font.active {
   outline: 4px solid #ff8c02;

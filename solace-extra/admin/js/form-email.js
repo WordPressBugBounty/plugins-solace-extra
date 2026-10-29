@@ -1,3 +1,12 @@
+// Scope wizard storage to the current site: on multisite (subdirectory) all subsites share one
+// origin, so unscoped keys and path=/ cookies leak between parallel imports on different subsites.
+window.solaceStorageKey = window.solaceStorageKey || function (key) {
+	return key + '@' + ( window.location.pathname.split( '/wp-admin' )[0] || '/' );
+};
+window.solaceCookiePath = window.solaceCookiePath || function () {
+	return ( window.location.pathname.split( '/wp-admin' )[0] || '' ) + '/wp-admin/';
+};
+
 (function ($) {
     'use strict';
 
@@ -27,7 +36,7 @@
             });
         } else {
             sendDataToSendy(firstname, email, agreement, listId, apiKey);
-            localStorage.setItem('solaceStep6', 'success');
+            localStorage.setItem(solaceStorageKey('solaceStep6'), 'success');
 
             const demoType = getParameterByName('type');
             const demoUrl = getParameterByName('url');
@@ -39,30 +48,30 @@
                 return now.toLocaleString(); // Using local date and time format
             }
 
-            if (localStorage.getItem('solaceDuration')) {
+            if (localStorage.getItem(solaceStorageKey('solaceDuration'))) {
                 // If it exists, remove it first
-                localStorage.removeItem('solaceDuration');
+                localStorage.removeItem(solaceStorageKey('solaceDuration'));
             }
 
             // Get the time when the button is clicked
             var currentTime = getCurrentTime();
 
             // Save the time value to local storage with the name 'solaceDuration'
-            localStorage.setItem('solaceDuration', currentTime);
+            localStorage.setItem(solaceStorageKey('solaceDuration'), currentTime);
 
             // Check if the 'solaceListDemo' key already exists in local storage
-            if (localStorage.getItem('solaceRemoveDataDemo')) {
+            if (localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo'))) {
                 // Retrieve the existing value
-                let existingValue = localStorage.getItem('solaceRemoveDataDemo');
+                let existingValue = localStorage.getItem(solaceStorageKey('solaceRemoveDataDemo'));
 
                 // Combine the existing value with the new data, separated by a comma
                 let combinedValue = existingValue + ',' + demoName;
 
                 // Save the combined value back to local storage
-                localStorage.setItem('solaceRemoveDataDemo', combinedValue);
+                localStorage.setItem(solaceStorageKey('solaceRemoveDataDemo'), combinedValue);
             } else {
                 // If 'solaceRemoveDataDemo' doesn't exist in local storage, create it and store the new data
-                localStorage.setItem('solaceRemoveDataDemo', demoName);
+                localStorage.setItem(solaceStorageKey('solaceRemoveDataDemo'), demoName);
             }                
 
             window.location = pluginUrl.admin_url + 'admin.php?page=dashboard-progress&type=' + demoType + '&demo=' + demoName + '&timestamp=' + new Date().getTime();            
@@ -92,7 +101,7 @@
             value: 'success'
         };
 
-        localStorage.setItem('solace-skip-no-thanks', JSON.stringify(data));
+        localStorage.setItem(solaceStorageKey('solace-skip-no-thanks'), JSON.stringify(data));
 
         const demoType = getParameterByName('type');
         const demoUrl = getParameterByName('url');

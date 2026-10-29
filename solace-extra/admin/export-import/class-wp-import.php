@@ -1253,6 +1253,7 @@ class Solace_Extra_WP_Import extends WP_Importer {
 		// Move the file to the uploads dir.
 		$file_name     = wp_unique_filename( $uploads['path'], $file_name );
 		$new_file      = $uploads['path'] . "/$file_name";
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.copy_copy -- Moving an uploaded import asset inside the uploads dir; WP_Filesystem::move() does not exist in all core versions.
 		$move_new_file = copy( $tmp_file_name, $new_file );
 
 		if ( ! $move_new_file ) {

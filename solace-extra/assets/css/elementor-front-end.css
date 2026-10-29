@@ -105,5 +105,6 @@ body .elementor-widget-solace-extra-site-logo .elementor-site-logo img,
 body .elementor-widget-solace-extra-site-logo .elementor-site-logo a img {
   max-width: 100%;
   height: auto;
+  width: auto;
 }
 /*# sourceMappingURL=elementor-front-end.css.map */
